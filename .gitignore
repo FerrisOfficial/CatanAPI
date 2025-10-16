@@ -1,0 +1,211 @@
+# Build directories
+build/
+bin/
+lib/
+obj/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Testing
+Testing/
+CTestTestfile.cmake
+
+# Executables
+*.exe
+*.out
+*.app
+*.dSYM/
+
+# Object files
+*.o
+*.obj
+*.ko
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Visual Studio files
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+
+# Qt-es
+object_script.*.Release
+object_script.*.Debug
+*_plugin_import.cpp
+/.qmake.cache
+/.qmake.stash
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qmlc
+*.jsc
+Makefile*
+*build-*
+*.qm
+*.prl
+
+# Qt unit tests
+target_wrapper.*
+
+# QtCreator
+*.autosave
+
+# QtCreator Qml
+*.qmlproject.user
+*.qmlproject.user.*
+
+# QtCreator CMake
+CMakeLists.txt.user*
+
+# QtCreator 4.8< compilation database 
+compile_commands.json
+
+# QtCreator local machine specific files for imported projects
+*creator.user*
+
+# IntelliJ CLion
+.idea/
+cmake-build-*/
+
+# Conan
+conanfile.txt
+conanfile.py
+conandata.yml
+test_package/
+
+# vcpkg
+vcpkg_installed/
+
+# Dependency directories
+_deps/
+
+# Backup files
+*~
+*.swp
+*.swo
+*#
+.#*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Python (if any Python scripts are added)
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# Package managers
+node_modules/
+.npm
+.yarn/
+
+# Coverage reports
+*.gcov
+*.gcno
+*.gcda
+coverage/
+lcov.info
+
+# Memory checking
+*.memcheck
+vgcore.*
+
+# Profiling
+gmon.out
+*.prof
+*.profdata
+
+# Sanitizer output
+*.san
+
+# Documentation build
+docs/_build/
+docs/html/
+docs/latex/
+
+# IDE specific
+*.workspace
+*.cbp
+*.layout
+*.depend
+
+# Archive files (unless specifically needed)
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Configuration files that shouldn't be committed
+config.local.*
+*.local.conf
