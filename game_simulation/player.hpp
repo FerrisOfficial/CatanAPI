@@ -4,8 +4,7 @@
 #include "consts.hpp"
 
 // Packed 64-bit player state representation
-// Layout (from LSB to MSB):
-// [ Resources (25 bits) | Dev Cards (13 bits) | Used Knights (4 bits) | Road Length (4 bits) | Flags (2 bits) | Reserved (16 bits) ]
+// Layout (from LSB to MSB)
 //
 // Resources (5 bits each, 25 bits total):
 // - Brick:  bits 0-4   (5 bits, max 31)
@@ -47,7 +46,6 @@ constexpr PackedPlayer packResource(PackedPlayer p, Resource r, uint8_t value) {
     p |= (uint64_t(value & 0x1F) << (r*5));
     return p;
 }
-
 constexpr uint8_t unpackResource(PackedPlayer p, Resource r) {
     return (p >> (r*5)) & 0x1F;
 }
@@ -62,7 +60,6 @@ constexpr PackedPlayer packDevCard(PackedPlayer p, DevType d, uint8_t value) {
     }
     return p;
 }
-
 constexpr uint8_t unpackDevCard(PackedPlayer p, DevType d) {
     switch(d){
         case DevType::Knight:       return (p >> 25) & 0xF;
