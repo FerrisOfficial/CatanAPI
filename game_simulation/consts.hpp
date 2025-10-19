@@ -14,7 +14,8 @@ using DiceNumber = uint8_t;
 
 enum class PlayerId : uint8_t { 
     Player0 = 0, 
-    Player1 = 1 
+    Player1 = 1,
+    NoPlayer = 2
 };
 
 enum Resource : uint8_t { 
@@ -84,4 +85,14 @@ enum class ActionType : uint8_t {
     // Setup
     PlaceInitialSettlement = 14,
     PlaceInitialRoad = 15,
+};
+
+enum class PortType : uint8_t {
+    ThreeForOne = 0,
+    BrickPort = 1,
+    LumberPort = 2,
+    WoolPort = 3,
+    GrainPort = 4,
+    OrePort = 5,
+    NoPort = 6
 };

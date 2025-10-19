@@ -22,8 +22,10 @@ FetchContent_MakeAvailable(googletest)
 include_directories(game_simulation)
 
 # Create a library for the game simulation code
-add_library(game_simulation INTERFACE)
-target_include_directories(game_simulation INTERFACE game_simulation)
+add_library(game_simulation 
+    game_simulation/board.cpp
+)
+target_include_directories(game_simulation PUBLIC game_simulation)
 
 # Enable testing
 enable_testing()

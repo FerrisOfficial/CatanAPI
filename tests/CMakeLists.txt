@@ -6,9 +6,31 @@ add_executable(
   test_player.cpp
 )
 
+add_executable(
+  actions_tests
+  test_actions.cpp
+)
+
+add_executable(
+  board_tests
+  test_board.cpp
+)
+
 # Link against gtest_main and the game_simulation library
 target_link_libraries(
   player_tests
+  gtest_main
+  game_simulation
+)
+
+target_link_libraries(
+  actions_tests
+  gtest_main
+  game_simulation
+)
+
+target_link_libraries(
+  board_tests
   gtest_main
   game_simulation
 )
@@ -18,3 +40,5 @@ include(GoogleTest)
 
 # Discover tests
 gtest_discover_tests(player_tests)
+gtest_discover_tests(actions_tests)
+gtest_discover_tests(board_tests)
