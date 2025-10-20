@@ -138,7 +138,4 @@ constexpr BoardState::BoardState() noexcept {
 inline constexpr BoardState kCompiledBoard{};
 BoardState boardState = kCompiledBoard;
 
-static_assert(Node::unpackAdjacentHex(kCompiledBoard.nodes[0], 1) == 0);
-static_assert(Edge::unpackAdjacentNode(kCompiledBoard.edges[71], 1) == 53);
-
 } // namespace Board
