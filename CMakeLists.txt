@@ -20,12 +20,20 @@ FetchContent_MakeAvailable(googletest)
 
 # Add include directory for game_simulation headers
 include_directories(game_simulation)
+include_directories(${CMAKE_SOURCE_DIR})
+include_directories(players)
 
-# Create a library for the game simulation code
-add_library(game_simulation 
-    game_simulation/board.cpp
+# Create game_simulation library
+add_library(game_simulation
+    players/player.cpp
+    game_simulation/game.cpp
 )
-target_include_directories(game_simulation PUBLIC game_simulation)
+
+target_include_directories(game_simulation PUBLIC
+    ${CMAKE_SOURCE_DIR}/game_simulation
+    ${CMAKE_SOURCE_DIR}/players
+    ${CMAKE_SOURCE_DIR}
+)
 
 # Enable testing
 enable_testing()
