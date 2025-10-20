@@ -179,7 +179,17 @@ constexpr PackedEdge makeEdge(NodeId node1, NodeId node2,
 
 } // namespace Edge
 
-// Forward declaration of BoardState
-struct BoardState;
+// Full board state structure (exposed so tests can access members)
+struct BoardState {
+    HexId robberPosition = 0;
+    Hex::PackedHex hexes[HEX_COUNT] = {0};
+    Node::PackedNode nodes[NODE_COUNT] = {0};
+    Edge::PackedEdge edges[EDGE_COUNT] = {0};
+
+    BoardState();
+};
+
+// Exposed global board state instance
+extern BoardState boardState;
 
 } // namespace Board

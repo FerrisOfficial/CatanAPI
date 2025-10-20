@@ -2,24 +2,140 @@
 
 namespace Board {
 
-// Global board state
-struct BoardState {
-    HexId robberPosition = 0;
-    
-    // Board arrays - using the constants from consts.hpp
-    Hex::PackedHex hexes[HEX_COUNT] = {0};
-    Node::PackedNode nodes[NODE_COUNT] = {0};  
-    Edge::PackedEdge edges[EDGE_COUNT] = {0};
+// BoardState constructor implementation (initializes nodes and edges)
+BoardState::BoardState() {
+    constexpr HexId None = HexId(-1);
+    nodes[0]  = Node::makeNode(None, 0, None);
+    nodes[1]  = Node::makeNode(None, None, 0);
+    nodes[2]  = Node::makeNode(0, 1, None);
+    nodes[3]  = Node::makeNode(None, None, 1);
+    nodes[4]  = Node::makeNode(1, 2, None);
+    nodes[5]  = Node::makeNode(None, None, 2);
+    nodes[6]  = Node::makeNode(2, None, None);
+    nodes[7]  = Node::makeNode(None, 3, None);
+    nodes[8]  = Node::makeNode(None, 0, 3);
+    nodes[9]  = Node::makeNode(3, 4, 0);
+    nodes[10] = Node::makeNode(0, 1, 4);
+    nodes[11] = Node::makeNode(4, 5, 1);
+    nodes[12] = Node::makeNode(1, 2, 5);
+    nodes[13] = Node::makeNode(5, 6, 2);
+    nodes[14] = Node::makeNode(2, None, 6);
+    nodes[15] = Node::makeNode(6, None, None);
+    nodes[16] = Node::makeNode(None, 7, None);
+    nodes[17] = Node::makeNode(None, 3, 7);
+    nodes[18] = Node::makeNode(7, 8, 3);
+    nodes[19] = Node::makeNode(3, 4, 8);
+    nodes[20] = Node::makeNode(8, 9, 4);
+    nodes[21] = Node::makeNode(4, 5, 9);
+    nodes[22] = Node::makeNode(9,  10, 5);
+    nodes[23] = Node::makeNode(5, 6,  10);
+    nodes[24] = Node::makeNode(10, 11, 6);
+    nodes[25] = Node::makeNode(6, None,  11);
+    nodes[26] = Node::makeNode(11,  None, None);
+    nodes[27] = Node::makeNode(None, 7, None);
+    nodes[28] = Node::makeNode(None,  12, 7);
+    nodes[29] = Node::makeNode(7, 8,  12);
+    nodes[30] = Node::makeNode(12, 13, 8);
+    nodes[31] = Node::makeNode(8, 9,  13);
+    nodes[32] = Node::makeNode(13, 14, 9);
+    nodes[33] = Node::makeNode(9,  10,  14);
+    nodes[34] = Node::makeNode(14, 15,  10);
+    nodes[35] = Node::makeNode(10, 11,  15);
+    nodes[36] = Node::makeNode(15,  None,  11);
+    nodes[37] = Node::makeNode(11,  None, None);
+    nodes[38] = Node::makeNode(None,  12, None);
+    nodes[39] = Node::makeNode(None,  16,  12);
+    nodes[40] = Node::makeNode(12, 13,  16);
+    nodes[41] = Node::makeNode(16, 17,  13);
+    nodes[42] = Node::makeNode(13, 14,  17);
+    nodes[43] = Node::makeNode(17, 18,  14);
+    nodes[44] = Node::makeNode(14, 15,  18);
+    nodes[45] = Node::makeNode(18,  None,  15);
+    nodes[46] = Node::makeNode(15,  None, None);
+    nodes[47] = Node::makeNode(None,  16, None);
+    nodes[48] = Node::makeNode(None, None,  16);
+    nodes[49] = Node::makeNode(16, 17, None);
+    nodes[50] = Node::makeNode(None, None,  17);
+    nodes[51] = Node::makeNode(17, 18, None);
+    nodes[52] = Node::makeNode(None, None,  18);
+    nodes[53] = Node::makeNode(18,  None, None);
 
-    BoardState() {
-        nodes[0] = Node::makeNode(5, 10, 15);
-        nodes[1] = Node::makeNode(0, 1, 2);
-        //itd
+    // ------- EDGES -------
+    edges[0]  = Edge::makeEdge(0, 1);
+    edges[1]  = Edge::makeEdge(1, 2);
+    edges[2]  = Edge::makeEdge(2, 3);
+    edges[3]  = Edge::makeEdge(3, 4);
+    edges[4]  = Edge::makeEdge(4, 5);
+    edges[5]  = Edge::makeEdge(5, 6);
+    edges[6]  = Edge::makeEdge(0, 8);
+    edges[7]  = Edge::makeEdge(2, 10);
+    edges[8]  = Edge::makeEdge(4, 12);
+    edges[9]  = Edge::makeEdge(6, 14);
+    edges[10] = Edge::makeEdge(7, 8);
+    edges[11] = Edge::makeEdge(8, 9);
+    edges[12] = Edge::makeEdge(9, 10);
+    edges[13] = Edge::makeEdge(10, 11);
+    edges[14] = Edge::makeEdge(11, 12);
+    edges[15] = Edge::makeEdge(12, 13);
+    edges[16] = Edge::makeEdge(13, 14);
+    edges[17] = Edge::makeEdge(14, 15);
+    edges[18] = Edge::makeEdge(7, 17);
+    edges[19] = Edge::makeEdge(9, 19);
+    edges[20] = Edge::makeEdge(11, 21);
+    edges[21] = Edge::makeEdge(13, 23);
+    edges[22] = Edge::makeEdge(15, 25);
+    edges[23] = Edge::makeEdge(16, 17);
+    edges[24] = Edge::makeEdge(17, 18);
+    edges[25] = Edge::makeEdge(18, 19);
+    edges[26] = Edge::makeEdge(19, 20);
+    edges[27] = Edge::makeEdge(20, 21);
+    edges[28] = Edge::makeEdge(21, 22);
+    edges[29] = Edge::makeEdge(29, 23);
+    edges[30] = Edge::makeEdge(23, 24);
+    edges[31] = Edge::makeEdge(24, 25);
+    edges[32] = Edge::makeEdge(25, 26);
+    edges[33] = Edge::makeEdge(16, 27);
+    edges[34] = Edge::makeEdge(18, 29);
+    edges[35] = Edge::makeEdge(20, 31);
+    edges[36] = Edge::makeEdge(22, 33);
+    edges[37] = Edge::makeEdge(24, 35);
+    edges[38] = Edge::makeEdge(26, 37);
+    edges[39] = Edge::makeEdge(27, 28);
+    edges[40] = Edge::makeEdge(28, 29);
+    edges[41] = Edge::makeEdge(29, 30);
+    edges[42] = Edge::makeEdge(30, 31);
+    edges[43] = Edge::makeEdge(31, 32);
+    edges[44] = Edge::makeEdge(32, 33);
+    edges[45] = Edge::makeEdge(33, 34);
+    edges[46] = Edge::makeEdge(34, 35);
+    edges[47] = Edge::makeEdge(35, 36);
+    edges[48] = Edge::makeEdge(36, 37);
+    edges[49] = Edge::makeEdge(28, 38);
+    edges[50] = Edge::makeEdge(30, 40);
+    edges[51] = Edge::makeEdge(32, 42);
+    edges[52] = Edge::makeEdge(34, 44);
+    edges[53] = Edge::makeEdge(36, 46);
+    edges[54] = Edge::makeEdge(38, 39);
+    edges[55] = Edge::makeEdge(39, 40);
+    edges[56] = Edge::makeEdge(40, 41);
+    edges[57] = Edge::makeEdge(41, 42);
+    edges[58] = Edge::makeEdge(42, 43);
+    edges[59] = Edge::makeEdge(43, 44);
+    edges[60] = Edge::makeEdge(44, 45);
+    edges[61] = Edge::makeEdge(45, 46);
+    edges[62] = Edge::makeEdge(39, 47);
+    edges[63] = Edge::makeEdge(41, 49);
+    edges[64] = Edge::makeEdge(43, 51);
+    edges[65] = Edge::makeEdge(45, 53);
+    edges[66] = Edge::makeEdge(47, 48);
+    edges[67] = Edge::makeEdge(48, 49);
+    edges[68] = Edge::makeEdge(49, 50);
+    edges[69] = Edge::makeEdge(50, 51);
+    edges[70] = Edge::makeEdge(51, 52);
+    edges[71] = Edge::makeEdge(52, 53);
+}
 
-        edges[0] = Edge::makeEdge(0, 1);
-        edges[1] = Edge::makeEdge(1, 2);
-        // itd
-    }
-};
+// Define the global board state instance so tests and other modules can access it
+BoardState boardState;
 
 } // namespace Board

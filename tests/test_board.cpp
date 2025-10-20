@@ -175,3 +175,41 @@ TEST(BoardTest, BitBoundaries) {
     edge = Edge::packAdjacentNode(edge, 0, 127); // 7 bits max (54 is actual max for node count)
     EXPECT_EQ(Edge::unpackAdjacentNode(edge, 0), 127);
 }
+
+TEST(BoardTest, InitializedNodesAndEdges) {
+    // The 'None' HexId was stored using HexId(-1) masked into 5 bits -> 31
+    constexpr HexId NoneMasked = 0x1F;
+
+    // nodes[0]  = Node::makeNode(None, 0, None);
+    Node::PackedNode n0 = boardState.nodes[0];
+    EXPECT_EQ(Node::unpackAdjacentHex(n0, 0), NoneMasked);
+    EXPECT_EQ(Node::unpackAdjacentHex(n0, 1), (HexId)0);
+    EXPECT_EQ(Node::unpackAdjacentHex(n0, 2), NoneMasked);
+
+    // nodes[9]  = Node::makeNode(3, 4, 0);
+    Node::PackedNode n9 = boardState.nodes[9];
+    EXPECT_EQ(Node::unpackAdjacentHex(n9, 0), (HexId)3);
+    EXPECT_EQ(Node::unpackAdjacentHex(n9, 1), (HexId)4);
+    EXPECT_EQ(Node::unpackAdjacentHex(n9, 2), (HexId)0);
+
+    // nodes[53] = Node::makeNode(18,  None, None);
+    Node::PackedNode n53 = boardState.nodes[53];
+    EXPECT_EQ(Node::unpackAdjacentHex(n53, 0), (HexId)18);
+    EXPECT_EQ(Node::unpackAdjacentHex(n53, 1), NoneMasked);
+    EXPECT_EQ(Node::unpackAdjacentHex(n53, 2), NoneMasked);
+
+    // edges[0]  = Edge::makeEdge(0, 1);
+    Edge::PackedEdge e0 = boardState.edges[0];
+    EXPECT_EQ(Edge::unpackAdjacentNode(e0, 0), (NodeId)0);
+    EXPECT_EQ(Edge::unpackAdjacentNode(e0, 1), (NodeId)1);
+
+    // edges[11] = Edge::makeEdge(8, 9);
+    Edge::PackedEdge e11 = boardState.edges[11];
+    EXPECT_EQ(Edge::unpackAdjacentNode(e11, 0), (NodeId)8);
+    EXPECT_EQ(Edge::unpackAdjacentNode(e11, 1), (NodeId)9);
+
+    // edges[71] = Edge::makeEdge(52, 53);
+    Edge::PackedEdge e71 = boardState.edges[71];
+    EXPECT_EQ(Edge::unpackAdjacentNode(e71, 0), (NodeId)52);
+    EXPECT_EQ(Edge::unpackAdjacentNode(e71, 1), (NodeId)53);
+}
