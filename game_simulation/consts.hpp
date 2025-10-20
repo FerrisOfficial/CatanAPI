@@ -10,7 +10,9 @@ constexpr int HEX_COUNT = 19;
 using NodeId = uint8_t;
 using EdgeId = uint8_t;
 using HexId = uint8_t; 
-using DiceNumber = uint8_t; 
+using DiceNumber = uint8_t;
+
+constexpr HexId HexIdNone = 20; 
 
 enum class PlayerId : uint8_t { 
     Player0 = 0, 

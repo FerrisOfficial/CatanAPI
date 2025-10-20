@@ -186,7 +186,7 @@ struct BoardState {
     Node::PackedNode nodes[NODE_COUNT] = {0};
     Edge::PackedEdge edges[EDGE_COUNT] = {0};
 
-    BoardState();
+    constexpr BoardState() noexcept;
 };
 
 // Exposed global board state instance
