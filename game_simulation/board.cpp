@@ -3,7 +3,7 @@
 namespace Board {
 
 // BoardState constructor implementation (initializes nodes and edges)
-BoardState::BoardState() {
+constexpr BoardState::BoardState() noexcept {
     constexpr HexId None = HexId(-1);
     nodes[0]  = Node::makeNode(None, 0, None);
     nodes[1]  = Node::makeNode(None, None, 0);
@@ -135,7 +135,10 @@ BoardState::BoardState() {
     edges[71] = Edge::makeEdge(52, 53);
 }
 
-// Define the global board state instance so tests and other modules can access it
-BoardState boardState;
+inline constexpr BoardState kCompiledBoard{};
+BoardState boardState = kCompiledBoard;
+
+static_assert(Node::unpackAdjacentHex(kCompiledBoard.nodes[0], 1) == 0);
+static_assert(Edge::unpackAdjacentNode(kCompiledBoard.edges[71], 1) == 53);
 
 } // namespace Board
