@@ -8,5 +8,10 @@
 
 struct Game {
     Board::BoardState boardState;
+    IPlayer& player1;
+    IPlayer& player2;
+
     Game(IPlayer& player1, IPlayer& player2);
+    void initialPhase();
+
 };

@@ -142,4 +142,10 @@ constexpr void buy(PackedPlayer &p, BuyableType b, DevType d = DevType::NoDev) {
     }
 }
 
+constexpr uint8_t totalResources(PackedPlayer p) {
+    return unpackResource(p, Resource::Brick) +
+           unpackResource(p, Resource::Lumber) +
+           unpackResource(p, Resource::Wool) +
+           unpackResource(p, Resource::Grain) +
+           unpackResource(p, Resource::Ore);
 } // namespace Player

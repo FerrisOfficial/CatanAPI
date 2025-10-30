@@ -4,6 +4,7 @@
 
 #include <player.hpp>
 #include <consts.hpp>
+#include <actions.hpp>
 
 // Packed board representation
 
@@ -197,6 +198,7 @@ struct BoardState {
     uint8_t actionQueueSize = 0;
 
     constexpr BoardState() noexcept;
+    void applyAction(Action::PackedAction action);
 };
 
 constexpr BoardState::BoardState() noexcept {

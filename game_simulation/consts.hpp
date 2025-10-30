@@ -65,28 +65,30 @@ enum class ActionType : uint8_t {
     EndTurn = 2,
 
     // Robber
-    MoveRobber = 3, // Arg1: HexId to move the robber to, Arg2: Resource type (0-4) 
-    DiscardResources = 4, // Resources
+    MoveRobber = 3, // Arg1: HexId to move the robber to
+    StealResource = 4, // Arg1: Resource type (0-4) 
+    DiscardResources = 5, // Resources
 
     // Buying/Building
-    BuildRoad = 5, // Arg1: EdgeId to build road on
-    BuildSettlement = 6, // Arg1: NodeId to build settlement on
-    BuildCity = 7, // Arg1: NodeId to upgrade settlement to city
-    BuyDevCard = 8,
+    BuildRoad = 6, // Arg1: EdgeId to build road on
+    BuildSettlement = 7, // Arg1: NodeId to build settlement on
+    BuildCity = 8, // Arg1: NodeId to upgrade settlement to city
+    BuyDevCard = 9, // None
 
     // Playing Development Cards
-    PlayDevCardKnight = 9, // Arg1: HexId to move the robber to, Arg2: Resource type (0-4)
-    PlayDevCardRoadBuilding = 10, // Arg1: EdgeId to build first road on, Arg2: EdgeId to build second road on
-    PlayDevCardYearOfPlenty = 11, // Resources
-    PlayDevCardMonopoly = 12, // Arg1: Resource type (0-4)
+    PlayDevCardKnight = 10, // Arg1: HexId to move the robber to, Arg2: Resource type (0-4)
+    PlayDevCardRoadBuilding = 11, // Arg1: EdgeId to build first road on, Arg2: EdgeId to build second road on
+    PlayDevCardYearOfPlenty = 12, // Resources
+    PlayDevCardMonopoly = 13, // Arg1: Resource type (0-4)
 
     // Trading
-    TradeBank = 12, // Resources, Arg1: Resource type (0-4)
-    ReceiveResources = 13, // Resources
+    TradeBank = 14, // Resources, Arg1: Resource type (0-4)
+    ReceiveResources = 15, // Resources
 
     // Setup
-    PlaceInitialSettlement = 14,
-    PlaceInitialRoad = 15,
+    PlaceInitialSettlement = 16, // Arg1: NodeId to place settlement on
+    Place2InitialSettlement = 17, // Arg1: NodeId to place settlement on
+    PlaceInitialRoad = 18, // Arg1: EdgeId to place road on
 };
 
 enum class PortType : uint8_t {
