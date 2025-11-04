@@ -19,13 +19,13 @@ void Game::initialPhase() {
     this->boardState.applyAction(p2InitialSettlement);
     this->boardState.applyAction(p2InitialRoad);
 
-    auto p2InitialSettlement = player2.get2InitialSettlement();
-    auto p2InitialRoad = player2.get2InitialRoad();
+    p2InitialSettlement = player2.get2InitialSettlement();
+    p2InitialRoad = player2.get2InitialRoad();
     this->boardState.applyAction(p2InitialSettlement);
     this->boardState.applyAction(p2InitialRoad);
 
-    auto p1InitialSettlement = player1.get2InitialSettlement();
-    auto p1InitialRoad = player1.get2InitialRoad();
+    p1InitialSettlement = player1.get2InitialSettlement();
+    p1InitialRoad = player1.get2InitialRoad();
     this->boardState.applyAction(p1InitialSettlement);
     this->boardState.applyAction(p1InitialRoad);
 }

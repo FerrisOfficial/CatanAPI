@@ -148,4 +148,6 @@ constexpr uint8_t totalResources(PackedPlayer p) {
            unpackResource(p, Resource::Wool) +
            unpackResource(p, Resource::Grain) +
            unpackResource(p, Resource::Ore);
-} // namespace Player
+} 
+
+}// namespace Player
