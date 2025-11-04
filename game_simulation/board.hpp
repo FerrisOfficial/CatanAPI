@@ -5,6 +5,7 @@
 #include <player.hpp>
 #include <consts.hpp>
 #include <actions.hpp>
+#include <packedBank.hpp>
 
 // Packed board representation
 
@@ -190,6 +191,9 @@ struct BoardState {
     Edge::PackedEdge edges[EDGE_COUNT] = {0};
 
     Player::PackedPlayer packedPlayers[2] = {Player::makeNewPlayer(), Player::makeNewPlayer()};
+    Bank::PackedBank packedBank = Bank::makeNewBank();
+
+    uint8_t devDeckCounts[5] = {14, 2, 2, 2, 5};
 
     PlayerId currentPlayer = PlayerId::Player1;
     uint8_t currentTurn = 0;
@@ -199,6 +203,24 @@ struct BoardState {
 
     constexpr BoardState() noexcept;
     void applyAction(Action::PackedAction action);
+    void handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId);
+    void handlePlace2InitialSettlement(Action::PackedAction action, PlayerId playerId);
+    void handlePlaceInitialRoad(Action::PackedAction action, PlayerId playerId);
+    void handleEndTurn(Action::PackedAction action, PlayerId playerId);
+    void handleRollDice(Action::PackedAction action, PlayerId playerId);
+    void handleMoveRobber(Action::PackedAction action, PlayerId playerId);
+    void handleDiscardResources(Action::PackedAction action, PlayerId playerId);
+    void handleBuildRoad(Action::PackedAction action, PlayerId playerId);
+    void handleBuildSettlement(Action::PackedAction action, PlayerId playerId);
+    void handleBuildCity(Action::PackedAction action, PlayerId playerId);
+    void handleBuyDevCard(Action::PackedAction action, PlayerId playerId);
+    void handlePlayDevCardKnight(Action::PackedAction action, PlayerId playerId);
+    void handlePlayDevCardRoadBuilding(Action::PackedAction action, PlayerId playerId);
+    void handlePlayDevCardYearOfPlenty(Action::PackedAction action, PlayerId playerId);
+    void handlePlayDevCardMonopoly(Action::PackedAction action, PlayerId playerId);
+    void handleStealResource(Action::PackedAction action, PlayerId playerId);
+    void handleTradeBank(Action::PackedAction action, PlayerId playerId);
+    void handleReceiveResources(Action::PackedAction action, PlayerId playerId);
 };
 
 constexpr BoardState::BoardState() noexcept {

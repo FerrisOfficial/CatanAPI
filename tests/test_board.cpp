@@ -179,7 +179,8 @@ TEST(BoardTest, BitBoundaries) {
 TEST(BoardTest, InitializedNodesAndEdges) {
     // The 'None' HexId was stored using HexId(-1) masked into 5 bits -> 31
     constexpr HexId NoneMasked = 0x1F;
-
+    
+    Board::BoardState boardState;
     // nodes[0]  = Node::makeNode(None, 0, None);
     Node::PackedNode n0 = boardState.nodes[0];
     EXPECT_EQ(Node::unpackAdjacentHex(n0, 0), NoneMasked);

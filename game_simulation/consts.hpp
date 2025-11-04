@@ -67,7 +67,7 @@ enum class ActionType : uint8_t {
     // Robber
     MoveRobber = 3, // Arg1: HexId to move the robber to
     StealResource = 4, // Arg1: Resource type (0-4) 
-    DiscardResources = 5, // Resources
+    DiscardResources = 5, // Arg1: Resource type (0-4), Arg2: amount to discard
 
     // Buying/Building
     BuildRoad = 6, // Arg1: EdgeId to build road on
@@ -82,8 +82,8 @@ enum class ActionType : uint8_t {
     PlayDevCardMonopoly = 13, // Arg1: Resource type (0-4)
 
     // Trading
-    TradeBank = 14, // Resources, Arg1: Resource type (0-4)
-    ReceiveResources = 15, // Resources
+    TradeBank = 14, // Resources, Arg1: Give back resource type (0-4), Arg2: Take resourse type (0-4), Arg3: trade ratio (2-4)
+    ReceiveResources = 15, // Resources, Arg1: Resource type (0-4), Arg2: amount to give
 
     // Setup
     PlaceInitialSettlement = 16, // Arg1: NodeId to place settlement on

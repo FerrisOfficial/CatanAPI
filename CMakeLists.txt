@@ -27,6 +27,7 @@ include_directories(players)
 add_library(game_simulation
     players/player.cpp
     game_simulation/game.cpp
+    game_simulation/board.cpp
 )
 
 target_include_directories(game_simulation PUBLIC

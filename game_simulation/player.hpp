@@ -50,16 +50,9 @@ constexpr uint8_t unpackResource(PackedPlayer p, Resource r) {
     return (p >> (r*5)) & 0x1F;
 }
 
-constexpr PackedPlayer packDevCard(PackedPlayer p, DevType d, uint8_t value) {
-    switch(d){
-        case DevType::Knight:       p &= ~(0xFULL << 25); p |= uint64_t(value & 0xF) << 25; break;  // 4 bits
-        case DevType::RoadBuilding: p &= ~(0x3ULL << 29); p |= uint64_t(value & 0x3) << 29; break;  // 2 bits
-        case DevType::YearOfPlenty: p &= ~(0x3ULL << 31); p |= uint64_t(value & 0x3) << 31; break;  // 2 bits
-        case DevType::Monopoly:     p &= ~(0x3ULL << 33); p |= uint64_t(value & 0x3) << 33; break;  // 2 bits
-        case DevType::VictoryPoint: p &= ~(0x7ULL << 35); p |= uint64_t(value & 0x7) << 35; break;  // 3 bits
-    }
-    return p;
-}
+constexpr PackedPlayer packVictoryPoints(PackedPlayer p, uint8_t value) { return (p & ~(0x1FULL << 58)) | (uint64_t(value & 0x1F) << 58); }
+constexpr uint8_t unpackVictoryPoints(PackedPlayer p) { return (p >> 58) & 0x1F; }
+
 constexpr uint8_t unpackDevCard(PackedPlayer p, DevType d) {
     switch(d){
         case DevType::Knight:       return (p >> 25) & 0xF;
@@ -69,6 +62,29 @@ constexpr uint8_t unpackDevCard(PackedPlayer p, DevType d) {
         case DevType::VictoryPoint: return (p >> 35) & 0x7;
         default: return 0;
     }
+}
+
+constexpr PackedPlayer packDevCard(PackedPlayer p, DevType d, uint8_t value) {
+    switch(d){
+        case DevType::Knight:       p &= ~(0xFULL << 25); p |= uint64_t(value & 0xF) << 25; break;  // 4 bits
+        case DevType::RoadBuilding: p &= ~(0x3ULL << 29); p |= uint64_t(value & 0x3) << 29; break;  // 2 bits
+        case DevType::YearOfPlenty: p &= ~(0x3ULL << 31); p |= uint64_t(value & 0x3) << 31; break;  // 2 bits
+        case DevType::Monopoly:     p &= ~(0x3ULL << 33); p |= uint64_t(value & 0x3) << 33; break;  // 2 bits
+        case DevType::VictoryPoint: {
+            uint8_t old = unpackDevCard(p, DevType::VictoryPoint);
+            uint8_t newCount = old + 1;
+
+            // zapisz nową liczbę kart
+            p &= ~(0x7ULL << 35);
+            p |= uint64_t(value & 0x7) << 35;
+
+            // dodaj różnicę do VP gracza
+            uint8_t vp = unpackVictoryPoints(p);
+            p = packVictoryPoints(p, vp + newCount);
+            break;
+        }    
+    }
+    return p;
 }
 
 constexpr PackedPlayer packUsedKnights(PackedPlayer p, uint8_t value) { return (p & ~(0xFULL << 38)) | (uint64_t(value & 0xF) << 38); }
@@ -99,9 +115,6 @@ constexpr uint8_t unpackAvailableStructures(PackedPlayer p, StructureType s) {
         default: return 0;
     }   
 }
-
-constexpr PackedPlayer packVictoryPoints(PackedPlayer p, uint8_t value) { return (p & ~(0x1FULL << 58)) | (uint64_t(value & 0x1F) << 58); }
-constexpr uint8_t unpackVictoryPoints(PackedPlayer p) { return (p >> 58) & 0x1F; }
 
 constexpr bool hasEnoughResources(PackedPlayer p, BuyableType b) {
     const auto& cost = StructureCost[static_cast<size_t>(b)];

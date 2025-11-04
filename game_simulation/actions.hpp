@@ -20,6 +20,7 @@
 // Arguments:
 // - Arg1:   bits 31-38 (8 bits, max 255)
 // - Arg2:   bits 39-46 (8 bits, max 255)
+// - Arg3:   bits 47-54 (8 bits, max 255)
 
 namespace Action {
 
@@ -66,6 +67,13 @@ constexpr PackedAction packArg2(PackedAction a, uint8_t arg2) {
 }
 constexpr uint8_t unpackArg2(PackedAction a) {
     return (a >> 39) & 0xFF;
+}
+
+constexpr PackedAction packArg3(PackedAction a, uint8_t arg3) {
+    return (a & ~(0xFFULL << 47)) | (uint64_t(arg3) << 47);
+}
+constexpr uint8_t unpackArg3(PackedAction a) {
+    return (a >> 47) & 0xFF;
 }
 
 } // namespace Action
