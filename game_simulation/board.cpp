@@ -4,6 +4,31 @@
 
 namespace Board {
 
+namespace {
+ //tutaj funkcje
+    void placeInitialSettlement(Action::PackedAction action) {
+        auto nodeId = Action::unpackArg1(action);
+        nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::Settlement);
+        nodes[nodeId] = Node::packOwner(nodes[nodeId], playerId);
+        // add victory point to player
+        packedPlayers[static_cast<uint8_t>(playerId)] = 
+            Player::packVictoryPoints(
+                packedPlayers[static_cast<uint8_t>(playerId)], 
+                Player::unpackVictoryPoints(
+                    packedPlayers[static_cast<uint8_t>(playerId)]) + 1
+            );
+        // remove one available settlement from player
+        packedPlayers[static_cast<uint8_t>(playerId)] =
+            Player::packAvailableStructures(
+                packedPlayers[static_cast<uint8_t>(playerId)],
+                StructureType::Settlement,
+                Player::unpackAvailableStructures(
+                    packedPlayers[static_cast<uint8_t>(playerId)],
+                    StructureType::Settlement) - 1
+            );
+    }
+} // namespace
+
 void BoardState::applyAction(Action::PackedAction action) {
     auto type = Action::unpackType(action);
     auto playerId = Action::unpackPlayerID(action);
@@ -11,27 +36,28 @@ void BoardState::applyAction(Action::PackedAction action) {
     switch (type)
     {
     case ActionType::PlaceInitialSettlement:
-        {
-            auto nodeId = Action::unpackArg1(action);
-            nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::Settlement);
-            nodes[nodeId] = Node::packOwner(nodes[nodeId], playerId);
-            // add victory point to player
-            packedPlayers[static_cast<uint8_t>(playerId)] = 
-                Player::packVictoryPoints(
-                    packedPlayers[static_cast<uint8_t>(playerId)], 
-                    Player::unpackVictoryPoints(
-                        packedPlayers[static_cast<uint8_t>(playerId)]) + 1
-                );
-            // remove one available settlement from player
-            packedPlayers[static_cast<uint8_t>(playerId)] =
-                Player::packAvailableStructures(
-                    packedPlayers[static_cast<uint8_t>(playerId)],
-                    StructureType::Settlement,
-                    Player::unpackAvailableStructures(
-                        packedPlayers[static_cast<uint8_t>(playerId)],
-                        StructureType::Settlement) - 1
-                );
-        }
+        placeInitialSettlement(action);
+        // {
+        //     auto nodeId = Action::unpackArg1(action);
+        //     nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::Settlement);
+        //     nodes[nodeId] = Node::packOwner(nodes[nodeId], playerId);
+        //     // add victory point to player
+        //     packedPlayers[static_cast<uint8_t>(playerId)] = 
+        //         Player::packVictoryPoints(
+        //             packedPlayers[static_cast<uint8_t>(playerId)], 
+        //             Player::unpackVictoryPoints(
+        //                 packedPlayers[static_cast<uint8_t>(playerId)]) + 1
+        //         );
+        //     // remove one available settlement from player
+        //     packedPlayers[static_cast<uint8_t>(playerId)] =
+        //         Player::packAvailableStructures(
+        //             packedPlayers[static_cast<uint8_t>(playerId)],
+        //             StructureType::Settlement,
+        //             Player::unpackAvailableStructures(
+        //                 packedPlayers[static_cast<uint8_t>(playerId)],
+        //                 StructureType::Settlement) - 1
+        //         );
+        // }
     case ActionType::Place2InitialSettlement:
         {
             auto nodeId = Action::unpackArg1(action);
