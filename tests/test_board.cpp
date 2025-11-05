@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 #include "board.hpp"
+#include "consts.hpp"
+#include "player.hpp"
+#include "actions.hpp"
 
 using namespace Board;
 
@@ -214,3 +217,11 @@ TEST(BoardTest, InitializedNodesAndEdges) {
     EXPECT_EQ(Edge::unpackAdjacentNode(e71, 0), (NodeId)52);
     EXPECT_EQ(Edge::unpackAdjacentNode(e71, 1), (NodeId)53);
 }
+
+class ApplyActionTest : public ::testing::Test {
+protected:
+    Board::BoardState boardState;
+
+    void SetUp() override {
+    }
+};

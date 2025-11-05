@@ -18,4 +18,9 @@ inline uint32_t uniform_u32_range(uint32_t minInclusive, uint32_t maxInclusive) 
     return dist(rng);
 }
 
+inline std::mt19937& get_rng() {
+    static thread_local std::mt19937 rng((std::random_device())());
+    return rng;
+}
+
 } // namespace RandomDevice

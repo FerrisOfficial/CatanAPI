@@ -202,6 +202,7 @@ struct BoardState {
     uint8_t actionQueueSize = 0;
 
     constexpr BoardState() noexcept;
+    void generateRandomBoard();
     void applyAction(Action::PackedAction action);
     void handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId);
     void handlePlace2InitialSettlement(Action::PackedAction action, PlayerId playerId);

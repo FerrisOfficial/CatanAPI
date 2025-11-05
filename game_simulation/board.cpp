@@ -384,7 +384,6 @@ void BoardState::handleStealResource(Action::PackedAction action, PlayerId playe
         Player::packResource(packedPlayers[static_cast<uint8_t>(playerId)], res, uint8_t(newVal));
 }
 
-
 void BoardState::applyAction(Action::PackedAction action) {
     auto type = Action::unpackType(action);
     auto playerId = Action::unpackPlayerID(action);
@@ -447,6 +446,34 @@ void BoardState::applyAction(Action::PackedAction action) {
 
     default:
         break;
+    }
+}
+
+void BoardState::generateRandomBoard() {
+    auto& rng = RandomDevice::get_rng();
+    
+    uint8_t numberDistribution[HEX_COUNT] = {2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12};
+    Resource resourceDistribution[HEX_COUNT] =
+    {
+
+        Resource::Brick, Resource::Brick, Resource::Lumber, Resource::Lumber,
+        Resource::Wool, Resource::Wool, Resource::Grain, Resource::Grain,
+        Resource::Ore, Resource::Ore, Resource::Grain, Resource::Wool,
+        Resource::Lumber, Resource::Brick, Resource::Lumber, Resource::Wool,
+        Resource::Grain, Resource::Ore, Resource::NoResource // Desert
+    };
+    for (size_t i = 0; i < HEX_COUNT; ++i) {
+        uint32_t j = rng() % (i + 1);
+        std::swap(numberDistribution[i], numberDistribution[j]);
+        std::swap(resourceDistribution[i], resourceDistribution[j]);
+    }
+    for (HexId h = 0; h < HEX_COUNT; ++h) {
+        hexes[h] = Hex::packResource(hexes[h], resourceDistribution[h]);
+        hexes[h] = Hex::packCatanNumber(hexes[h], numberDistribution[h]);
+
+        if (resourceDistribution[h] == Resource::NoResource) {
+            robberPosition = h;
+        }
     }
 }
 
