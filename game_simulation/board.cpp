@@ -176,7 +176,7 @@ void BoardState::handleBuildRoad(Action::PackedAction action, PlayerId playerId)
 
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Road);
-    Bank::sell(BoardState::packedBank, BuyableType::Road);
+    BoardState::packedBank = Bank::sell(BoardState::packedBank, BuyableType::Road);
 }
 
 void BoardState::handleBuildSettlement(Action::PackedAction action, PlayerId playerId) {
@@ -186,7 +186,7 @@ void BoardState::handleBuildSettlement(Action::PackedAction action, PlayerId pla
 
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Settlement);
-    Bank::sell(BoardState::packedBank, BuyableType::Settlement);
+    BoardState::packedBank = Bank::sell(BoardState::packedBank, BuyableType::Settlement);
 }
 
 void BoardState::handleBuildCity(Action::PackedAction action, PlayerId playerId) {
@@ -196,14 +196,15 @@ void BoardState::handleBuildCity(Action::PackedAction action, PlayerId playerId)
 
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::City);
-    Bank::sell(BoardState::packedBank, BuyableType::City);
+    BoardState::packedBank = Bank::sell(BoardState::packedBank, BuyableType::City);
 }
 
 void BoardState::handleBuyDevCard(Action::PackedAction /*action*/, PlayerId playerId) {
 
     // Select a random card from devDeckCounts (weighted by remaining counts)
     auto &deck = devDeckCounts;
-    uint32_t total = 0;
+    uint32_t total = uint32_t(deck[0]) + uint32_t(deck[1]) + uint32_t(deck[2]) + uint32_t(deck[3]) + uint32_t(deck[4]);
+    if (total == 0) return; // nothing to draw
 
     uint32_t pick = RandomDevice::uniform_u32(total);
     int chosen = -1;
@@ -224,7 +225,7 @@ void BoardState::handleBuyDevCard(Action::PackedAction /*action*/, PlayerId play
     packedPlayers[static_cast<uint8_t>(playerId)] =
         Player::packDevCard(packedPlayers[static_cast<uint8_t>(playerId)], d, curr + 1);
 
-    Bank::sell(BoardState::packedBank, BuyableType::DevCard);
+    BoardState::packedBank = Bank::sell(BoardState::packedBank, BuyableType::DevCard);
 }
 
 void BoardState::handlePlayDevCardKnight(Action::PackedAction action, PlayerId playerId) {
@@ -340,10 +341,10 @@ void BoardState::handleTradeBank(Action::PackedAction action, PlayerId playerId)
     p = Player::packResource(p, giveResource, playerHaveGive - ratio);
 
     uint8_t bankGiveVal = Bank::unpackResource(BoardState::packedBank, giveResource);
-    Bank::packResource(BoardState::packedBank, giveResource, bankGiveVal + ratio);
+    BoardState::packedBank = Bank::packResource(BoardState::packedBank, giveResource, bankGiveVal + ratio);
 
     // Bank gives 1
-    Bank::packResource(BoardState::packedBank, receiveResource, bankHaveReceive - 1);
+    BoardState::packedBank = Bank::packResource(BoardState::packedBank, receiveResource, bankHaveReceive - 1);
 
     uint8_t playerHaveReceive = Player::unpackResource(p, receiveResource);
     p = Player::packResource(p, receiveResource, playerHaveReceive + 1);

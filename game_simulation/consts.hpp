@@ -62,12 +62,12 @@ constexpr std::array<std::array<uint8_t,5>,4> StructureCost {{
 enum class ActionType : uint8_t {
     // Turn flow
     RollDice = 1, // Arg1: dice value (2-12)
-    EndTurn = 2,
+    EndTurn = 2, // None
 
     // Robber
     MoveRobber = 3, // Arg1: HexId to move the robber to
     StealResource = 4, // Arg1: Resource type (0-4) 
-    DiscardResources = 5, // Arg1: Resource type (0-4), Arg2: amount to discard
+    DiscardResources = 5, // None
 
     // Buying/Building
     BuildRoad = 6, // Arg1: EdgeId to build road on
@@ -82,7 +82,7 @@ enum class ActionType : uint8_t {
     PlayDevCardMonopoly = 13, // Arg1: Resource type (0-4)
 
     // Trading
-    TradeBank = 14, // Resources, Arg1: Give back resource type (0-4), Arg2: Take resourse type (0-4), Arg3: trade ratio (2-4)
+    TradeBank = 14, // Arg1: Give bank resource type (0-4), Arg2: Take resource type (0-4), Arg3: trade ratio (2-4)
     ReceiveResources = 15, // Resources, Arg1: Resource type (0-4), Arg2: amount to give
 
     // Setup

@@ -225,6 +225,25 @@ protected:
     void SetUp() override {
         boardState.generateRandomBoard();
     }
+
+    void setBankResourcesTen() {
+        for (size_t res = 0; res < 5; ++res) {
+            boardState.packedBank = Bank::packResource(boardState.packedBank, static_cast<Resource>(res), 10);
+        }
+    }
+
+    void setPlayersResourcesSeven() {
+        for (size_t p = 0; p < 2; ++p) {
+            for (size_t res = 0; res < 5; ++res) {
+                boardState.packedPlayers[p] = Player::packResource(
+                    boardState.packedPlayers[p],
+                    static_cast<Resource>(res),
+                    7
+                );
+            }
+        }
+    }
+
 };
 
 TEST_F(ApplyActionTest, ExpectResourceDistributionOnNotSevenRoll) {
@@ -294,3 +313,332 @@ TEST_F(ApplyActionTest, ExpectTurnRotationOnEndTurn) {
     EXPECT_EQ(boardState.currentTurn, startingTurn + 3);
 }
 
+TEST_F(ApplyActionTest, ExpectRobberMovementAndStealCardTrigger) {
+    EXPECT_EQ(Hex::unpackResource(boardState.hexes[boardState.robberPosition]), Resource::NoResource);
+
+    HexId newRobberPosition;
+    for (HexId h = 0; h < HEX_COUNT; ++h) {
+        if (Hex::unpackCatanNumber(boardState.hexes[h]) == 8) {
+            newRobberPosition = h;
+            break;
+        }
+    }
+
+    PlayerId stealingPlayer = PlayerId::Player0;
+    PlayerId victimPlayer = PlayerId::Player1;
+    Resource robbedResource = Resource::Lumber;
+
+    boardState.packedPlayers[static_cast<size_t>(stealingPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<size_t>(stealingPlayer)],
+        robbedResource,
+        2
+    );
+
+    boardState.packedPlayers[static_cast<size_t>(victimPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<size_t>(victimPlayer)],
+        robbedResource,
+        3
+    );
+
+    boardState.hexes[newRobberPosition] = Hex::packPlayerValue(
+        boardState.hexes[newRobberPosition],
+        victimPlayer,
+        2
+    );
+
+    Action::PackedAction moveRobberAction;
+    moveRobberAction = Action::packType(moveRobberAction, ActionType::MoveRobber);
+    moveRobberAction = Action::packArg1(moveRobberAction, newRobberPosition);
+    moveRobberAction = Action::packPlayerID(moveRobberAction, stealingPlayer);
+    boardState.applyAction(moveRobberAction);
+    EXPECT_EQ(boardState.robberPosition, newRobberPosition);
+    EXPECT_EQ(
+        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(stealingPlayer)], robbedResource),
+        3
+    );
+    EXPECT_EQ(
+        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(victimPlayer)], robbedResource),
+        2
+    );
+}
+
+TEST_F(ApplyActionTest, ExpectStealResource) {
+    PlayerId stealingPlayer = PlayerId::Player0;
+    PlayerId victimPlayer = PlayerId::Player1;
+    Resource robbedResource = Resource::Grain;
+
+    boardState.packedPlayers[static_cast<size_t>(stealingPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<size_t>(stealingPlayer)],
+        robbedResource,
+        1
+    );
+
+    boardState.packedPlayers[static_cast<size_t>(victimPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<size_t>(victimPlayer)],
+        robbedResource,
+        4
+    );
+
+    Action::PackedAction stealResourceAction;
+    stealResourceAction = Action::packType(stealResourceAction, ActionType::StealResource);
+    stealResourceAction = Action::packArg1(stealResourceAction, static_cast<uint8_t>(robbedResource));
+    stealResourceAction = Action::packPlayerID(stealResourceAction, stealingPlayer);
+    boardState.applyAction(stealResourceAction);
+
+    EXPECT_EQ(
+        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(stealingPlayer)], robbedResource),
+        2
+    );
+    EXPECT_EQ(
+        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(victimPlayer)], robbedResource),
+        3
+    );
+}
+
+TEST_F(ApplyActionTest, ExpectDiscardResources) {
+    PlayerId discardingPlayer = PlayerId::Player1;
+
+    boardState.packedPlayers[static_cast<size_t>(discardingPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<size_t>(discardingPlayer)],
+        Resource::Wool,
+        6
+    );
+
+    boardState.packedPlayers[static_cast<size_t>(discardingPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<size_t>(discardingPlayer)],
+        Resource::Grain,
+        3
+    );
+
+    boardState.packedPlayers[static_cast<size_t>(discardingPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<size_t>(discardingPlayer)],
+        Resource::Ore,
+        19
+    );
+
+    Action::PackedAction discardResourcesAction;
+    discardResourcesAction = Action::packType(discardResourcesAction, ActionType::DiscardResources);
+    discardResourcesAction = Action::packPlayerID(discardResourcesAction, discardingPlayer);
+
+    boardState.applyAction(discardResourcesAction);
+
+    auto sumResources = Player::totalResources(boardState.packedPlayers[static_cast<size_t>(discardingPlayer)]);
+    EXPECT_EQ(sumResources, 14); // 50% of 28 rounded down is
+
+    boardState.packedPlayers[static_cast<size_t>(discardingPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<size_t>(discardingPlayer)],
+        Resource::Lumber,
+        19
+    );
+
+    boardState.applyAction(discardResourcesAction);
+    sumResources = Player::totalResources(boardState.packedPlayers[static_cast<size_t>(discardingPlayer)]);
+    EXPECT_EQ(sumResources, 11); // 50% of 23 rounded down is 11
+}
+
+TEST_F(ApplyActionTest, ExpectBuildRoad) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    PlayerId buildingPlayer = PlayerId::Player0;
+    EdgeId roadEdgeId = 10;
+
+    Action::PackedAction buildRoadAction;
+    buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+    buildRoadAction = Action::packArg1(buildRoadAction, roadEdgeId);
+    buildRoadAction = Action::packPlayerID(buildRoadAction, buildingPlayer);
+    boardState.applyAction(buildRoadAction);
+
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Grain), 10);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Wool), 10);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Ore), 10);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Brick), 11);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Lumber), 11);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Brick), 6);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Lumber), 6);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Grain), 7);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Ore), 7);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Wool), 7);
+    
+    Edge::PackedEdge roadEdge = boardState.edges[roadEdgeId];
+    EXPECT_TRUE(Edge::unpackHasRoad(roadEdge));
+    EXPECT_EQ(Edge::unpackOwner(roadEdge), buildingPlayer);
+    EXPECT_EQ(Player::unpackAvailableStructures(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], StructureType::Road), 14);
+}
+
+TEST_F(ApplyActionTest, ExpectBuildSettlement) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    PlayerId buildingPlayer = PlayerId::Player1;
+    NodeId settlementNodeId = 20;
+
+    Action::PackedAction buildSettlementAction;
+    buildSettlementAction = Action::packType(buildSettlementAction, ActionType::BuildSettlement);
+    buildSettlementAction = Action::packArg1(buildSettlementAction, settlementNodeId);
+    buildSettlementAction = Action::packPlayerID(buildSettlementAction, buildingPlayer);
+    boardState.applyAction(buildSettlementAction);
+
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Grain), 11);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Wool), 11);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Ore), 10);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Brick), 11);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Lumber), 11);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Brick), 6);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Lumber), 6);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Grain), 6);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Ore), 7);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Wool), 6);
+
+    Node::PackedNode settlementNode = boardState.nodes[settlementNodeId];
+    EXPECT_EQ(Node::unpackStructure(settlementNode), StructureType::Settlement);
+    EXPECT_EQ(Node::unpackOwner(settlementNode), buildingPlayer);
+    EXPECT_EQ(Player::unpackAvailableStructures(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], StructureType::Settlement), 4);
+    EXPECT_EQ(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]), 1);
+    
+    HexId adjHex[3] = {
+        Node::unpackAdjacentHex(settlementNode, 0),
+        Node::unpackAdjacentHex(settlementNode, 1),
+        Node::unpackAdjacentHex(settlementNode, 2)
+    };
+
+    for (HexId h : adjHex) {
+        if (h != HexIdNone) {
+            EXPECT_EQ(
+                Hex::unpackPlayerValue(boardState.hexes[h], buildingPlayer),
+                1
+            );
+        }
+    }
+}
+
+TEST_F(ApplyActionTest, ExpectBuildCity) {
+    PlayerId buildingPlayer = PlayerId::Player0;
+    NodeId cityNodeId = 15;
+    setBankResourcesTen();
+
+    boardState.packedPlayers[static_cast<size_t>(buildingPlayer)] = Player::packAvailableStructures(
+        boardState.packedPlayers[static_cast<size_t>(buildingPlayer)],
+        StructureType::Settlement,
+        3
+    );
+    boardState.packedPlayers[static_cast<size_t>(buildingPlayer)] = Player::packVictoryPoints(
+        boardState.packedPlayers[static_cast<size_t>(buildingPlayer)],
+        1
+    );
+
+    Node::PackedNode& targetNode = boardState.nodes[cityNodeId];
+    targetNode = Node::packStructure(targetNode, StructureType::Settlement);
+    targetNode = Node::packOwner(targetNode, buildingPlayer);
+
+    Action::PackedAction buildCityAction;
+    buildCityAction = Action::packType(buildCityAction, ActionType::BuildCity);
+    buildCityAction = Action::packArg1(buildCityAction, cityNodeId);
+    buildCityAction = Action::packPlayerID(buildCityAction, buildingPlayer);
+    boardState.applyAction(buildCityAction);
+
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Grain), 12);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Wool), 10);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Ore), 13);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Brick), 10);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Lumber), 10);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Brick), 7);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Lumber), 7);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Grain), 5);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Ore), 4);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Wool), 7);
+
+    Node::PackedNode cityNode = boardState.nodes[cityNodeId];
+    EXPECT_EQ(Node::unpackStructure(cityNode), StructureType::City);
+    EXPECT_EQ(Node::unpackOwner(cityNode), buildingPlayer);
+    EXPECT_EQ(Player::unpackAvailableStructures(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], StructureType::City), 3);
+    EXPECT_EQ(Player::unpackAvailableStructures(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], StructureType::Settlement), 4);
+    EXPECT_EQ(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]), 2);
+    
+    HexId adjHex[3] = {
+        Node::unpackAdjacentHex(cityNode, 0),
+        Node::unpackAdjacentHex(cityNode, 1),
+        Node::unpackAdjacentHex(cityNode, 2)
+    };
+
+    for (HexId h : adjHex) {
+        if (h != HexIdNone) {
+            EXPECT_EQ(
+                Hex::unpackPlayerValue(boardState.hexes[h], buildingPlayer),
+                2
+            );
+        }
+    }
+}
+
+TEST_F(ApplyActionTest, ExpectBuyDevelopmentCard) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    boardState.packedBank = Bank::packDevCard(
+        boardState.packedBank,
+        DevType::VictoryPoint,
+        5
+    );
+
+    PlayerId buyingPlayer = PlayerId::Player1;
+
+    Action::PackedAction buyDevCardAction;
+    buyDevCardAction = Action::packType(buyDevCardAction, ActionType::BuyDevCard);
+    buyDevCardAction = Action::packPlayerID(buyDevCardAction, buyingPlayer);
+    boardState.applyAction(buyDevCardAction);
+
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Grain), 11);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Wool), 11);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Ore), 11);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Brick), 10);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Lumber), 10);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], Resource::Brick), 7);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], Resource::Lumber), 7);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], Resource::Grain), 6);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], Resource::Ore), 6);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], Resource::Wool), 6);
+
+    int totalDevCards = Player::totalDevCards(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)]);
+
+    EXPECT_EQ(totalDevCards, 1);
+
+    if (Player::unpackDevCard(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], DevType::VictoryPoint) == 1) {
+        EXPECT_EQ(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)]), 1);
+    }
+}
+
+TEST_F(ApplyActionTest, ExpectTradeBank) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    PlayerId tradingPlayer = PlayerId::Player0;
+    Resource giveResource = Resource::Lumber;
+    Resource receiveResource = Resource::Ore;
+
+    Action::PackedAction tradeBankAction;
+    tradeBankAction = Action::packType(tradeBankAction, ActionType::TradeBank);
+    tradeBankAction = Action::packArg1(tradeBankAction, static_cast<uint8_t>(giveResource));
+    tradeBankAction = Action::packArg2(tradeBankAction, static_cast<uint8_t>(receiveResource));
+    tradeBankAction = Action::packArg3(tradeBankAction, 2); // 2:1 trade
+    tradeBankAction = Action::packPlayerID(tradeBankAction, tradingPlayer);
+    boardState.applyAction(tradeBankAction);
+
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, giveResource), 12);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, receiveResource), 9);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(tradingPlayer)], giveResource), 5);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(tradingPlayer)], receiveResource), 8);
+}
+
+TEST_F(ApplyActionTest, ExpectReceiveResources) {
+    setBankResourcesTen();
+    PlayerId receivingPlayer = PlayerId::Player1;
+    Resource resToReceive = Resource::Grain;
+
+    Action::PackedAction receiveResourcesAction;
+    receiveResourcesAction = Action::packType(receiveResourcesAction, ActionType::ReceiveResources);
+    receiveResourcesAction = Action::packArg1(receiveResourcesAction, static_cast<uint8_t>(resToReceive));
+    receiveResourcesAction = Action::packArg2(receiveResourcesAction, 4);
+    receiveResourcesAction = Action::packPlayerID(receiveResourcesAction, receivingPlayer);
+    boardState.applyAction(receiveResourcesAction);
+
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, resToReceive), 6);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(receivingPlayer)], resToReceive), 4);
+}

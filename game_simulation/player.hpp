@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#pragma once
+
+#include <cstdint>
 #include "consts.hpp"
 
 // Packed 64-bit player state representation
@@ -162,5 +165,13 @@ constexpr uint8_t totalResources(PackedPlayer p) {
            unpackResource(p, Resource::Grain) +
            unpackResource(p, Resource::Ore);
 } 
+
+constexpr uint8_t totalDevCards(PackedPlayer p) {
+    return unpackDevCard(p, DevType::Knight) +
+           unpackDevCard(p, DevType::RoadBuilding) +
+           unpackDevCard(p, DevType::YearOfPlenty) +
+           unpackDevCard(p, DevType::Monopoly) +
+           unpackDevCard(p, DevType::VictoryPoint);
+}
 
 }// namespace Player

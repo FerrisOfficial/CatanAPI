@@ -104,13 +104,14 @@ constexpr uint8_t computeTotalDevCards(PackedBank pb) {
     );
 }
 
-constexpr void sell(PackedBank &pb, BuyableType b) {
-    const auto& cost = StructureCost[static_cast<size_t>(pb)];
+constexpr PackedBank sell(PackedBank pb, BuyableType b) {
+    const auto& cost = StructureCost[static_cast<size_t>(b)];
     pb = packResource(pb, Resource::Brick, unpackResource(pb, Resource::Brick) - cost[0]);
     pb = packResource(pb, Resource::Lumber, unpackResource(pb, Resource::Lumber) - cost[1]);
     pb = packResource(pb, Resource::Wool, unpackResource(pb, Resource::Wool) - cost[2]);
     pb = packResource(pb, Resource::Grain, unpackResource(pb, Resource::Grain) - cost[3]);
     pb = packResource(pb, Resource::Ore, unpackResource(pb, Resource::Ore) - cost[4]);
+    return pb;
 }
 
 } // namespace Bank
