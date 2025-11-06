@@ -247,6 +247,8 @@ protected:
 };
 
 TEST_F(ApplyActionTest, ExpectResourceDistributionOnEightRoll) {
+    setBankResourcesTen();
+
     std::vector<HexId> expectedHexes;
     for (HexId h = 0; h < HEX_COUNT; ++h) {
         if (Hex::unpackCatanNumber(boardState.hexes[h]) == 8) {
@@ -289,6 +291,9 @@ TEST_F(ApplyActionTest, ExpectResourceDistributionOnEightRoll) {
         EXPECT_EQ(player1Resources1, 2);
         EXPECT_EQ(player1Resources2, 0);
     }
+
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, res1), 10 - (3 + 2));
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, res2), 10 - (4 + 0));
 }
 
 TEST_F(ApplyActionTest, ExpectTurnRotationOnEndTurn) {
