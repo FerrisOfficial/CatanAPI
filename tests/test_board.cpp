@@ -246,7 +246,7 @@ protected:
 
 };
 
-TEST_F(ApplyActionTest, ExpectResourceDistributionOnNotSevenRoll) {
+TEST_F(ApplyActionTest, ExpectResourceDistributionOnEightRoll) {
     std::vector<HexId> expectedHexes;
     for (HexId h = 0; h < HEX_COUNT; ++h) {
         if (Hex::unpackCatanNumber(boardState.hexes[h]) == 8) {
