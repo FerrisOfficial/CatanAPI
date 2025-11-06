@@ -12,7 +12,7 @@ using EdgeId = uint8_t;
 using HexId = uint8_t; 
 using DiceNumber = uint8_t;
 
-constexpr HexId HexIdNone = HEX_COUNT + 1; 
+constexpr HexId HexIdNone = 0x1F;
 
 enum class PlayerId : uint8_t { 
     Player0 = 0, 

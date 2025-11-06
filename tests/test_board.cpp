@@ -223,5 +223,74 @@ protected:
     Board::BoardState boardState;
 
     void SetUp() override {
+        boardState.generateRandomBoard();
     }
 };
+
+TEST_F(ApplyActionTest, ExpectResourceDistributionOnNotSevenRoll) {
+    std::vector<HexId> expectedHexes;
+    for (HexId h = 0; h < HEX_COUNT; ++h) {
+        if (Hex::unpackCatanNumber(boardState.hexes[h]) == 8) {
+            expectedHexes.push_back(h);
+        }
+    }
+
+    ASSERT_EQ(expectedHexes.size(), 2);
+    
+    HexId hex1 = expectedHexes[0];
+    HexId hex2 = expectedHexes[1];
+
+    boardState.hexes[hex1] = Hex::packPlayerValue(boardState.hexes[hex1], PlayerId::Player0, 3);
+    boardState.hexes[hex1] = Hex::packPlayerValue(boardState.hexes[hex1], PlayerId::Player1, 2);
+    boardState.hexes[hex2] = Hex::packPlayerValue(boardState.hexes[hex2], PlayerId::Player0, 4);
+    boardState.hexes[hex2] = Hex::packPlayerValue(boardState.hexes[hex2], PlayerId::Player1, 0);
+
+    Resource res1 = Hex::unpackResource(boardState.hexes[hex1]);
+    Resource res2 = Hex::unpackResource(boardState.hexes[hex2]);
+
+    Action::PackedAction rollDiceAction;
+    rollDiceAction = Action::packType(rollDiceAction, ActionType::RollDice);
+    rollDiceAction = Action::packArg1(rollDiceAction, 8);
+    boardState.applyAction(rollDiceAction);
+
+    auto player0Resources1 = Player::unpackResource(boardState.packedPlayers[0], res1);
+    auto player0Resources2 = Player::unpackResource(boardState.packedPlayers[0], res2);
+    auto player1Resources1 = Player::unpackResource(boardState.packedPlayers[1], res1);
+    auto player1Resources2 = Player::unpackResource(boardState.packedPlayers[1], res2);
+
+    if (res1 == res2)
+    {
+        EXPECT_EQ(player0Resources1, 7); // 3 + 4
+        EXPECT_EQ(player1Resources1, 2); // 2 + 0
+    }
+    else
+    {
+        EXPECT_EQ(player0Resources1, 3);
+        EXPECT_EQ(player0Resources2, 4);
+        EXPECT_EQ(player1Resources1, 2);
+        EXPECT_EQ(player1Resources2, 0);
+    }
+}
+
+TEST_F(ApplyActionTest, ExpectTurnRotationOnEndTurn) {
+    Action::PackedAction endTurnAction;
+    endTurnAction = Action::packType(endTurnAction, ActionType::EndTurn);
+
+    PlayerId startingPlayer = boardState.currentPlayer;
+    uint8_t startingTurn = boardState.currentTurn;
+
+    boardState.applyAction(endTurnAction);
+
+    PlayerId expectedNextPlayer = (startingPlayer == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+    EXPECT_EQ(boardState.currentPlayer, expectedNextPlayer);
+    EXPECT_EQ(boardState.currentTurn, startingTurn + 1);
+
+    boardState.applyAction(endTurnAction);
+    EXPECT_EQ(boardState.currentPlayer, startingPlayer);
+    EXPECT_EQ(boardState.currentTurn, startingTurn + 2);
+
+    boardState.applyAction(endTurnAction);
+    EXPECT_EQ(boardState.currentPlayer, expectedNextPlayer);
+    EXPECT_EQ(boardState.currentTurn, startingTurn + 3);
+}
+

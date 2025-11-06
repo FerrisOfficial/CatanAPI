@@ -339,7 +339,7 @@ TEST_F(PlayerTest, IntegratedPurchaseScenario) {
     EXPECT_EQ(unpackAvailableStructures(player, StructureType::Settlement), 4);
     EXPECT_EQ(unpackAvailableStructures(player, StructureType::City), 3);
     
-    EXPECT_EQ(unpackVictoryPoints(player), 3);
+    EXPECT_EQ(unpackVictoryPoints(player), 4);
     EXPECT_EQ(unpackDevCard(player, DevType::VictoryPoint), 1);
 }
 

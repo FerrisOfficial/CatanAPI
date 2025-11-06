@@ -451,16 +451,16 @@ void BoardState::applyAction(Action::PackedAction action) {
 
 void BoardState::generateRandomBoard() {
     auto& rng = RandomDevice::get_rng();
-    
+
     uint8_t numberDistribution[HEX_COUNT] = {2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12};
     Resource resourceDistribution[HEX_COUNT] =
     {
-
-        Resource::Brick, Resource::Brick, Resource::Lumber, Resource::Lumber,
-        Resource::Wool, Resource::Wool, Resource::Grain, Resource::Grain,
-        Resource::Ore, Resource::Ore, Resource::Grain, Resource::Wool,
-        Resource::Lumber, Resource::Brick, Resource::Lumber, Resource::Wool,
-        Resource::Grain, Resource::Ore, Resource::NoResource // Desert
+        Resource::Brick, Resource::Brick, Resource::Brick,
+        Resource::Lumber, Resource::Lumber, Resource::Lumber, Resource::Lumber,
+        Resource::Wool, Resource::Wool, Resource::Wool, Resource::Wool,
+        Resource::Grain, Resource::Grain, Resource::Grain,
+        Resource::Ore, Resource::Ore, Resource::Ore,
+        Resource::NoResource
     };
     for (size_t i = 0; i < HEX_COUNT; ++i) {
         uint32_t j = rng() % (i + 1);
