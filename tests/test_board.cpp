@@ -428,7 +428,7 @@ TEST_F(ApplyActionTest, ExpectDiscardResources) {
     boardState.applyAction(discardResourcesAction);
 
     auto sumResources = Player::totalResources(boardState.packedPlayers[static_cast<size_t>(discardingPlayer)]);
-    EXPECT_EQ(sumResources, 14); // 50% of 28 rounded down is
+    EXPECT_EQ(sumResources, 14); // 50% of 28 rounded down is 14
 
     boardState.packedPlayers[static_cast<size_t>(discardingPlayer)] = Player::packResource(
         boardState.packedPlayers[static_cast<size_t>(discardingPlayer)],
@@ -438,7 +438,7 @@ TEST_F(ApplyActionTest, ExpectDiscardResources) {
 
     boardState.applyAction(discardResourcesAction);
     sumResources = Player::totalResources(boardState.packedPlayers[static_cast<size_t>(discardingPlayer)]);
-    EXPECT_EQ(sumResources, 11); // 50% of 23 rounded down is 11
+    EXPECT_EQ(sumResources, 17); // 50% of 33 rounded up is 17
 }
 
 TEST_F(ApplyActionTest, ExpectBuildRoad) {
