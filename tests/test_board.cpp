@@ -269,7 +269,7 @@ TEST_F(ApplyActionTest, ExpectResourceDistributionOnEightRoll) {
     Resource res1 = Hex::unpackResource(boardState.hexes[hex1]);
     Resource res2 = Hex::unpackResource(boardState.hexes[hex2]);
 
-    Action::PackedAction rollDiceAction;
+    Action::PackedAction rollDiceAction{};
     rollDiceAction = Action::packType(rollDiceAction, ActionType::RollDice);
     rollDiceAction = Action::packArg1(rollDiceAction, 8);
     boardState.applyAction(rollDiceAction);
@@ -297,7 +297,7 @@ TEST_F(ApplyActionTest, ExpectResourceDistributionOnEightRoll) {
 }
 
 TEST_F(ApplyActionTest, ExpectTurnRotationOnEndTurn) {
-    Action::PackedAction endTurnAction;
+    Action::PackedAction endTurnAction{};
     endTurnAction = Action::packType(endTurnAction, ActionType::EndTurn);
 
     PlayerId startingPlayer = boardState.currentPlayer;
@@ -351,7 +351,7 @@ TEST_F(ApplyActionTest, ExpectRobberMovementAndStealCardTrigger) {
         2
     );
 
-    Action::PackedAction moveRobberAction;
+    Action::PackedAction moveRobberAction{};
     moveRobberAction = Action::packType(moveRobberAction, ActionType::MoveRobber);
     moveRobberAction = Action::packArg1(moveRobberAction, newRobberPosition);
     moveRobberAction = Action::packPlayerID(moveRobberAction, stealingPlayer);
@@ -384,7 +384,7 @@ TEST_F(ApplyActionTest, ExpectStealResource) {
         4
     );
 
-    Action::PackedAction stealResourceAction;
+    Action::PackedAction stealResourceAction{};
     stealResourceAction = Action::packType(stealResourceAction, ActionType::StealResource);
     stealResourceAction = Action::packArg1(stealResourceAction, static_cast<uint8_t>(robbedResource));
     stealResourceAction = Action::packPlayerID(stealResourceAction, stealingPlayer);
@@ -402,43 +402,23 @@ TEST_F(ApplyActionTest, ExpectStealResource) {
 
 TEST_F(ApplyActionTest, ExpectDiscardResources) {
     PlayerId discardingPlayer = PlayerId::Player1;
+    setPlayersResourcesSeven();
 
-    boardState.packedPlayers[static_cast<size_t>(discardingPlayer)] = Player::packResource(
-        boardState.packedPlayers[static_cast<size_t>(discardingPlayer)],
-        Resource::Wool,
-        6
-    );
-
-    boardState.packedPlayers[static_cast<size_t>(discardingPlayer)] = Player::packResource(
-        boardState.packedPlayers[static_cast<size_t>(discardingPlayer)],
-        Resource::Grain,
-        3
-    );
-
-    boardState.packedPlayers[static_cast<size_t>(discardingPlayer)] = Player::packResource(
-        boardState.packedPlayers[static_cast<size_t>(discardingPlayer)],
-        Resource::Ore,
-        19
-    );
-
-    Action::PackedAction discardResourcesAction;
+    Action::PackedAction discardResourcesAction{};
     discardResourcesAction = Action::packType(discardResourcesAction, ActionType::DiscardResources);
     discardResourcesAction = Action::packPlayerID(discardResourcesAction, discardingPlayer);
-
+    discardResourcesAction = Action::packResource(discardResourcesAction, Resource::Ore, 1);
+    discardResourcesAction = Action::packResource(discardResourcesAction, Resource::Wool, 2);
+    discardResourcesAction = Action::packResource(discardResourcesAction, Resource::Grain, 3);
+    discardResourcesAction = Action::packResource(discardResourcesAction, Resource::Brick, 0);
+    discardResourcesAction = Action::packResource(discardResourcesAction, Resource::Lumber, 1);
     boardState.applyAction(discardResourcesAction);
 
-    auto sumResources = Player::totalResources(boardState.packedPlayers[static_cast<size_t>(discardingPlayer)]);
-    EXPECT_EQ(sumResources, 14); // 50% of 28 rounded down is 14
-
-    boardState.packedPlayers[static_cast<size_t>(discardingPlayer)] = Player::packResource(
-        boardState.packedPlayers[static_cast<size_t>(discardingPlayer)],
-        Resource::Lumber,
-        19
-    );
-
-    boardState.applyAction(discardResourcesAction);
-    sumResources = Player::totalResources(boardState.packedPlayers[static_cast<size_t>(discardingPlayer)]);
-    EXPECT_EQ(sumResources, 17); // 50% of 33 rounded up is 17
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(discardingPlayer)], Resource::Ore), 6);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(discardingPlayer)], Resource::Wool), 5);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(discardingPlayer)], Resource::Grain), 4);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(discardingPlayer)], Resource::Brick), 7);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(discardingPlayer)], Resource::Lumber), 6);
 }
 
 TEST_F(ApplyActionTest, ExpectBuildRoad) {
@@ -447,7 +427,7 @@ TEST_F(ApplyActionTest, ExpectBuildRoad) {
     PlayerId buildingPlayer = PlayerId::Player0;
     EdgeId roadEdgeId = 10;
 
-    Action::PackedAction buildRoadAction;
+    Action::PackedAction buildRoadAction{};
     buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
     buildRoadAction = Action::packArg1(buildRoadAction, roadEdgeId);
     buildRoadAction = Action::packPlayerID(buildRoadAction, buildingPlayer);
@@ -476,7 +456,7 @@ TEST_F(ApplyActionTest, ExpectBuildSettlement) {
     PlayerId buildingPlayer = PlayerId::Player1;
     NodeId settlementNodeId = 20;
 
-    Action::PackedAction buildSettlementAction;
+    Action::PackedAction buildSettlementAction{};
     buildSettlementAction = Action::packType(buildSettlementAction, ActionType::BuildSettlement);
     buildSettlementAction = Action::packArg1(buildSettlementAction, settlementNodeId);
     buildSettlementAction = Action::packPlayerID(buildSettlementAction, buildingPlayer);
@@ -519,6 +499,7 @@ TEST_F(ApplyActionTest, ExpectBuildCity) {
     PlayerId buildingPlayer = PlayerId::Player0;
     NodeId cityNodeId = 15;
     setBankResourcesTen();
+    setPlayersResourcesSeven();
 
     boardState.packedPlayers[static_cast<size_t>(buildingPlayer)] = Player::packAvailableStructures(
         boardState.packedPlayers[static_cast<size_t>(buildingPlayer)],
@@ -530,11 +511,28 @@ TEST_F(ApplyActionTest, ExpectBuildCity) {
         1
     );
 
+    Node::PackedNode& cityNode = boardState.nodes[cityNodeId];
     Node::PackedNode& targetNode = boardState.nodes[cityNodeId];
     targetNode = Node::packStructure(targetNode, StructureType::Settlement);
     targetNode = Node::packOwner(targetNode, buildingPlayer);
 
-    Action::PackedAction buildCityAction;
+    HexId adjHex[3] = {
+        Node::unpackAdjacentHex(cityNode, 0),
+        Node::unpackAdjacentHex(cityNode, 1),
+        Node::unpackAdjacentHex(cityNode, 2)
+    };
+
+    for (HexId h : adjHex) {
+        if (h != HexIdNone) {
+            boardState.hexes[h] = Hex::packPlayerValue(
+                boardState.hexes[h],
+                buildingPlayer,
+                1
+            );
+        }
+    }
+
+    Action::PackedAction buildCityAction{};
     buildCityAction = Action::packType(buildCityAction, ActionType::BuildCity);
     buildCityAction = Action::packArg1(buildCityAction, cityNodeId);
     buildCityAction = Action::packPlayerID(buildCityAction, buildingPlayer);
@@ -551,18 +549,10 @@ TEST_F(ApplyActionTest, ExpectBuildCity) {
     EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Ore), 4);
     EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], Resource::Wool), 7);
 
-    Node::PackedNode cityNode = boardState.nodes[cityNodeId];
     EXPECT_EQ(Node::unpackStructure(cityNode), StructureType::City);
-    EXPECT_EQ(Node::unpackOwner(cityNode), buildingPlayer);
     EXPECT_EQ(Player::unpackAvailableStructures(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], StructureType::City), 3);
     EXPECT_EQ(Player::unpackAvailableStructures(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], StructureType::Settlement), 4);
     EXPECT_EQ(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]), 2);
-    
-    HexId adjHex[3] = {
-        Node::unpackAdjacentHex(cityNode, 0),
-        Node::unpackAdjacentHex(cityNode, 1),
-        Node::unpackAdjacentHex(cityNode, 2)
-    };
 
     for (HexId h : adjHex) {
         if (h != HexIdNone) {
@@ -586,7 +576,7 @@ TEST_F(ApplyActionTest, ExpectBuyDevelopmentCard) {
 
     PlayerId buyingPlayer = PlayerId::Player1;
 
-    Action::PackedAction buyDevCardAction;
+    Action::PackedAction buyDevCardAction{};
     buyDevCardAction = Action::packType(buyDevCardAction, ActionType::BuyDevCard);
     buyDevCardAction = Action::packPlayerID(buyDevCardAction, buyingPlayer);
     boardState.applyAction(buyDevCardAction);
@@ -618,7 +608,7 @@ TEST_F(ApplyActionTest, ExpectTradeBank) {
     Resource giveResource = Resource::Lumber;
     Resource receiveResource = Resource::Ore;
 
-    Action::PackedAction tradeBankAction;
+    Action::PackedAction tradeBankAction{};
     tradeBankAction = Action::packType(tradeBankAction, ActionType::TradeBank);
     tradeBankAction = Action::packArg1(tradeBankAction, static_cast<uint8_t>(giveResource));
     tradeBankAction = Action::packArg2(tradeBankAction, static_cast<uint8_t>(receiveResource));
@@ -637,7 +627,7 @@ TEST_F(ApplyActionTest, ExpectReceiveResources) {
     PlayerId receivingPlayer = PlayerId::Player1;
     Resource resToReceive = Resource::Grain;
 
-    Action::PackedAction receiveResourcesAction;
+    Action::PackedAction receiveResourcesAction{};
     receiveResourcesAction = Action::packType(receiveResourcesAction, ActionType::ReceiveResources);
     receiveResourcesAction = Action::packArg1(receiveResourcesAction, static_cast<uint8_t>(resToReceive));
     receiveResourcesAction = Action::packArg2(receiveResourcesAction, 4);

@@ -214,7 +214,7 @@ struct BoardState {
     void handleBuildRoad(Action::PackedAction action, PlayerId playerId);
     void handleBuildSettlement(Action::PackedAction action, PlayerId playerId);
     void handleBuildCity(Action::PackedAction action, PlayerId playerId);
-    void handleBuyDevCard(Action::PackedAction action, PlayerId playerId);
+    void handleBuyDevCard(PlayerId playerId);
     void handlePlayDevCardKnight(Action::PackedAction action, PlayerId playerId);
     void handlePlayDevCardRoadBuilding(Action::PackedAction action, PlayerId playerId);
     void handlePlayDevCardYearOfPlenty(Action::PackedAction action, PlayerId playerId);

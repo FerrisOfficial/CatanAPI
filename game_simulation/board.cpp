@@ -99,35 +99,31 @@ void BoardState::handleRollDice(Action::PackedAction action, PlayerId /*playerId
     for (HexId h = 0; h < HEX_COUNT; ++h) {
         if (Hex::unpackCatanNumber(hexes[h]) != dice) continue;
         Resource res = Hex::unpackResource(hexes[h]);
-        if (res == Resource::NoResource) continue;
 
-        // For every node adjacent to this hex, give resources to owner
-        for (NodeId nid = 0; nid < NODE_COUNT; ++nid) {
-            // check if this node is adjacent to hex h
-            bool adjacent = false;
-            for (uint8_t ai = 0; ai < 3; ++ai) {
-                if (Node::unpackAdjacentHex(nodes[nid], ai) == h) { adjacent = true; break; }
-            }
-            if (!adjacent) continue;
+        auto &p0 = packedPlayers[static_cast<uint8_t>(PlayerId::Player0)];
+        auto &p1 = packedPlayers[static_cast<uint8_t>(PlayerId::Player1)];
 
-            auto structure = Node::unpackStructure(nodes[nid]);
-            if (structure == StructureType::NoStructure) continue;
-            PlayerId owner = Node::unpackOwner(nodes[nid]);
-            if (owner == PlayerId::NoPlayer) continue;
+        p0 =
+            Player::packResource(
+                p0,
+                res,
+                Player::unpackResource(p0, res) + Hex::unpackPlayerValue(hexes[h], PlayerId::Player0)
+            );
 
-            uint8_t give = (structure == StructureType::City) ? 2 : 1;
-            auto curr = Player::unpackResource(packedPlayers[static_cast<uint8_t>(owner)], res);
-            uint16_t sum = uint16_t(curr) + uint16_t(give);
-            packedPlayers[static_cast<uint8_t>(owner)] =
-                Player::packResource(packedPlayers[static_cast<uint8_t>(owner)], res, uint8_t(sum));
-            BoardState::packedBank =
-                Bank::packResource(
-                    BoardState::packedBank,
-                    res,
-                    Bank::unpackResource(
-                        BoardState::packedBank, res) - give
-                );
-        }
+        p1 =
+            Player::packResource(
+                p1,
+                res,
+                Player::unpackResource(p1, res) + Hex::unpackPlayerValue(hexes[h], PlayerId::Player1)
+            );
+        BoardState::packedBank =
+            Bank::packResource(
+                BoardState::packedBank,
+                res,
+                Bank::unpackResource(BoardState::packedBank, res) -
+                (Hex::unpackPlayerValue(hexes[h], PlayerId::Player0) +
+                 Hex::unpackPlayerValue(hexes[h], PlayerId::Player1))
+            );
     }
 }
 
@@ -185,6 +181,22 @@ void BoardState::handleBuildSettlement(Action::PackedAction action, PlayerId pla
     nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::Settlement);
     nodes[nodeId] = Node::packOwner(nodes[nodeId], playerId);
 
+    HexId adjHex[3] = {
+        Node::unpackAdjacentHex(nodes[nodeId], 0),
+        Node::unpackAdjacentHex(nodes[nodeId], 1),
+        Node::unpackAdjacentHex(nodes[nodeId], 2)
+    };
+
+    for (HexId h : adjHex) {
+        if (h != HexIdNone) {
+            hexes[h] = Hex::packPlayerValue(
+                hexes[h],
+                playerId,
+                Hex::unpackPlayerValue(hexes[h], playerId) + 1
+            );
+        }
+    }
+
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Settlement);
     BoardState::packedBank = Bank::sell(BoardState::packedBank, BuyableType::Settlement);
@@ -193,41 +205,53 @@ void BoardState::handleBuildSettlement(Action::PackedAction action, PlayerId pla
 void BoardState::handleBuildCity(Action::PackedAction action, PlayerId playerId) {
     auto nodeId = Action::unpackArg1(action);
     nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::City);
-    nodes[nodeId] = Node::packOwner(nodes[nodeId], playerId);
+
+    HexId adjHex[3] = {
+        Node::unpackAdjacentHex(nodes[nodeId], 0),
+        Node::unpackAdjacentHex(nodes[nodeId], 1),
+        Node::unpackAdjacentHex(nodes[nodeId], 2)
+    };
+
+    for (HexId h : adjHex) {
+        if (h != HexIdNone) {
+            hexes[h] = Hex::packPlayerValue(
+                hexes[h],
+                playerId,
+                Hex::unpackPlayerValue(hexes[h], playerId) + 1
+            );
+        }
+    }
 
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::City);
     BoardState::packedBank = Bank::sell(BoardState::packedBank, BuyableType::City);
 }
 
-void BoardState::handleBuyDevCard(Action::PackedAction /*action*/, PlayerId playerId) {
+void BoardState::handleBuyDevCard(PlayerId playerId) {
+    const uint32_t pick = RandomDevice::uniform_u32(Bank::unpackTotalDevCount(packedBank));
+    uint32_t acc = 0;
+    DevType DevTypeOfpick = DevType::NoDev;
 
-    // Select a random card from devDeckCounts (weighted by remaining counts)
-    auto &deck = devDeckCounts;
-    uint32_t total = uint32_t(deck[0]) + uint32_t(deck[1]) + uint32_t(deck[2]) + uint32_t(deck[3]) + uint32_t(deck[4]);
-    if (total == 0) return; // nothing to draw
-
-    uint32_t pick = RandomDevice::uniform_u32(total);
-    int chosen = -1;
-    uint32_t accum = 0;
-    for (int i = 0; i < 5; ++i) {
-        accum += deck[i];
-        if (pick < accum) { chosen = i; break; }
+    for (DevType d : {
+        DevType::Knight,
+        DevType::RoadBuilding,
+        DevType::YearOfPlenty,
+        DevType::Monopoly,
+        DevType::VictoryPoint
+    }) {
+        uint32_t count = Bank::unpackDevCard(BoardState::packedBank, d);
+        if (pick < acc + count){
+            DevTypeOfpick = d;
+            break;
+        }
+        acc += count;
     }
-    if (chosen == -1) return; // should not happen
 
-    DevType d = static_cast<DevType>(chosen);
-    // decrement deck
-    if (deck[chosen] > 0) --deck[chosen];
-
-    // give the dev card to the player (increment their dev card count)
-    Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::DevCard, d);
-    auto curr = Player::unpackDevCard(packedPlayers[static_cast<uint8_t>(playerId)], d);
-    packedPlayers[static_cast<uint8_t>(playerId)] =
-        Player::packDevCard(packedPlayers[static_cast<uint8_t>(playerId)], d, curr + 1);
-
+    Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::DevCard, DevTypeOfpick);
     BoardState::packedBank = Bank::sell(BoardState::packedBank, BuyableType::DevCard);
+
 }
+
 
 void BoardState::handlePlayDevCardKnight(Action::PackedAction action, PlayerId playerId) {
     auto hexId = Action::unpackArg1(action);
@@ -361,12 +385,33 @@ void BoardState::handleReceiveResources(Action::PackedAction action, PlayerId pl
 }
 
 void BoardState::handleDiscardResources(Action::PackedAction action, PlayerId playerId) {
-    auto res = static_cast<Resource>(Action::unpackArg1(action));
-    uint8_t toDiscard = Action::unpackArg2(action);
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
-    uint8_t have = Player::unpackResource(p, res);
     
-    p = Player::packResource(p, res, have - toDiscard);
+    p = Player::packResource(
+        p,
+        Resource::Brick,
+        Player::unpackResource(p, Resource::Brick) - Action::unpackResource(action, Resource::Brick)
+    );
+    p = Player::packResource(
+        p,
+        Resource::Lumber,
+        Player::unpackResource(p, Resource::Lumber) - Action::unpackResource(action, Resource::Lumber)
+    );
+    p = Player::packResource(
+        p,
+        Resource::Wool,
+        Player::unpackResource(p, Resource::Wool) - Action::unpackResource(action, Resource::Wool)
+    );
+    p = Player::packResource(
+        p,
+        Resource::Grain,
+        Player::unpackResource(p, Resource::Grain) - Action::unpackResource(action, Resource::Grain)
+    );
+    p = Player::packResource(
+        p,
+        Resource::Ore,
+        Player::unpackResource(p, Resource::Ore) - Action::unpackResource(action, Resource::Ore)
+    );
 }
 
 void BoardState::handleStealResource(Action::PackedAction action, PlayerId playerId) {
@@ -422,7 +467,7 @@ void BoardState::applyAction(Action::PackedAction action) {
         handleBuildCity(action, playerId);
         break;
     case ActionType::BuyDevCard:
-        handleBuyDevCard(action, playerId);
+        handleBuyDevCard(playerId);
         break;
     case ActionType::PlayDevCardKnight:
         handlePlayDevCardKnight(action, playerId);

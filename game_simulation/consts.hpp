@@ -67,7 +67,7 @@ enum class ActionType : uint8_t {
     // Robber
     MoveRobber = 3, // Arg1: HexId to move the robber to
     StealResource = 4, // Arg1: Resource type (0-4) 
-    DiscardResources = 5, // None
+    DiscardResources = 5, // Resources
 
     // Buying/Building
     BuildRoad = 6, // Arg1: EdgeId to build road on
