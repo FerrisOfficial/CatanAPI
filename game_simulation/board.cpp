@@ -3,6 +3,7 @@
 #include "randomDevice.hpp"
 #include "consts.hpp"
 #include "packedBank.hpp"
+#include "display/display.hpp"
 
 namespace Board {
 
@@ -476,6 +477,9 @@ void BoardState::generateRandomBoard() {
             robberPosition = h;
         }
     }
+
+    Display display;
+    display.renderBoard(*this);
 }
 
 } // namespace Board
