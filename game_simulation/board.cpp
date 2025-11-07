@@ -379,9 +379,17 @@ void BoardState::handleReceiveResources(Action::PackedAction action, PlayerId pl
     Resource res = static_cast<Resource>(Action::unpackArg1(action));
     uint8_t amount = Action::unpackArg2(action);
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
-    auto curr = Player::unpackResource(p, res);
-    uint16_t newVal = uint16_t(curr) + uint16_t(amount);
-    p = Player::packResource(p, res, uint8_t(newVal));
+
+    p = Player::packResource(
+        p, 
+        res,
+        Player::unpackResource(p, res) + amount
+    );
+    BoardState::packedBank = Bank::packResource(
+        BoardState::packedBank,
+        res,
+        Bank::unpackResource(BoardState::packedBank, res) - amount
+    );
 }
 
 void BoardState::handleDiscardResources(Action::PackedAction action, PlayerId playerId) {
