@@ -207,8 +207,8 @@ struct BoardState {
     void handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId);
     void handlePlace2InitialSettlement(Action::PackedAction action, PlayerId playerId);
     void handlePlaceInitialRoad(Action::PackedAction action, PlayerId playerId);
-    void handleEndTurn(Action::PackedAction action, PlayerId playerId);
-    void handleRollDice(Action::PackedAction action, PlayerId playerId);
+    void handleEndTurn();
+    void handleRollDice(Action::PackedAction action);
     void handleMoveRobber(Action::PackedAction action, PlayerId playerId);
     void handleDiscardResources(Action::PackedAction action, PlayerId playerId);
     void handleBuildRoad(Action::PackedAction action, PlayerId playerId);

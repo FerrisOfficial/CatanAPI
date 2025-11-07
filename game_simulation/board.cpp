@@ -86,13 +86,13 @@ void BoardState::handlePlaceInitialRoad(Action::PackedAction action, PlayerId pl
         );
 }
 
-void BoardState::handleEndTurn(Action::PackedAction /*action*/, PlayerId /*playerId*/) {
+void BoardState::handleEndTurn() {
     // Advance to next player's turn
     currentPlayer = (currentPlayer == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
     currentTurn += 1;
 }
 
-void BoardState::handleRollDice(Action::PackedAction action, PlayerId /*playerId*/) {
+void BoardState::handleRollDice(Action::PackedAction action) {
     uint8_t dice = Action::unpackArg1(action);
 
     // For each hex with matching catan number, produce resources
@@ -131,33 +131,27 @@ void BoardState::handleMoveRobber(Action::PackedAction action, PlayerId playerId
     auto hexId = Action::unpackArg1(action);
     auto enemyPlayerId = playerId == PlayerId::Player0 ? PlayerId::Player1 : PlayerId::Player0;
     robberPosition = hexId;
-    
-    // Count enemy's resources
-    auto enemyWool = Player::unpackResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], Resource::Wool);
-    auto enemyBrick = Player::unpackResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], Resource::Brick);
-    auto enemyLumber = Player::unpackResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], Resource::Lumber);
-    auto enemyGrain = Player::unpackResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], Resource::Grain);
-    auto enemyOre = Player::unpackResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], Resource::Ore);
 
-    // Choose a random resource to steal (each card equally likely)
-    uint8_t counts[5];
-    counts[0] = enemyBrick;
-    counts[1] = enemyLumber;
-    counts[2] = enemyWool;
-    counts[3] = enemyGrain;
-    counts[4] = enemyOre;
-
-    uint32_t total = uint32_t(counts[0]) + uint32_t(counts[1]) + uint32_t(counts[2]) + uint32_t(counts[3]) + uint32_t(counts[4]);
+    uint32_t total = Player::totalResources(packedPlayers[static_cast<uint8_t>(enemyPlayerId)]);
     uint32_t pick = RandomDevice::uniform_u32(total);
-    int chosenRes = -1;
+    int chosenRes = 0;
     uint32_t acc = 0;
-    for (int r = 0; r < 5; ++r) {
-        acc += counts[r];
-        if (pick < acc) { chosenRes = r; break; }
-    }
-    if (chosenRes < 0) return; // safety
 
-    // Create a StealResource action for the chosen resource
+    for (Resource r : {
+        Resource::Brick,
+        Resource::Lumber,
+        Resource::Wool,
+        Resource::Grain,
+        Resource::Ore
+    }) {
+        uint8_t resCount = Player::unpackResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], r);
+        if (pick < acc + resCount) {
+            chosenRes = static_cast<int>(r);
+            break;
+        }
+        acc += resCount;
+    }
+
     Action::PackedAction stealAction = 0;
     stealAction = Action::packType(stealAction, ActionType::StealResource);
     stealAction = Action::packPlayerID(stealAction, playerId);
@@ -355,24 +349,18 @@ void BoardState::handleTradeBank(Action::PackedAction action, PlayerId playerId)
     auto idx = static_cast<uint8_t>(playerId);
     auto &p = packedPlayers[idx];
 
-    // Player resource count
-    uint8_t playerHaveGive = Player::unpackResource(p, giveResource);
+    uint8_t playerHave = Player::unpackResource(p, giveResource);
+    uint8_t bankHave = Bank::unpackResource(BoardState::packedBank, receiveResource);
 
-    // Bank resource count
-    uint8_t bankHaveReceive = Bank::unpackResource(BoardState::packedBank, receiveResource);
-
-    // ---- PERFORM TRADE ----
     // Player gives 'ratio'
-    p = Player::packResource(p, giveResource, playerHaveGive - ratio);
+    p = Player::packResource(p, giveResource, playerHave - ratio);
+    
+    p = Player::packResource(p, receiveResource, Player::unpackResource(p, receiveResource) + 1);
 
-    uint8_t bankGiveVal = Bank::unpackResource(BoardState::packedBank, giveResource);
-    BoardState::packedBank = Bank::packResource(BoardState::packedBank, giveResource, bankGiveVal + ratio);
+    uint8_t bankGive = Bank::unpackResource(BoardState::packedBank, giveResource);
+    BoardState::packedBank = Bank::packResource(BoardState::packedBank, giveResource, bankGive + ratio);
+    BoardState::packedBank = Bank::packResource(BoardState::packedBank, receiveResource, bankHave - 1);
 
-    // Bank gives 1
-    BoardState::packedBank = Bank::packResource(BoardState::packedBank, receiveResource, bankHaveReceive - 1);
-
-    uint8_t playerHaveReceive = Player::unpackResource(p, receiveResource);
-    p = Player::packResource(p, receiveResource, playerHaveReceive + 1);
 }
 
 void BoardState::handleReceiveResources(Action::PackedAction action, PlayerId playerId) {
@@ -426,15 +414,12 @@ void BoardState::handleStealResource(Action::PackedAction action, PlayerId playe
     auto enemyPlayerId = playerId == PlayerId::Player0 ? PlayerId::Player1 : PlayerId::Player0;
     Resource res = static_cast<Resource>(Action::unpackArg1(action));
     
-    // Remove one from enemy
     // handleDiscardResources();
     auto enemyHave = Player::unpackResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], res);
     packedPlayers[static_cast<uint8_t>(enemyPlayerId)] =
         Player::packResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], res, enemyHave - 1);
 
-    // Give one to current player
-    auto curHave = Player::unpackResource(packedPlayers[static_cast<uint8_t>(playerId)], res);
-    uint16_t newVal = uint16_t(curHave) + 1;
+    auto newVal = Player::unpackResource(packedPlayers[static_cast<uint8_t>(playerId)], res) + 1;
     packedPlayers[static_cast<uint8_t>(playerId)] =
         Player::packResource(packedPlayers[static_cast<uint8_t>(playerId)], res, uint8_t(newVal));
 }
@@ -454,10 +439,10 @@ void BoardState::applyAction(Action::PackedAction action) {
         handlePlaceInitialRoad(action, playerId);
         break;
     case ActionType::EndTurn:
-        handleEndTurn(action, playerId);
+        handleEndTurn();
         break;
     case ActionType::RollDice:
-        handleRollDice(action, playerId);
+        handleRollDice(action);
         break;
     case ActionType::MoveRobber:
         handleMoveRobber(action, playerId);
