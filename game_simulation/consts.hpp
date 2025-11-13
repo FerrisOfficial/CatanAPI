@@ -76,9 +76,9 @@ enum class ActionType : uint8_t {
     BuyDevCard = 9, // None
 
     // Playing Development Cards
-    PlayDevCardKnight = 10, // Arg1: HexId to move the robber to, Arg2: Resource type (0-4)
+    PlayDevCardKnight = 10, // Arg1: HexId to move the robber to
     PlayDevCardRoadBuilding = 11, // Arg1: EdgeId to build first road on, Arg2: EdgeId to build second road on
-    PlayDevCardYearOfPlenty = 12, // Resources
+    PlayDevCardYearOfPlenty = 12, // Agr1: Resource type (0-4) for first resource, Arg2: Resource type (0-4) for second resource
     PlayDevCardMonopoly = 13, // Arg1: Resource type (0-4)
 
     // Trading

@@ -637,3 +637,159 @@ TEST_F(ApplyActionTest, ExpectReceiveResources) {
     EXPECT_EQ(Bank::unpackResource(boardState.packedBank, resToReceive), 6);
     EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(receivingPlayer)], resToReceive), 4);
 }
+
+TEST_F(ApplyActionTest, ExpectPlayDevCardKnight){
+    EXPECT_EQ(Hex::unpackResource(boardState.hexes[boardState.robberPosition]), Resource::NoResource);
+
+    PlayerId playingPlayer = PlayerId::Player0;
+    PlayerId victimPlayer = PlayerId::Player1;
+    HexId newRobberPosition = 5;
+    Resource robbedResource = Resource::Wool;
+
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        DevType::Knight,
+        1
+    );
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        robbedResource,
+        2
+    );
+
+    boardState.packedPlayers[static_cast<size_t>(victimPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<size_t>(victimPlayer)],
+        robbedResource,
+        3
+    );
+
+    Action::PackedAction playKnightAction{};
+    playKnightAction = Action::packType(playKnightAction, ActionType::PlayDevCardKnight);
+    playKnightAction = Action::packArg1(playKnightAction, newRobberPosition);
+    playKnightAction = Action::packPlayerID(playKnightAction, playingPlayer);
+    boardState.applyAction(playKnightAction);
+
+    EXPECT_EQ(boardState.robberPosition, newRobberPosition);
+    EXPECT_EQ(
+        Player::unpackDevCard(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], DevType::Knight),
+        0
+    );
+    EXPECT_EQ(
+        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], robbedResource),
+        3
+    );
+    EXPECT_EQ(
+        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(victimPlayer)], robbedResource),
+        2
+    );
+}
+
+TEST_F(ApplyActionTest, ExpectPlayDevCardRoadBuilding){
+    PlayerId playingPlayer = PlayerId::Player0;
+    EdgeId firstRoadEdgeId = 20;
+    EdgeId secondRoadEdgeId = 28;
+
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        DevType::RoadBuilding,
+        1
+    );
+
+    Action::PackedAction playRoadBuildingAction{};
+    playRoadBuildingAction = Action::packType(playRoadBuildingAction, ActionType::PlayDevCardRoadBuilding);
+    playRoadBuildingAction = Action::packArg1(playRoadBuildingAction, firstRoadEdgeId);
+    playRoadBuildingAction = Action::packArg2(playRoadBuildingAction, secondRoadEdgeId);
+    playRoadBuildingAction = Action::packPlayerID(playRoadBuildingAction, playingPlayer);
+    boardState.applyAction(playRoadBuildingAction);
+
+    EXPECT_EQ(
+        Player::unpackDevCard(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], DevType::RoadBuilding),
+        0
+    );
+
+    Edge::PackedEdge firstRoadEdge = boardState.edges[firstRoadEdgeId];
+    EXPECT_TRUE(Edge::unpackHasRoad(firstRoadEdge));
+    EXPECT_EQ(Edge::unpackOwner(firstRoadEdge), playingPlayer);
+
+    Edge::PackedEdge secondRoadEdge = boardState.edges[secondRoadEdgeId];
+    EXPECT_TRUE(Edge::unpackHasRoad(secondRoadEdge));
+    EXPECT_EQ(Edge::unpackOwner(secondRoadEdge), playingPlayer);
+
+    EXPECT_EQ(Player::unpackAvailableStructures(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], StructureType::Road), 13);
+}
+
+TEST_F(ApplyActionTest, ExpectPlayDevCardYearOfPlenty){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    PlayerId playingPlayer = PlayerId::Player1;
+    Resource firstResource = Resource::Ore;
+    Resource secondResource = Resource::Grain;
+
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        DevType::YearOfPlenty,
+        1
+    );
+
+    Action::PackedAction playYearOfPlentyAction{};
+    playYearOfPlentyAction = Action::packType(playYearOfPlentyAction, ActionType::PlayDevCardYearOfPlenty);
+    playYearOfPlentyAction = Action::packArg1(playYearOfPlentyAction, static_cast<uint8_t>(firstResource));
+    playYearOfPlentyAction = Action::packArg2(playYearOfPlentyAction, static_cast<uint8_t>(secondResource));
+    playYearOfPlentyAction = Action::packPlayerID(playYearOfPlentyAction, playingPlayer);
+    boardState.applyAction(playYearOfPlentyAction);
+
+    EXPECT_EQ(
+        Player::unpackDevCard(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], DevType::YearOfPlenty),
+        0
+    );
+    EXPECT_EQ(
+        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], firstResource),
+        8
+    );
+    EXPECT_EQ(
+        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], secondResource),
+        8
+    );
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, firstResource), 9);
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, secondResource), 9);
+}
+
+TEST_F(ApplyActionTest, ExpectPlayDevCardMonopoly){
+    setPlayersResourcesSeven();
+
+    PlayerId playingPlayer = PlayerId::Player0;
+    PlayerId victimPlayer = PlayerId::Player1;
+    Resource monopolyResource = Resource::Brick;
+
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        DevType::Monopoly,
+        1
+    );
+
+    boardState.packedPlayers[static_cast<size_t>(victimPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<size_t>(victimPlayer)],
+        monopolyResource,
+        5
+    );
+
+    Action::PackedAction playMonopolyAction{};
+    playMonopolyAction = Action::packType(playMonopolyAction, ActionType::PlayDevCardMonopoly);
+    playMonopolyAction = Action::packArg1(playMonopolyAction, static_cast<uint8_t>(monopolyResource));
+    playMonopolyAction = Action::packPlayerID(playMonopolyAction, playingPlayer);
+    boardState.applyAction(playMonopolyAction);
+
+    EXPECT_EQ(
+        Player::unpackDevCard(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], DevType::Monopoly),
+        0
+    );
+    EXPECT_EQ(
+        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], monopolyResource),
+        12
+    );
+    EXPECT_EQ(
+        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(victimPlayer)], monopolyResource),
+        0
+    );
+}

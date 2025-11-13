@@ -248,85 +248,96 @@ void BoardState::handleBuyDevCard(PlayerId playerId) {
 
 
 void BoardState::handlePlayDevCardKnight(Action::PackedAction action, PlayerId playerId) {
-    auto hexId = Action::unpackArg1(action);
-    robberPosition = hexId;
-
     // Decrement knight dev card count
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
-    auto curr = Player::unpackDevCard(p, DevType::Knight);
-    if (curr > 0) {
-        p = Player::packDevCard(p, DevType::Knight, curr - 1);
-    }
+    p = Player::packDevCard(
+        p,
+        DevType::Knight,
+        Player::unpackDevCard(p, DevType::Knight) - 1
+    );
 
     handleMoveRobber(action, playerId);
 }
 
 void BoardState::handlePlayDevCardRoadBuilding(Action::PackedAction action, PlayerId playerId) {
-    // First, decrement the road building card count
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
-    auto curr = Player::unpackDevCard(p, DevType::RoadBuilding);
     
-    // Decrement the card count
-    p = Player::packDevCard(p, DevType::RoadBuilding, curr - 1);
+    p = Player::packDevCard(
+        p,
+        DevType::RoadBuilding,
+        Player::unpackDevCard(p, DevType::RoadBuilding) - 1
+    );
 
-    // Build the first road (edge ID in arg1)
+    // Build two roads
     auto firstEdgeId = Action::unpackArg1(action);
     edges[firstEdgeId] = Edge::packHasRoad(edges[firstEdgeId], true);
     edges[firstEdgeId] = Edge::packOwner(edges[firstEdgeId], playerId);
     
-    // The second edge ID is packed in the resource fields (since we need two arguments)
-    // By convention, let's use the Brick field to store it
-    auto secondEdgeId = Action::unpackResource(action, Resource::Brick);
+    auto secondEdgeId = Action::unpackArg2(action);
     edges[secondEdgeId] = Edge::packHasRoad(edges[secondEdgeId], true);
     edges[secondEdgeId] = Edge::packOwner(edges[secondEdgeId], playerId);
 
-    // Update the player's available road count for both roads
     packedPlayers[static_cast<uint8_t>(playerId)] =
         Player::packAvailableStructures(
-            packedPlayers[static_cast<uint8_t>(playerId)],
+            p,
             StructureType::Road,
             Player::unpackAvailableStructures(
-                packedPlayers[static_cast<uint8_t>(playerId)],
+                p,
                 StructureType::Road) - 2
         );
 }
 
 void BoardState::handlePlayDevCardYearOfPlenty(Action::PackedAction action, PlayerId playerId) {
-    // First, decrement the year of plenty card count
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
-    auto curr = Player::unpackDevCard(p, DevType::YearOfPlenty);
 
-    // Decrement the card count
-    p = Player::packDevCard(p, DevType::YearOfPlenty, curr - 1);
+    p = Player::packDevCard(
+        p,
+        DevType::YearOfPlenty,
+        Player::unpackDevCard(p, DevType::YearOfPlenty) - 1
+    );
 
-    // Get the two resources from the action (using Brick and Lumber fields by convention)
-    Resource firstResource = static_cast<Resource>(Action::unpackResource(action, Resource::Brick));
-    Resource secondResource = static_cast<Resource>(Action::unpackResource(action, Resource::Lumber));
+    Resource firstResource = static_cast<Resource>(Action::unpackArg1(action));
+    Resource secondResource = static_cast<Resource>(Action::unpackArg2(action));
 
     // Add first resource to player
-    auto firstHave = Player::unpackResource(p, firstResource);
-    uint16_t newFirst = uint16_t(firstHave) + 1;
-    p = Player::packResource(p, firstResource, uint8_t(newFirst));
+    p = Player::packResource(
+        p,
+        firstResource,
+        Player::unpackResource(p, firstResource) + 1
+    );
+    packedBank = Bank::packResource(
+        packedBank,
+        firstResource,
+        Bank::unpackResource(packedBank, firstResource) - 1
+    );
 
     // Add second resource to player
-    auto secondHave = Player::unpackResource(p, secondResource);
-    uint16_t newSecond = uint16_t(secondHave) + 1;
-    p = Player::packResource(p, secondResource, uint8_t(newSecond));
+    p = Player::packResource(
+        p,
+        secondResource,
+        Player::unpackResource(p, secondResource) + 1
+    );
+    packedBank = Bank::packResource(
+        packedBank,
+        secondResource,
+        Bank::unpackResource(packedBank, secondResource) - 1
+    );
 }
 
 void BoardState::handlePlayDevCardMonopoly(Action::PackedAction action, PlayerId playerId) {
     // First, decrement the monopoly card count
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
-    auto curr = Player::unpackDevCard(p, DevType::Monopoly);
-    
-    // Decrement the card count
-    p = Player::packDevCard(p, DevType::Monopoly, curr - 1);
+   
+    p = Player::packDevCard(
+        p,
+        DevType::Monopoly,
+        Player::unpackDevCard(p, DevType::Monopoly) - 1
+    );
 
-    // Get the resource type from the action (using Brick field by convention)
-    Resource targetResource = static_cast<Resource>(Action::unpackResource(action, Resource::Brick));
+
+    Resource targetResource = static_cast<Resource>(Action::unpackArg1(action));
     auto enemyPlayerId = playerId == PlayerId::Player0 ? PlayerId::Player1 : PlayerId::Player0;
     
-    // Count how many of the resource the enemy has
     auto enemyHave = Player::unpackResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], targetResource);
     
     // Remove all of this resource from enemy
@@ -334,10 +345,11 @@ void BoardState::handlePlayDevCardMonopoly(Action::PackedAction action, PlayerId
         packedPlayers[static_cast<uint8_t>(enemyPlayerId)] =
             Player::packResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], targetResource, 0);
 
-        // Give all to current player
-        auto curHave = Player::unpackResource(p, targetResource);
-        uint16_t newVal = uint16_t(curHave) + uint16_t(enemyHave);
-        p = Player::packResource(p, targetResource, uint8_t(newVal));
+        p = Player::packResource(
+            p,
+            targetResource, 
+            Player::unpackResource(p, targetResource) + enemyHave
+        );
     }
 }
 
