@@ -89,6 +89,28 @@ enum class ActionType : uint8_t {
     PlaceInitialSettlement = 16, // Arg1: NodeId to place settlement on
     Place2InitialSettlement = 17, // Arg1: NodeId to place settlement on
     PlaceInitialRoad = 18, // Arg1: EdgeId to place road on
+
+    //Undo Actions
+    UndoMoveRobber = 19, // Arg1: Previous HexId of the robber, Arg2: Resource type (0-4) stolen
+    UndoStealResource = 20, // Arg1: Resource type (0-4) that was stolen
+    UndoDiscardResources = 21, // Resources
+
+    UndoBuildRoad = 22, // Arg1: EdgeId where road was built
+    UndoBuildSettlement = 23, // Arg1: NodeId where settlement was built
+    UndoBuildCity = 24, // Arg1: NodeId where city was built
+    UndoBuyDevCard = 25, // Arg1: DevType (0-4) of the dev card bought
+
+    UndoPlayDevCardKnight = 26, // Arg1: Previous HexId of the robber, Arg2: Resource type (0-4) stolen
+    UndoPlayDevCardRoadBuilding = 27, // Arg1: EdgeId where first road was built, Arg2: EdgeId where second road was built
+    UndoPlayDevCardYearOfPlenty = 28, // Arg1: Resource type (0-4) for first resource, Arg2: Resource type (0-4) for second resource
+    UndoPlayDevCardMonopoly = 29, // Arg1: Resource type (0-4) stolen, Arg2: amount stolen
+
+    UndoTradeBank = 30, // Arg1: Give bank resource type (0-4), Arg2: Take resource type (0-4), Arg3: trade ratio (2-4)
+    UndoReceiveResources = 31, // Resources, Arg1: Resource type (0-4), Arg2: amount to give
+
+    UndoPlaceInitialSettlement = 32, // Arg1: NodeId where settlement was placed
+    UndoPlace2InitialSettlement = 33, // Arg1: NodeId where settlement was placed
+    UndoPlaceInitialRoad = 34, // Arg1: EdgeId where road was placed
 };
 
 enum class PortType : uint8_t {

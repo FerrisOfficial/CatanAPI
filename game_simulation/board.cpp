@@ -7,27 +7,50 @@
 
 namespace Board {
 
-    void BoardState::handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId) {
-        auto nodeId = Action::unpackArg1(action);
-        nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::Settlement);
-        nodes[nodeId] = Node::packOwner(nodes[nodeId], playerId);
-        // add victory point to player
-        packedPlayers[static_cast<uint8_t>(playerId)] =
-            Player::packVictoryPoints(
+void BoardState::handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId) {
+    auto nodeId = Action::unpackArg1(action);
+    nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::Settlement);
+    nodes[nodeId] = Node::packOwner(nodes[nodeId], playerId);
+    // add victory point to player
+    packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packVictoryPoints(
+            packedPlayers[static_cast<uint8_t>(playerId)],
+            Player::unpackVictoryPoints(
+                packedPlayers[static_cast<uint8_t>(playerId)]) + 1
+        );
+    // remove one available settlement from player
+    packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packAvailableStructures(
+            packedPlayers[static_cast<uint8_t>(playerId)],
+            StructureType::Settlement,
+            Player::unpackAvailableStructures(
                 packedPlayers[static_cast<uint8_t>(playerId)],
-                Player::unpackVictoryPoints(
-                    packedPlayers[static_cast<uint8_t>(playerId)]) + 1
-            );
-        // remove one available settlement from player
-        packedPlayers[static_cast<uint8_t>(playerId)] =
-            Player::packAvailableStructures(
-                packedPlayers[static_cast<uint8_t>(playerId)],
-                StructureType::Settlement,
-                Player::unpackAvailableStructures(
-                    packedPlayers[static_cast<uint8_t>(playerId)],
-                    StructureType::Settlement) - 1
-            );
+                StructureType::Settlement) - 1
+        );
 }
+
+void BoardState::handleUndoPlaceInitialSettlement(Action::PackedAction action, PlayerId playerId) {
+    auto nodeId = Action::unpackArg1(action);
+    nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::NoStructure);
+    nodes[nodeId] = Node::packOwner(nodes[nodeId], PlayerId::NoPlayer);
+    // remove victory point from player
+    packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packVictoryPoints(
+            packedPlayers[static_cast<uint8_t>(playerId)],
+            Player::unpackVictoryPoints(
+                packedPlayers[static_cast<uint8_t>(playerId)]) - 1
+        );
+    // add one available settlement to player
+    packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packAvailableStructures(
+            packedPlayers[static_cast<uint8_t>(playerId)],
+            StructureType::Settlement,
+            Player::unpackAvailableStructures(
+                packedPlayers[static_cast<uint8_t>(playerId)],
+                StructureType::Settlement) + 1
+        );
+}
+
 
 void BoardState::handlePlace2InitialSettlement(Action::PackedAction action, PlayerId playerId) {
     auto nodeId = Action::unpackArg1(action);
@@ -38,20 +61,8 @@ void BoardState::handlePlace2InitialSettlement(Action::PackedAction action, Play
         auto hexId = Node::unpackAdjacentHex(nodes[nodeId], i);
         auto res = Hex::unpackResource(hexes[hexId]);
         if (res != Resource::NoResource) {
-            packedPlayers[static_cast<uint8_t>(playerId)] =
-                Player::packResource(
-                    packedPlayers[static_cast<uint8_t>(playerId)],
-                    res,
-                    Player::unpackResource(
-                        packedPlayers[static_cast<uint8_t>(playerId)], res) + 1
-                );
-            BoardState::packedBank =
-                Bank::packResource(
-                    BoardState::packedBank,
-                    res,
-                    Bank::unpackResource(
-                        BoardState::packedBank, res) - 1
-                );
+            Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], res, 1);
+            Bank::changeResourceQuantity(BoardState::packedBank, res, -1);
         }
     }
     packedPlayers[static_cast<uint8_t>(playerId)] =
@@ -70,6 +81,35 @@ void BoardState::handlePlace2InitialSettlement(Action::PackedAction action, Play
         );
 }
 
+void BoardState::handleUndoPlace2InitialSettlement(Action::PackedAction action, PlayerId playerId) {
+    auto nodeId = Action::unpackArg1(action);
+    nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::NoStructure);
+    nodes[nodeId] = Node::packOwner(nodes[nodeId], PlayerId::NoPlayer);
+    // remove resources from player for 2nd settlement
+    for (int i = 0; i < 3; ++i) {
+        auto hexId = Node::unpackAdjacentHex(nodes[nodeId], i);
+        auto res = Hex::unpackResource(hexes[hexId]);
+        if (res != Resource::NoResource) {
+            Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], res, -1);
+            Bank::changeResourceQuantity(BoardState::packedBank, res, 1);
+        }
+    }
+    packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packVictoryPoints(
+            packedPlayers[static_cast<uint8_t>(playerId)],
+            Player::unpackVictoryPoints(
+                packedPlayers[static_cast<uint8_t>(playerId)]) - 1
+        );
+    packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packAvailableStructures(
+            packedPlayers[static_cast<uint8_t>(playerId)],
+            StructureType::Settlement,
+            Player::unpackAvailableStructures(
+                packedPlayers[static_cast<uint8_t>(playerId)],
+                StructureType::Settlement) + 1
+        );
+}
+
 void BoardState::handlePlaceInitialRoad(Action::PackedAction action, PlayerId playerId) {
     auto edgeId = Action::unpackArg1(action);
     edges[edgeId] = Edge::packHasRoad(edges[edgeId], true);
@@ -83,6 +123,22 @@ void BoardState::handlePlaceInitialRoad(Action::PackedAction action, PlayerId pl
             Player::unpackAvailableStructures(
                 packedPlayers[static_cast<uint8_t>(playerId)],
                 StructureType::Road) - 1
+        );
+}
+
+void BoardState::handleUndoPlaceInitialRoad(Action::PackedAction action, PlayerId playerId) {
+    auto edgeId = Action::unpackArg1(action);
+    edges[edgeId] = Edge::packHasRoad(edges[edgeId], false);
+    edges[edgeId] = Edge::packOwner(edges[edgeId], PlayerId::NoPlayer);
+
+    // add one available road to player
+    packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packAvailableStructures(
+            packedPlayers[static_cast<uint8_t>(playerId)],
+            StructureType::Road,
+            Player::unpackAvailableStructures(
+                packedPlayers[static_cast<uint8_t>(playerId)],
+                StructureType::Road) + 1
         );
 }
 
@@ -103,27 +159,13 @@ void BoardState::handleRollDice(Action::PackedAction action) {
         auto &p0 = packedPlayers[static_cast<uint8_t>(PlayerId::Player0)];
         auto &p1 = packedPlayers[static_cast<uint8_t>(PlayerId::Player1)];
 
-        p0 =
-            Player::packResource(
-                p0,
-                res,
-                Player::unpackResource(p0, res) + Hex::unpackPlayerValue(hexes[h], PlayerId::Player0)
-            );
-
-        p1 =
-            Player::packResource(
-                p1,
-                res,
-                Player::unpackResource(p1, res) + Hex::unpackPlayerValue(hexes[h], PlayerId::Player1)
-            );
-        BoardState::packedBank =
-            Bank::packResource(
-                BoardState::packedBank,
-                res,
-                Bank::unpackResource(BoardState::packedBank, res) -
-                (Hex::unpackPlayerValue(hexes[h], PlayerId::Player0) +
-                 Hex::unpackPlayerValue(hexes[h], PlayerId::Player1))
-            );
+        Player::changeResourceQuantity(p0, res,
+            Hex::unpackPlayerValue(hexes[h], PlayerId::Player0));
+        Player::changeResourceQuantity(p1, res, 
+            Hex::unpackPlayerValue(hexes[h], PlayerId::Player1));
+        Bank::changeResourceQuantity(BoardState::packedBank, res,
+            -(Hex::unpackPlayerValue(hexes[h], PlayerId::Player0) +
+            Hex::unpackPlayerValue(hexes[h], PlayerId::Player1)));
     }
 }
 
@@ -167,7 +209,17 @@ void BoardState::handleBuildRoad(Action::PackedAction action, PlayerId playerId)
 
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Road);
-    BoardState::packedBank = Bank::sell(BoardState::packedBank, BuyableType::Road);
+    BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::Road);
+}
+
+void BoardState::handleUndoBuildRoad(Action::PackedAction action, PlayerId playerId) {
+    auto edgeId = Action::unpackArg1(action);
+    edges[edgeId] = Edge::packHasRoad(edges[edgeId], false);
+    edges[edgeId] = Edge::packOwner(edges[edgeId], PlayerId::NoPlayer);
+
+    // Refund resources to player
+    BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::Road, DevType::NoDev, false);
+    Player::refund(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Road);
 }
 
 void BoardState::handleBuildSettlement(Action::PackedAction action, PlayerId playerId) {
@@ -193,7 +245,33 @@ void BoardState::handleBuildSettlement(Action::PackedAction action, PlayerId pla
 
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Settlement);
-    BoardState::packedBank = Bank::sell(BoardState::packedBank, BuyableType::Settlement);
+    BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::Settlement);
+}
+
+void BoardState::handleUndoBuildSettlement(Action::PackedAction action, PlayerId playerId) {
+    auto nodeId = Action::unpackArg1(action);
+    nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::NoStructure);
+    nodes[nodeId] = Node::packOwner(nodes[nodeId], PlayerId::NoPlayer);
+
+    HexId adjHex[3] = {
+        Node::unpackAdjacentHex(nodes[nodeId], 0),
+        Node::unpackAdjacentHex(nodes[nodeId], 1),
+        Node::unpackAdjacentHex(nodes[nodeId], 2)
+    };
+
+    for (HexId h : adjHex) {
+        if (h != HexIdNone) {
+            hexes[h] = Hex::packPlayerValue(
+                hexes[h],
+                playerId,
+                Hex::unpackPlayerValue(hexes[h], playerId) - 1
+            );
+        }
+    }
+
+    // Refund resources to player
+    BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::Settlement, DevType::NoDev, false);
+    Player::refund(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Settlement);
 }
 
 void BoardState::handleBuildCity(Action::PackedAction action, PlayerId playerId) {
@@ -218,7 +296,32 @@ void BoardState::handleBuildCity(Action::PackedAction action, PlayerId playerId)
 
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::City);
-    BoardState::packedBank = Bank::sell(BoardState::packedBank, BuyableType::City);
+    BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::City);
+}
+
+void BoardState::handleUndoBuildCity(Action::PackedAction action, PlayerId playerId) {
+    auto nodeId = Action::unpackArg1(action);
+    nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::Settlement);
+
+    HexId adjHex[3] = {
+        Node::unpackAdjacentHex(nodes[nodeId], 0),
+        Node::unpackAdjacentHex(nodes[nodeId], 1),
+        Node::unpackAdjacentHex(nodes[nodeId], 2)
+    };
+
+    for (HexId h : adjHex) {
+        if (h != HexIdNone) {
+            hexes[h] = Hex::packPlayerValue(
+                hexes[h],
+                playerId,
+                Hex::unpackPlayerValue(hexes[h], playerId) - 1
+            );
+        }
+    }
+
+    // Refund resources to player
+    BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::City, DevType::NoDev, false);
+    Player::refund(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::City);
 }
 
 void BoardState::handleBuyDevCard(PlayerId playerId) {
@@ -242,10 +345,14 @@ void BoardState::handleBuyDevCard(PlayerId playerId) {
     }
 
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::DevCard, DevTypeOfpick);
-    BoardState::packedBank = Bank::sell(BoardState::packedBank, BuyableType::DevCard);
-
+    BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::DevCard, DevTypeOfpick);
 }
 
+void BoardState::handleUndoBuyDevCard(Action::PackedAction action, PlayerId playerId) {
+    auto d = Action::unpackArg1(action);
+    Player::refund(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::DevCard, static_cast<DevType>(d));
+    BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::DevCard, static_cast<DevType>(d), false);
+}
 
 void BoardState::handlePlayDevCardKnight(Action::PackedAction action, PlayerId playerId) {
     // Decrement knight dev card count
@@ -287,6 +394,34 @@ void BoardState::handlePlayDevCardRoadBuilding(Action::PackedAction action, Play
         );
 }
 
+void BoardState::handleUndoPlayDevCardRoadBuilding(Action::PackedAction action, PlayerId playerId) {
+    auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
+    
+    p = Player::packDevCard(
+        p,
+        DevType::RoadBuilding,
+        Player::unpackDevCard(p, DevType::RoadBuilding) + 1
+    );
+
+    // Remove two roads
+    auto firstEdgeId = Action::unpackArg1(action);
+    edges[firstEdgeId] = Edge::packHasRoad(edges[firstEdgeId], false);
+    edges[firstEdgeId] = Edge::packOwner(edges[firstEdgeId], PlayerId::NoPlayer);
+    
+    auto secondEdgeId = Action::unpackArg2(action);
+    edges[secondEdgeId] = Edge::packHasRoad(edges[secondEdgeId], false);
+    edges[secondEdgeId] = Edge::packOwner(edges[secondEdgeId], PlayerId::NoPlayer);
+
+    packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packAvailableStructures(
+            p,
+            StructureType::Road,
+            Player::unpackAvailableStructures(
+                p,
+                StructureType::Road) + 2
+        );
+}
+
 void BoardState::handlePlayDevCardYearOfPlenty(Action::PackedAction action, PlayerId playerId) {
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
 
@@ -300,28 +435,34 @@ void BoardState::handlePlayDevCardYearOfPlenty(Action::PackedAction action, Play
     Resource secondResource = static_cast<Resource>(Action::unpackArg2(action));
 
     // Add first resource to player
-    p = Player::packResource(
-        p,
-        firstResource,
-        Player::unpackResource(p, firstResource) + 1
-    );
-    packedBank = Bank::packResource(
-        packedBank,
-        firstResource,
-        Bank::unpackResource(packedBank, firstResource) - 1
-    );
+    Player::changeResourceQuantity(p, firstResource, 1);
+    Bank::changeResourceQuantity(packedBank, firstResource, -1);
+
 
     // Add second resource to player
-    p = Player::packResource(
+    Player::changeResourceQuantity(p, secondResource, 1);
+    Bank::changeResourceQuantity(packedBank, secondResource, -1);
+}
+
+void BoardState::handleUndoPlayDevCardYearOfPlenty(Action::PackedAction action, PlayerId playerId) {
+    auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
+
+    p = Player::packDevCard(
         p,
-        secondResource,
-        Player::unpackResource(p, secondResource) + 1
+        DevType::YearOfPlenty,
+        Player::unpackDevCard(p, DevType::YearOfPlenty) + 1
     );
-    packedBank = Bank::packResource(
-        packedBank,
-        secondResource,
-        Bank::unpackResource(packedBank, secondResource) - 1
-    );
+
+    Resource firstResource = static_cast<Resource>(Action::unpackArg1(action));
+    Resource secondResource = static_cast<Resource>(Action::unpackArg2(action));
+
+    // Remove first resource from player
+    Player::changeResourceQuantity(p, firstResource, -1);
+    Bank::changeResourceQuantity(packedBank, firstResource, 1);
+
+    // Remove second resource from player
+    Player::changeResourceQuantity(p, secondResource, -1);
+    Bank::changeResourceQuantity(packedBank, secondResource, 1);
 }
 
 void BoardState::handlePlayDevCardMonopoly(Action::PackedAction action, PlayerId playerId) {
@@ -345,11 +486,34 @@ void BoardState::handlePlayDevCardMonopoly(Action::PackedAction action, PlayerId
         packedPlayers[static_cast<uint8_t>(enemyPlayerId)] =
             Player::packResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], targetResource, 0);
 
-        p = Player::packResource(
-            p,
-            targetResource, 
-            Player::unpackResource(p, targetResource) + enemyHave
+        Player::changeResourceQuantity(p, targetResource, enemyHave);
+    }
+}
+
+void BoardState::handleUndoPlayDevCardMonopoly(Action::PackedAction action, PlayerId playerId) {
+    // First, increment the monopoly card count
+    auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
+   
+    p = Player::packDevCard(
+        p,
+        DevType::Monopoly,
+        Player::unpackDevCard(p, DevType::Monopoly) + 1
+    );
+
+    Resource targetResource = static_cast<Resource>(Action::unpackArg1(action));
+    auto enemyPlayerId = playerId == PlayerId::Player0 ? PlayerId::Player1 : PlayerId::Player0;
+
+    uint8_t stolenAmount = Action::unpackArg2(action);
+
+    // Return resources to enemy
+    if (stolenAmount > 0) {
+        Player::changeResourceQuantity(
+            packedPlayers[static_cast<uint8_t>(enemyPlayerId)],
+            targetResource,
+            stolenAmount
         );
+
+        Player::changeResourceQuantity(p, targetResource, -stolenAmount);
     }
 }
 
@@ -361,18 +525,29 @@ void BoardState::handleTradeBank(Action::PackedAction action, PlayerId playerId)
     auto idx = static_cast<uint8_t>(playerId);
     auto &p = packedPlayers[idx];
 
-    uint8_t playerHave = Player::unpackResource(p, giveResource);
-    uint8_t bankHave = Bank::unpackResource(BoardState::packedBank, receiveResource);
-
     // Player gives 'ratio'
-    p = Player::packResource(p, giveResource, playerHave - ratio);
-    
-    p = Player::packResource(p, receiveResource, Player::unpackResource(p, receiveResource) + 1);
+    Player::changeResourceQuantity(p, giveResource, -ratio);
+    Player::changeResourceQuantity(p, receiveResource, 1);    
 
     uint8_t bankGive = Bank::unpackResource(BoardState::packedBank, giveResource);
-    BoardState::packedBank = Bank::packResource(BoardState::packedBank, giveResource, bankGive + ratio);
-    BoardState::packedBank = Bank::packResource(BoardState::packedBank, receiveResource, bankHave - 1);
+    Bank::changeResourceQuantity(BoardState::packedBank, giveResource, ratio);
+    Bank::changeResourceQuantity(BoardState::packedBank, receiveResource, -1);
+}
 
+void BoardState::handleUndoTradeBank(Action::PackedAction action, PlayerId playerId) {
+    Resource giveResource = static_cast<Resource>(Action::unpackArg1(action));
+    Resource receiveResource = static_cast<Resource>(Action::unpackArg2(action));
+    uint8_t ratio = Action::unpackArg3(action);
+
+    auto idx = static_cast<uint8_t>(playerId);
+    auto &p = packedPlayers[idx];
+
+    // Player gets back 'ratio'
+    Player::changeResourceQuantity(p, giveResource, ratio);
+    Player::changeResourceQuantity(p, receiveResource, -1);    
+
+    Bank::changeResourceQuantity(BoardState::packedBank, giveResource, -ratio);
+    Bank::changeResourceQuantity(BoardState::packedBank, receiveResource, 1);
 }
 
 void BoardState::handleReceiveResources(Action::PackedAction action, PlayerId playerId) {
@@ -380,46 +555,27 @@ void BoardState::handleReceiveResources(Action::PackedAction action, PlayerId pl
     uint8_t amount = Action::unpackArg2(action);
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
 
-    p = Player::packResource(
-        p, 
-        res,
-        Player::unpackResource(p, res) + amount
-    );
-    BoardState::packedBank = Bank::packResource(
-        BoardState::packedBank,
-        res,
-        Bank::unpackResource(BoardState::packedBank, res) - amount
-    );
+    Player::changeResourceQuantity(p, res, amount);
+    Bank::changeResourceQuantity(BoardState::packedBank, res, -amount);
+}
+
+void BoardState::handleUndoReceiveResources(Action::PackedAction action, PlayerId playerId) {
+    Resource res = static_cast<Resource>(Action::unpackArg1(action));
+    uint8_t amount = Action::unpackArg2(action);
+    auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
+
+    Player::changeResourceQuantity(p, res, -amount);
+    Bank::changeResourceQuantity(BoardState::packedBank, res, amount);
 }
 
 void BoardState::handleDiscardResources(Action::PackedAction action, PlayerId playerId) {
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
     
-    p = Player::packResource(
-        p,
-        Resource::Brick,
-        Player::unpackResource(p, Resource::Brick) - Action::unpackResource(action, Resource::Brick)
-    );
-    p = Player::packResource(
-        p,
-        Resource::Lumber,
-        Player::unpackResource(p, Resource::Lumber) - Action::unpackResource(action, Resource::Lumber)
-    );
-    p = Player::packResource(
-        p,
-        Resource::Wool,
-        Player::unpackResource(p, Resource::Wool) - Action::unpackResource(action, Resource::Wool)
-    );
-    p = Player::packResource(
-        p,
-        Resource::Grain,
-        Player::unpackResource(p, Resource::Grain) - Action::unpackResource(action, Resource::Grain)
-    );
-    p = Player::packResource(
-        p,
-        Resource::Ore,
-        Player::unpackResource(p, Resource::Ore) - Action::unpackResource(action, Resource::Ore)
-    );
+    Player::changeResourceQuantity(p, Resource::Brick, -Action::unpackResource(action, Resource::Brick));
+    Player::changeResourceQuantity(p, Resource::Lumber, -Action::unpackResource(action, Resource::Lumber));
+    Player::changeResourceQuantity(p, Resource::Wool, -Action::unpackResource(action, Resource::Wool));
+    Player::changeResourceQuantity(p, Resource::Grain, -Action::unpackResource(action, Resource::Grain));
+    Player::changeResourceQuantity(p, Resource::Ore, -Action::unpackResource(action, Resource::Ore));
 }
 
 void BoardState::handleStealResource(Action::PackedAction action, PlayerId playerId) {
@@ -427,13 +583,8 @@ void BoardState::handleStealResource(Action::PackedAction action, PlayerId playe
     Resource res = static_cast<Resource>(Action::unpackArg1(action));
     
     // handleDiscardResources();
-    auto enemyHave = Player::unpackResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], res);
-    packedPlayers[static_cast<uint8_t>(enemyPlayerId)] =
-        Player::packResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], res, enemyHave - 1);
-
-    auto newVal = Player::unpackResource(packedPlayers[static_cast<uint8_t>(playerId)], res) + 1;
-    packedPlayers[static_cast<uint8_t>(playerId)] =
-        Player::packResource(packedPlayers[static_cast<uint8_t>(playerId)], res, uint8_t(newVal));
+    Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], res, -1);
+    Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], res, 1);
 }
 
 void BoardState::applyAction(Action::PackedAction action) {
@@ -497,6 +648,62 @@ void BoardState::applyAction(Action::PackedAction action) {
         break;
 
     default:
+        break;
+    }
+}
+
+void BoardState::applyUndoAction(Action::PackedAction action) {
+    auto type = Action::unpackType(action);
+    auto playerId = Action::unpackPlayerID(action);
+
+    switch (type) {
+    case ActionType::UndoMoveRobber:
+        // Undo logic for MoveRobber
+        break;
+    case ActionType::UndoStealResource:
+        // Undo logic for StealResource
+        break;
+    case ActionType::UndoDiscardResources:
+        // Undo logic for DiscardResources
+        break;
+    case ActionType::UndoBuildRoad:
+        handleUndoBuildRoad(action, playerId);
+        break;
+    case ActionType::UndoBuildSettlement:
+        handleUndoBuildSettlement(action, playerId);
+        break;
+    case ActionType::UndoBuildCity:
+        handleUndoBuildCity(action, playerId);
+        break;
+    case ActionType::UndoBuyDevCard:
+        handleUndoBuyDevCard(action, playerId);
+        break;
+    case ActionType::UndoPlayDevCardKnight:
+        // Undo logic for PlayDevCardKnight
+        break;
+    case ActionType::UndoPlayDevCardRoadBuilding:
+        handleUndoPlayDevCardRoadBuilding(action, playerId);
+        break;
+    case ActionType::UndoPlayDevCardYearOfPlenty:
+        handleUndoPlayDevCardYearOfPlenty(action, playerId);
+        break;
+    case ActionType::UndoPlayDevCardMonopoly:
+        handleUndoPlayDevCardMonopoly(action, playerId);
+        break;
+    case ActionType::UndoTradeBank:
+        handleUndoTradeBank(action, playerId);
+        break;
+    case ActionType::UndoReceiveResources:
+        handleUndoReceiveResources(action, playerId);
+        break;
+    case ActionType::UndoPlaceInitialSettlement:
+        handleUndoPlaceInitialSettlement(action, playerId);
+        break;
+    case ActionType::UndoPlace2InitialSettlement:
+        handleUndoPlace2InitialSettlement(action, playerId);
+        break;
+    case ActionType::UndoPlaceInitialRoad:
+        handleUndoPlaceInitialRoad(action, playerId);
         break;
     }
 }

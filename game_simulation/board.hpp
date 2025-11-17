@@ -204,6 +204,8 @@ struct BoardState {
     constexpr BoardState() noexcept;
     void generateRandomBoard();
     void applyAction(Action::PackedAction action);
+    void applyUndoAction(Action::PackedAction action);
+
     void handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId);
     void handlePlace2InitialSettlement(Action::PackedAction action, PlayerId playerId);
     void handlePlaceInitialRoad(Action::PackedAction action, PlayerId playerId);
@@ -222,6 +224,23 @@ struct BoardState {
     void handleStealResource(Action::PackedAction action, PlayerId playerId);
     void handleTradeBank(Action::PackedAction action, PlayerId playerId);
     void handleReceiveResources(Action::PackedAction action, PlayerId playerId);
+
+    void handleUndoMoveRobber(Action::PackedAction action, PlayerId playerId);
+    void handleUndoStealResource(Action::PackedAction action, PlayerId playerId);
+    void handleUndoDiscardResources(Action::PackedAction action, PlayerId playerId);
+    void handleUndoBuildRoad(Action::PackedAction action, PlayerId playerId);
+    void handleUndoBuildSettlement(Action::PackedAction action, PlayerId playerId);
+    void handleUndoBuildCity(Action::PackedAction action, PlayerId playerId);
+    void handleUndoBuyDevCard(Action::PackedAction action, PlayerId playerId);
+    void handleUndoPlayDevCardKnight(Action::PackedAction action, PlayerId playerId);
+    void handleUndoPlayDevCardRoadBuilding(Action::PackedAction action, PlayerId playerId);
+    void handleUndoPlayDevCardYearOfPlenty(Action::PackedAction action, PlayerId playerId);
+    void handleUndoPlayDevCardMonopoly(Action::PackedAction action, PlayerId playerId);
+    void handleUndoTradeBank(Action::PackedAction action, PlayerId playerId);
+    void handleUndoReceiveResources(Action::PackedAction action, PlayerId playerId);
+    void handleUndoPlaceInitialSettlement(Action::PackedAction action, PlayerId playerId);
+    void handleUndoPlace2InitialSettlement(Action::PackedAction action, PlayerId playerId);
+    void handleUndoPlaceInitialRoad(Action::PackedAction action, PlayerId playerId);
 };
 
 constexpr BoardState::BoardState() noexcept {

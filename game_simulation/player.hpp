@@ -158,6 +158,35 @@ constexpr void buy(PackedPlayer &p, BuyableType b, DevType d = DevType::NoDev) {
     }
 }
 
+constexpr void refund(PackedPlayer &p, BuyableType b, DevType d = DevType::NoDev) {
+    const auto& cost = StructureCost[static_cast<size_t>(b)];
+    p = packResource(p, Resource::Brick, unpackResource(p, Resource::Brick) + cost[0]);
+    p = packResource(p, Resource::Lumber, unpackResource(p, Resource::Lumber) + cost[1]);
+    p = packResource(p, Resource::Wool, unpackResource(p, Resource::Wool) + cost[2]);
+    p = packResource(p, Resource::Grain, unpackResource(p, Resource::Grain) + cost[3]);
+    p = packResource(p, Resource::Ore, unpackResource(p, Resource::Ore) + cost[4]);
+    switch (b)
+    {
+    case BuyableType::Road:
+        p = packAvailableStructures(p, StructureType::Road, unpackAvailableStructures(p, StructureType::Road) + 1);
+        break;
+    case BuyableType::Settlement:
+        p = packAvailableStructures(p, StructureType::Settlement, unpackAvailableStructures(p, StructureType::Settlement) + 1);
+        p = packVictoryPoints(p, unpackVictoryPoints(p) - 1);
+        break;
+    case BuyableType::City:
+        p = packAvailableStructures(p, StructureType::City, unpackAvailableStructures(p, StructureType::City) + 1);
+        p = packVictoryPoints(p, unpackVictoryPoints(p) - 1);
+        p = packAvailableStructures(p, StructureType::Settlement, unpackAvailableStructures(p, StructureType::Settlement) - 1);
+        break;
+    case BuyableType::DevCard:
+        p = packDevCard(p, d, unpackDevCard(p, d) - 1);
+        break;
+    default:
+        break;
+    }
+}
+
 constexpr uint8_t totalResources(PackedPlayer p) {
     return unpackResource(p, Resource::Brick) +
            unpackResource(p, Resource::Lumber) +
@@ -172,6 +201,10 @@ constexpr uint8_t totalDevCards(PackedPlayer p) {
            unpackDevCard(p, DevType::YearOfPlenty) +
            unpackDevCard(p, DevType::Monopoly) +
            unpackDevCard(p, DevType::VictoryPoint);
+}
+
+constexpr void changeResourceQuantity(PackedPlayer &p, Resource r, int8_t delta) {
+    p = packResource(p, r, unpackResource(p, r) + delta);
 }
 
 }// namespace Player

@@ -104,17 +104,47 @@ constexpr uint8_t computeTotalDevCards(PackedBank pb) {
     );
 }
 
-constexpr PackedBank sell(PackedBank pb, BuyableType b) {
+constexpr PackedBank buyableTransaction(PackedBank pb, BuyableType b, DevType d = DevType::NoDev, bool sell = true) {
     const auto& cost = StructureCost[static_cast<size_t>(b)];
-    pb = packResource(pb, Resource::Brick, unpackResource(pb, Resource::Brick) + cost[0]);
-    pb = packResource(pb, Resource::Lumber, unpackResource(pb, Resource::Lumber) + cost[1]);
-    pb = packResource(pb, Resource::Wool, unpackResource(pb, Resource::Wool) + cost[2]);
-    pb = packResource(pb, Resource::Grain, unpackResource(pb, Resource::Grain) + cost[3]);
-    pb = packResource(pb, Resource::Ore, unpackResource(pb, Resource::Ore) + cost[4]);
-    if (b == BuyableType::DevCard) {
-        pb = packTotalDevCount(pb, computeTotalDevCards(pb) - 1);
+
+    if (sell) {
+        // Bank sells an item to a player: add resources from bank
+        pb = packResource(pb, Resource::Brick, unpackResource(pb, Resource::Brick) + cost[0]);
+        pb = packResource(pb, Resource::Lumber, unpackResource(pb, Resource::Lumber) + cost[1]);
+        pb = packResource(pb, Resource::Wool, unpackResource(pb, Resource::Wool) + cost[2]);
+        pb = packResource(pb, Resource::Grain, unpackResource(pb, Resource::Grain) + cost[3]);
+        pb = packResource(pb, Resource::Ore, unpackResource(pb, Resource::Ore) + cost[4]);
+        if (b == BuyableType::DevCard) {
+            if (d != DevType::NoDev) {
+                uint8_t cur = unpackDevCard(pb, d);
+                if (cur > 0) pb = packDevCard(pb, d, cur - 1);
+            }
+            // Update cached total after possible change
+            pb = packTotalDevCount(pb, computeTotalDevCards(pb));
+        }
+    } else {
+        // Bank receives an item back and gives resources to player
+        pb = packResource(pb, Resource::Brick, unpackResource(pb, Resource::Brick) - cost[0]);
+        pb = packResource(pb, Resource::Lumber, unpackResource(pb, Resource::Lumber) - cost[1]);
+        pb = packResource(pb, Resource::Wool, unpackResource(pb, Resource::Wool) - cost[2]);
+        pb = packResource(pb, Resource::Grain, unpackResource(pb, Resource::Grain) - cost[3]);
+        pb = packResource(pb, Resource::Ore, unpackResource(pb, Resource::Ore) - cost[4]);
+
+        if (b == BuyableType::DevCard) {
+            if (d != DevType::NoDev) {
+                uint8_t cur = unpackDevCard(pb, d);
+                pb = packDevCard(pb, d, cur + 1);
+            }
+            // Update cached total after possible change
+            pb = packTotalDevCount(pb, computeTotalDevCards(pb));
+        }
     }
+
     return pb;
+}
+
+constexpr void changeResourceQuantity(PackedBank &pb, Resource r, int8_t delta) {
+    pb = packResource(pb, r, unpackResource(pb, r) + delta);
 }
 
 } // namespace Bank
