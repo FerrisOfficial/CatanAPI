@@ -586,6 +586,7 @@ TEST_F(ApplyActionTest, ExpectBuyDevelopmentCard) {
     EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Ore), 11);
     EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Brick), 10);
     EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Lumber), 10);
+    EXPECT_EQ(Bank::unpackDevCard(boardState.packedBank, DevType::VictoryPoint), 4);
     EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], Resource::Brick), 7);
     EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], Resource::Lumber), 7);
     EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], Resource::Grain), 6);
@@ -651,7 +652,7 @@ TEST_F(ApplyActionTest, ExpectPlayDevCardKnight){
         DevType::Knight,
         1
     );
-        boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packResource(
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packResource(
         boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
         robbedResource,
         2

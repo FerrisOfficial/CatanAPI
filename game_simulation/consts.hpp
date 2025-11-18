@@ -67,7 +67,7 @@ enum class ActionType : uint8_t {
     // Robber
     MoveRobber = 3, // Arg1: HexId to move the robber to
     StealResource = 4, // Arg1: Resource type (0-4) 
-    DiscardResources = 5, // Resources
+    DiscardResources = 5, // Resources that player chose to discard
 
     // Buying/Building
     BuildRoad = 6, // Arg1: EdgeId to build road on
@@ -93,7 +93,7 @@ enum class ActionType : uint8_t {
     //Undo Actions
     UndoMoveRobber = 19, // Arg1: Previous HexId of the robber, Arg2: Resource type (0-4) stolen
     UndoStealResource = 20, // Arg1: Resource type (0-4) that was stolen
-    UndoDiscardResources = 21, // Resources
+    UndoDiscardResources = 21, // Resources that player chose to discard
 
     UndoBuildRoad = 22, // Arg1: EdgeId where road was built
     UndoBuildSettlement = 23, // Arg1: NodeId where settlement was built
