@@ -106,7 +106,7 @@ enum class ActionType : uint8_t {
     UndoPlayDevCardMonopoly = 29, // Arg1: Resource type (0-4) stolen, Arg2: amount stolen
 
     UndoTradeBank = 30, // Arg1: Give bank resource type (0-4), Arg2: Take resource type (0-4), Arg3: trade ratio (2-4)
-    UndoReceiveResources = 31, // Resources, Arg1: Resource type (0-4), Arg2: amount to give
+    UndoReceiveResources = 31, // Resources, Arg1: Resource type (0-4), Arg2: amount to take back
 
     UndoPlaceInitialSettlement = 32, // Arg1: NodeId where settlement was placed
     UndoPlace2InitialSettlement = 33, // Arg1: NodeId where settlement was placed

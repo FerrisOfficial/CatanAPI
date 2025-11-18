@@ -14,6 +14,8 @@ add_executable(
 add_executable(
   board_tests
   test_board.cpp
+  test_board_actions.cpp
+  test_board_undo_actions.cpp
 )
 
 add_executable(

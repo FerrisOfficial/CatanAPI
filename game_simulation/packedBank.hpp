@@ -117,7 +117,7 @@ constexpr PackedBank buyableTransaction(PackedBank pb, BuyableType b, DevType d 
         if (b == BuyableType::DevCard) {
             if (d != DevType::NoDev) {
                 uint8_t cur = unpackDevCard(pb, d);
-                if (cur > 0) pb = packDevCard(pb, d, cur - 1);
+                pb = packDevCard(pb, d, cur - 1);
             }
             // Update cached total after possible change
             pb = packTotalDevCount(pb, computeTotalDevCards(pb));

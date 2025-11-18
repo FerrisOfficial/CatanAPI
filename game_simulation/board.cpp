@@ -212,7 +212,6 @@ void BoardState::handleUndoMoveRobber(Action::PackedAction action, PlayerId play
     undoStealAction = Action::packPlayerID(undoStealAction, playerId);
     undoStealAction = Action::packArg1(undoStealAction, static_cast<uint8_t>(resourceType));
     handleUndoStealResource(undoStealAction, playerId);
-
 }
 
 void BoardState::handleBuildRoad(Action::PackedAction action, PlayerId playerId) {
@@ -747,6 +746,8 @@ void BoardState::applyUndoAction(Action::PackedAction action) {
         break;
     case ActionType::UndoPlaceInitialRoad:
         handleUndoPlaceInitialRoad(action, playerId);
+        break;
+    default:
         break;
     }
 }
