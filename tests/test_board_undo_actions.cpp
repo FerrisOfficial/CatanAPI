@@ -57,8 +57,8 @@ TEST_P(UndoActionTest, ApplyThenUndoActions) {
     case ActionType::StealResource: {
         boardState.packedPlayers[static_cast<uint8_t>(pid)] =
             Player::packResource(boardState.packedPlayers[static_cast<uint8_t>(pid)], Resource::Brick, 5);
-        boardState.packedPlayers[static_cast<uint8_t>(PlayerId::Player1)] =
-            Player::packResource(boardState.packedPlayers[static_cast<uint8_t>(PlayerId::Player1)], Resource::Brick, 2);
+        boardState.packedPlayers[static_cast<uint8_t>(victim_pid)] =
+            Player::packResource(boardState.packedPlayers[static_cast<uint8_t>(victim_pid)], Resource::Brick, 2);
 
         action = Action::packType(action, ActionType::StealResource);
         action = Action::packPlayerID(action, pid);
