@@ -193,8 +193,6 @@ struct BoardState {
     Player::PackedPlayer packedPlayers[2] = {Player::makeNewPlayer(), Player::makeNewPlayer()};
     Bank::PackedBank packedBank = Bank::makeNewBank();
 
-    uint8_t devDeckCounts[5] = {14, 2, 2, 2, 5};
-
     PlayerId currentPlayer = PlayerId::Player1;
     uint8_t currentTurn = 0;
 
@@ -204,7 +202,7 @@ struct BoardState {
     constexpr BoardState() noexcept;
     void generateRandomBoard();
     void applyAction(Action::PackedAction action);
-    void applyUndoAction(Action::PackedAction action);
+    void undoLastAction();
 
     void handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId);
     void handlePlace2InitialSettlement(Action::PackedAction action, PlayerId playerId);
