@@ -34,6 +34,104 @@ protected:
 
 };
 
+TEST_F(ApplyActionTest, ExpextPlaceInitialSettlement) {
+    PlayerId playerId = PlayerId::Player0;
+
+    Action::PackedAction placeSettlementAction{};
+    placeSettlementAction = Action::packType(placeSettlementAction, ActionType::PlaceInitialSettlement);
+    placeSettlementAction = Action::packPlayerID(placeSettlementAction, playerId);
+    placeSettlementAction = Action::packArg1(placeSettlementAction, 0); // NodeId 0
+    
+    boardState.applyAction(placeSettlementAction);
+
+    EXPECT_EQ(Node::unpackStructure(boardState.nodes[0]), StructureType::Settlement);
+    EXPECT_EQ(Node::unpackOwner(boardState.nodes[0]), playerId);
+    EXPECT_EQ(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<size_t>(playerId)]), 1);
+    EXPECT_EQ(Player::unpackAvailableStructures(
+        boardState.packedPlayers[static_cast<size_t>(playerId)],
+        StructureType::Settlement
+    ), 4); // Starting with 5 settlements
+}
+
+TEST_F(ApplyActionTest, ExpextPlace2InitialSettlement) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    NodeId settlementNodeId = 2;
+    Node::PackedNode settlementNode = boardState.nodes[settlementNodeId];
+
+    PlayerId playerId = PlayerId::Player1;
+
+    HexId adjHex[3] = {
+        Node::unpackAdjacentHex(settlementNode, 0),
+        Node::unpackAdjacentHex(settlementNode, 1),
+        Node::unpackAdjacentHex(settlementNode, 2)
+    };
+
+    for (HexId h : adjHex) {
+        if (h != HexIdNone) {
+            boardState.hexes[h] = Hex::packResource(boardState.hexes[h], Resource::Brick);
+        }
+    }
+
+    boardState.packedPlayers[static_cast<size_t>(playerId)] = 
+        Player::packVictoryPoints(
+            boardState.packedPlayers[static_cast<size_t>(playerId)],
+            0
+        );
+    boardState.packedPlayers[static_cast<size_t>(playerId)] = 
+        Player::packAvailableStructures(
+            boardState.packedPlayers[static_cast<size_t>(playerId)],
+            StructureType::Settlement,
+            5
+        );
+
+    
+    
+    Action::PackedAction place2SettlementAction{};
+    place2SettlementAction = Action::packType(place2SettlementAction, ActionType::Place2InitialSettlement);
+    place2SettlementAction = Action::packPlayerID(place2SettlementAction, playerId);
+    place2SettlementAction = Action::packArg1(place2SettlementAction, settlementNodeId);
+    
+    boardState.applyAction(place2SettlementAction);
+
+    EXPECT_EQ(Node::unpackStructure(boardState.nodes[settlementNodeId]), StructureType::Settlement);
+    EXPECT_EQ(Node::unpackOwner(boardState.nodes[settlementNodeId]), playerId);
+    EXPECT_EQ(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<size_t>(playerId)]), 1);
+    EXPECT_EQ(Player::unpackAvailableStructures(
+        boardState.packedPlayers[static_cast<size_t>(playerId)],
+        StructureType::Settlement
+    ), 4); // Starting with 5 settlements
+    EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Brick), 8);
+    EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(playerId)], Resource::Brick), 9);
+    
+    for (HexId h : adjHex) {
+        if (h != HexIdNone) {
+            EXPECT_EQ(
+                Hex::unpackPlayerValue(boardState.hexes[h], playerId),
+                1
+            );
+        }
+    }
+}
+
+
+TEST_F(ApplyActionTest, ExpectPlaceInitialRoad){
+    PlayerId playerId = PlayerId::Player0;
+    EdgeId roadEdgeId = 10;
+
+    Action::PackedAction buildRoadAction{};
+    buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+    buildRoadAction = Action::packArg1(buildRoadAction, roadEdgeId);
+    buildRoadAction = Action::packPlayerID(buildRoadAction, playerId);
+    boardState.applyAction(buildRoadAction);
+    
+    Edge::PackedEdge roadEdge = boardState.edges[roadEdgeId];
+    EXPECT_TRUE(Edge::unpackHasRoad(roadEdge));
+    EXPECT_EQ(Edge::unpackOwner(roadEdge), playerId);
+    EXPECT_EQ(Player::unpackAvailableStructures(boardState.packedPlayers[static_cast<size_t>(playerId)], StructureType::Road), 14);
+
+}
+
 TEST_F(ApplyActionTest, ExpectResourceDistributionOnEightRoll) {
     setBankResourcesTen();
 

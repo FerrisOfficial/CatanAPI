@@ -196,7 +196,7 @@ struct BoardState {
     PlayerId currentPlayer = PlayerId::Player1;
     uint8_t currentTurn = 0;
 
-    ActionType actionQueue[512] = {};
+    Action::PackedAction actionQueue[512] = {};
     uint8_t actionQueueSize = 0;
 
     constexpr BoardState() noexcept;

@@ -63,6 +63,12 @@ void BoardState::handlePlace2InitialSettlement(Action::PackedAction action, Play
         if (res != Resource::NoResource) {
             Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], res, 1);
             Bank::changeResourceQuantity(BoardState::packedBank, res, -1);
+
+            hexes[hexId] = Hex::packPlayerValue(
+                hexes[hexId],
+                playerId,
+                Hex::unpackPlayerValue(hexes[hexId], playerId) + 1
+            );
         }
     }
     packedPlayers[static_cast<uint8_t>(playerId)] =
@@ -92,6 +98,12 @@ void BoardState::handleUndoPlace2InitialSettlement(Action::PackedAction action, 
         if (res != Resource::NoResource) {
             Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], res, -1);
             Bank::changeResourceQuantity(BoardState::packedBank, res, 1);
+
+            hexes[hexId] = Hex::packPlayerValue(
+                hexes[hexId],
+                playerId,
+                Hex::unpackPlayerValue(hexes[hexId], playerId) - 1
+            );
         }
     }
     packedPlayers[static_cast<uint8_t>(playerId)] =
@@ -208,7 +220,7 @@ void BoardState::handleUndoMoveRobber(Action::PackedAction action, PlayerId play
 
     auto resourceType = static_cast<Resource>(Action::unpackArg2(action));
     Action::PackedAction undoStealAction = 0;
-    undoStealAction = Action::packType(undoStealAction, ActionType::UndoStealResource);
+    undoStealAction = Action::packType(undoStealAction, ActionType::StealResource);
     undoStealAction = Action::packPlayerID(undoStealAction, playerId);
     undoStealAction = Action::packArg1(undoStealAction, static_cast<uint8_t>(resourceType));
     handleUndoStealResource(undoStealAction, playerId);
@@ -694,63 +706,64 @@ void BoardState::applyAction(Action::PackedAction action) {
     }
 }
 
-void BoardState::applyUndoAction(Action::PackedAction action) {
-    auto type = Action::unpackType(action);
-    auto playerId = Action::unpackPlayerID(action);
+// void BoardState::undoLastAction() {
+//     Action::PackedAction action = actionHistory.back();
+//     auto type = Action::unpackType(action);
+//     auto playerId = Action::unpackPlayerID(action);
 
-    switch (type) {
-    case ActionType::UndoMoveRobber:
-        handleUndoMoveRobber(action, playerId);
-        break;
-    case ActionType::UndoStealResource:
-        handleUndoStealResource(action, playerId);
-        break;
-    case ActionType::UndoDiscardResources:
-        handleUndoDiscardResources(action, playerId);
-        break;
-    case ActionType::UndoBuildRoad:
-        handleUndoBuildRoad(action, playerId);
-        break;
-    case ActionType::UndoBuildSettlement:
-        handleUndoBuildSettlement(action, playerId);
-        break;
-    case ActionType::UndoBuildCity:
-        handleUndoBuildCity(action, playerId);
-        break;
-    case ActionType::UndoBuyDevCard:
-        handleUndoBuyDevCard(action, playerId);
-        break;
-    case ActionType::UndoPlayDevCardKnight:
-        handleUndoPlayDevCardKnight(action, playerId);
-        break;
-    case ActionType::UndoPlayDevCardRoadBuilding:
-        handleUndoPlayDevCardRoadBuilding(action, playerId);
-        break;
-    case ActionType::UndoPlayDevCardYearOfPlenty:
-        handleUndoPlayDevCardYearOfPlenty(action, playerId);
-        break;
-    case ActionType::UndoPlayDevCardMonopoly:
-        handleUndoPlayDevCardMonopoly(action, playerId);
-        break;
-    case ActionType::UndoTradeBank:
-        handleUndoTradeBank(action, playerId);
-        break;
-    case ActionType::UndoReceiveResources:
-        handleUndoReceiveResources(action, playerId);
-        break;
-    case ActionType::UndoPlaceInitialSettlement:
-        handleUndoPlaceInitialSettlement(action, playerId);
-        break;
-    case ActionType::UndoPlace2InitialSettlement:
-        handleUndoPlace2InitialSettlement(action, playerId);
-        break;
-    case ActionType::UndoPlaceInitialRoad:
-        handleUndoPlaceInitialRoad(action, playerId);
-        break;
-    default:
-        break;
-    }
-}
+//     switch (type) {
+//     case ActionType::UndoMoveRobber:
+//         handleUndoMoveRobber(action, playerId);
+//         break;
+//     case ActionType::UndoStealResource:
+//         handleUndoStealResource(action, playerId);
+//         break;
+//     case ActionType::UndoDiscardResources:
+//         handleUndoDiscardResources(action, playerId);
+//         break;
+//     case ActionType::UndoBuildRoad:
+//         handleUndoBuildRoad(action, playerId);
+//         break;
+//     case ActionType::UndoBuildSettlement:
+//         handleUndoBuildSettlement(action, playerId);
+//         break;
+//     case ActionType::UndoBuildCity:
+//         handleUndoBuildCity(action, playerId);
+//         break;
+//     case ActionType::UndoBuyDevCard:
+//         handleUndoBuyDevCard(action, playerId);
+//         break;
+//     case ActionType::UndoPlayDevCardKnight:
+//         handleUndoPlayDevCardKnight(action, playerId);
+//         break;
+//     case ActionType::UndoPlayDevCardRoadBuilding:
+//         handleUndoPlayDevCardRoadBuilding(action, playerId);
+//         break;
+//     case ActionType::UndoPlayDevCardYearOfPlenty:
+//         handleUndoPlayDevCardYearOfPlenty(action, playerId);
+//         break;
+//     case ActionType::UndoPlayDevCardMonopoly:
+//         handleUndoPlayDevCardMonopoly(action, playerId);
+//         break;
+//     case ActionType::UndoTradeBank:
+//         handleUndoTradeBank(action, playerId);
+//         break;
+//     case ActionType::UndoReceiveResources:
+//         handleUndoReceiveResources(action, playerId);
+//         break;
+//     case ActionType::UndoPlaceInitialSettlement:
+//         handleUndoPlaceInitialSettlement(action, playerId);
+//         break;
+//     case ActionType::UndoPlace2InitialSettlement:
+//         handleUndoPlace2InitialSettlement(action, playerId);
+//         break;
+//     case ActionType::UndoPlaceInitialRoad:
+//         handleUndoPlaceInitialRoad(action, playerId);
+//         break;
+//     default:
+//         break;
+//     }
+// }
 
 void BoardState::generateRandomBoard() {
     auto& rng = RandomDevice::get_rng();
