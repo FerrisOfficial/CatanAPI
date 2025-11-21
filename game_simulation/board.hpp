@@ -223,6 +223,7 @@ struct BoardState {
     void handleTradeBank(Action::PackedAction action, PlayerId playerId);
     void handleReceiveResources(Action::PackedAction action, PlayerId playerId);
 
+    void handleUndoRollDice(Action::PackedAction action);
     void handleUndoMoveRobber(Action::PackedAction action, PlayerId playerId);
     void handleUndoStealResource(Action::PackedAction action, PlayerId playerId);
     void handleUndoDiscardResources(Action::PackedAction action, PlayerId playerId);
@@ -372,5 +373,4 @@ constexpr BoardState::BoardState() noexcept {
     edges[71] = Edge::makeEdge(52, 53);
 }
 
-inline constexpr BoardState CompiledBoard{};
 } // namespace Board

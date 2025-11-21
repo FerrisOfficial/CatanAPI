@@ -27,6 +27,8 @@ void BoardState::handlePlaceInitialSettlement(Action::PackedAction action, Playe
                 packedPlayers[static_cast<uint8_t>(playerId)],
                 StructureType::Settlement) - 1
         );
+
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoPlaceInitialSettlement(Action::PackedAction action, PlayerId playerId) {
@@ -85,6 +87,8 @@ void BoardState::handlePlace2InitialSettlement(Action::PackedAction action, Play
                 packedPlayers[static_cast<uint8_t>(playerId)],
                 StructureType::Settlement) - 1
         );
+
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoPlace2InitialSettlement(Action::PackedAction action, PlayerId playerId) {
@@ -136,6 +140,8 @@ void BoardState::handlePlaceInitialRoad(Action::PackedAction action, PlayerId pl
                 packedPlayers[static_cast<uint8_t>(playerId)],
                 StructureType::Road) - 1
         );
+
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoPlaceInitialRoad(Action::PackedAction action, PlayerId playerId) {
@@ -179,39 +185,42 @@ void BoardState::handleRollDice(Action::PackedAction action) {
             -(Hex::unpackPlayerValue(hexes[h], PlayerId::Player0) +
             Hex::unpackPlayerValue(hexes[h], PlayerId::Player1)));
     }
+
+    action = Action::packArg1(action, dice);
+    actionQueue[actionQueueSize++] = action;
+}
+
+void BoardState::handleUndoRollDice(Action::PackedAction action){
+    uint8_t dice = Action::unpackArg1(action);
+
+    // For each hex with matching catan number, produce resources
+    for (HexId h = 0; h < HEX_COUNT; ++h) {
+        if (Hex::unpackCatanNumber(hexes[h]) != dice) continue;
+        Resource res = Hex::unpackResource(hexes[h]);
+
+        auto &p0 = packedPlayers[static_cast<uint8_t>(PlayerId::Player0)];
+        auto &p1 = packedPlayers[static_cast<uint8_t>(PlayerId::Player1)];
+
+        Player::changeResourceQuantity(p0, res,
+            -Hex::unpackPlayerValue(hexes[h], PlayerId::Player0));
+        Player::changeResourceQuantity(p1, res, 
+            -Hex::unpackPlayerValue(hexes[h], PlayerId::Player1));
+        Bank::changeResourceQuantity(BoardState::packedBank, res,
+            (Hex::unpackPlayerValue(hexes[h], PlayerId::Player0) +
+            Hex::unpackPlayerValue(hexes[h], PlayerId::Player1)));
+    }
 }
 
 void BoardState::handleMoveRobber(Action::PackedAction action, PlayerId playerId) {
     auto hexId = Action::unpackArg1(action);
+    action = Action::packArg1(action, robberPosition);
     robberPosition = hexId;
-    auto enemyPlayerId = playerId == PlayerId::Player0 ? PlayerId::Player1 : PlayerId::Player0;
-
-    uint32_t total = Player::totalResources(packedPlayers[static_cast<uint8_t>(enemyPlayerId)]);
-    uint32_t pick = RandomDevice::uniform_u32(total);
-    int chosenRes = 0;
-    uint32_t acc = 0;
-
-    for (Resource r : {
-        Resource::Brick,
-        Resource::Lumber,
-        Resource::Wool,
-        Resource::Grain,
-        Resource::Ore
-    }) {
-        uint8_t resCount = Player::unpackResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], r);
-        if (pick < acc + resCount) {
-            chosenRes = static_cast<int>(r);
-            break;
-        }
-        acc += resCount;
-    }
-
-    Action::PackedAction stealAction = 0;
-    stealAction = Action::packType(stealAction, ActionType::StealResource);
-    stealAction = Action::packPlayerID(stealAction, playerId);
-    stealAction = Action::packArg1(stealAction, static_cast<uint8_t>(chosenRes));
     
-    handleStealResource(stealAction, playerId);
+    handleStealResource(action, playerId);
+    
+    if (Action::unpackType(action) == ActionType::MoveRobber) {
+        actionQueue[actionQueueSize++] = action;
+    }
 }
 
 void BoardState::handleUndoMoveRobber(Action::PackedAction action, PlayerId playerId) {
@@ -234,6 +243,8 @@ void BoardState::handleBuildRoad(Action::PackedAction action, PlayerId playerId)
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Road);
     BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::Road);
+
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoBuildRoad(Action::PackedAction action, PlayerId playerId) {
@@ -270,6 +281,8 @@ void BoardState::handleBuildSettlement(Action::PackedAction action, PlayerId pla
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Settlement);
     BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::Settlement);
+
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoBuildSettlement(Action::PackedAction action, PlayerId playerId) {
@@ -321,6 +334,8 @@ void BoardState::handleBuildCity(Action::PackedAction action, PlayerId playerId)
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::City);
     BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::City);
+    
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoBuildCity(Action::PackedAction action, PlayerId playerId) {
@@ -370,6 +385,12 @@ void BoardState::handleBuyDevCard(PlayerId playerId) {
 
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::DevCard, DevTypeOfpick);
     BoardState::packedBank = Bank::buyableTransaction(BoardState::packedBank, BuyableType::DevCard, DevTypeOfpick);
+
+    Action::PackedAction action = 0;
+    action = Action::packType(action, ActionType::BuyDevCard);
+    action = Action::packPlayerID(action, playerId);
+    action = Action::packArg1(action, static_cast<uint8_t>(DevTypeOfpick));
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoBuyDevCard(Action::PackedAction action, PlayerId playerId) {
@@ -381,6 +402,7 @@ void BoardState::handleUndoBuyDevCard(Action::PackedAction action, PlayerId play
 void BoardState::handlePlayDevCardKnight(Action::PackedAction action, PlayerId playerId) {
     // Decrement knight dev card count
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
+    auto previousRobberPosition = robberPosition;
     p = Player::packDevCard(
         p,
         DevType::Knight,
@@ -388,6 +410,9 @@ void BoardState::handlePlayDevCardKnight(Action::PackedAction action, PlayerId p
     );
 
     handleMoveRobber(action, playerId);
+
+    action = Action::packArg1(action, previousRobberPosition);
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoPlayDevCardKnight(Action::PackedAction action, PlayerId playerId) {
@@ -428,6 +453,8 @@ void BoardState::handlePlayDevCardRoadBuilding(Action::PackedAction action, Play
                 p,
                 StructureType::Road) - 2
         );
+
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoPlayDevCardRoadBuilding(Action::PackedAction action, PlayerId playerId) {
@@ -478,6 +505,8 @@ void BoardState::handlePlayDevCardYearOfPlenty(Action::PackedAction action, Play
     // Add second resource to player
     Player::changeResourceQuantity(p, secondResource, 1);
     Bank::changeResourceQuantity(packedBank, secondResource, -1);
+
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoPlayDevCardYearOfPlenty(Action::PackedAction action, PlayerId playerId) {
@@ -524,6 +553,9 @@ void BoardState::handlePlayDevCardMonopoly(Action::PackedAction action, PlayerId
 
         Player::changeResourceQuantity(p, targetResource, enemyHave);
     }
+
+    action = Action::packArg2(action, enemyHave);
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoPlayDevCardMonopoly(Action::PackedAction action, PlayerId playerId) {
@@ -568,6 +600,8 @@ void BoardState::handleTradeBank(Action::PackedAction action, PlayerId playerId)
     uint8_t bankGive = Bank::unpackResource(BoardState::packedBank, giveResource);
     Bank::changeResourceQuantity(BoardState::packedBank, giveResource, ratio);
     Bank::changeResourceQuantity(BoardState::packedBank, receiveResource, -1);
+
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoTradeBank(Action::PackedAction action, PlayerId playerId) {
@@ -593,6 +627,8 @@ void BoardState::handleReceiveResources(Action::PackedAction action, PlayerId pl
 
     Player::changeResourceQuantity(p, res, amount);
     Bank::changeResourceQuantity(BoardState::packedBank, res, -amount);
+
+    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoReceiveResources(Action::PackedAction action, PlayerId playerId) {
@@ -626,11 +662,34 @@ void BoardState::handleUndoDiscardResources(Action::PackedAction action, PlayerI
 
 void BoardState::handleStealResource(Action::PackedAction action, PlayerId playerId) {
     auto enemyPlayerId = playerId == PlayerId::Player0 ? PlayerId::Player1 : PlayerId::Player0;
-    Resource res = static_cast<Resource>(Action::unpackArg1(action));
+
+    uint32_t total = Player::totalResources(packedPlayers[static_cast<uint8_t>(enemyPlayerId)]);
+    uint32_t pick = RandomDevice::uniform_u32(total);
+    int chosenRes = 0;
+    uint32_t acc = 0;
+
+    for (Resource r : {
+        Resource::Brick,
+        Resource::Lumber,
+        Resource::Wool,
+        Resource::Grain,
+        Resource::Ore
+    }) {
+        uint8_t resCount = Player::unpackResource(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], r);
+        if (pick < acc + resCount) {
+            chosenRes = static_cast<int>(r);
+            break;
+        }
+        acc += resCount;
+    }
     
     // handleDiscardResources();
-    Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], res, -1);
-    Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], res, 1);
+    Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], static_cast<Resource>(chosenRes), -1);
+    Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], static_cast<Resource>(chosenRes), 1);
+
+    if (Action::unpackType(action) == ActionType::StealResource) {
+        actionQueue[actionQueueSize++] = action;
+    }
 }
 
 void BoardState::handleUndoStealResource(Action::PackedAction action, PlayerId playerId) {
@@ -706,64 +765,72 @@ void BoardState::applyAction(Action::PackedAction action) {
     }
 }
 
-// void BoardState::undoLastAction() {
-//     Action::PackedAction action = actionHistory.back();
-//     auto type = Action::unpackType(action);
-//     auto playerId = Action::unpackPlayerID(action);
+void BoardState::undoLastAction() {
+    if (actionQueueSize == 0) return;
 
-//     switch (type) {
-//     case ActionType::UndoMoveRobber:
-//         handleUndoMoveRobber(action, playerId);
-//         break;
-//     case ActionType::UndoStealResource:
-//         handleUndoStealResource(action, playerId);
-//         break;
-//     case ActionType::UndoDiscardResources:
-//         handleUndoDiscardResources(action, playerId);
-//         break;
-//     case ActionType::UndoBuildRoad:
-//         handleUndoBuildRoad(action, playerId);
-//         break;
-//     case ActionType::UndoBuildSettlement:
-//         handleUndoBuildSettlement(action, playerId);
-//         break;
-//     case ActionType::UndoBuildCity:
-//         handleUndoBuildCity(action, playerId);
-//         break;
-//     case ActionType::UndoBuyDevCard:
-//         handleUndoBuyDevCard(action, playerId);
-//         break;
-//     case ActionType::UndoPlayDevCardKnight:
-//         handleUndoPlayDevCardKnight(action, playerId);
-//         break;
-//     case ActionType::UndoPlayDevCardRoadBuilding:
-//         handleUndoPlayDevCardRoadBuilding(action, playerId);
-//         break;
-//     case ActionType::UndoPlayDevCardYearOfPlenty:
-//         handleUndoPlayDevCardYearOfPlenty(action, playerId);
-//         break;
-//     case ActionType::UndoPlayDevCardMonopoly:
-//         handleUndoPlayDevCardMonopoly(action, playerId);
-//         break;
-//     case ActionType::UndoTradeBank:
-//         handleUndoTradeBank(action, playerId);
-//         break;
-//     case ActionType::UndoReceiveResources:
-//         handleUndoReceiveResources(action, playerId);
-//         break;
-//     case ActionType::UndoPlaceInitialSettlement:
-//         handleUndoPlaceInitialSettlement(action, playerId);
-//         break;
-//     case ActionType::UndoPlace2InitialSettlement:
-//         handleUndoPlace2InitialSettlement(action, playerId);
-//         break;
-//     case ActionType::UndoPlaceInitialRoad:
-//         handleUndoPlaceInitialRoad(action, playerId);
-//         break;
-//     default:
-//         break;
-//     }
-// }
+    Action::PackedAction action = actionQueue[--actionQueueSize];
+    auto type = Action::unpackType(action);
+    auto playerId = Action::unpackPlayerID(action);
+    std::cout << "---------Undoing action of type: " << static_cast<int>(type) << " by player: " << static_cast<int>(playerId) << std::endl;
+    std::cout << "---------Arg 1: " << static_cast<int>(Action::unpackArg1(action)) << std::endl;
+    std::cout << "Arg 2: " << static_cast<int>(Action::unpackArg2(action)) << std::endl;
+
+    switch (type) {
+    case ActionType::PlaceInitialSettlement:
+        handleUndoPlaceInitialSettlement(action, playerId);
+        break;
+    case ActionType::Place2InitialSettlement:
+        handleUndoPlace2InitialSettlement(action, playerId);
+        break;
+    case ActionType::PlaceInitialRoad:
+        handleUndoPlaceInitialRoad(action, playerId);
+        break;
+    case ActionType::RollDice:
+        handleUndoRollDice(action);
+        break;
+    case ActionType::MoveRobber:
+        handleUndoMoveRobber(action, playerId);
+        break;
+    case ActionType::DiscardResources:
+        handleUndoDiscardResources(action, playerId);
+        break;
+    case ActionType::BuildRoad:
+        handleUndoBuildRoad(action, playerId);
+        break;
+    case ActionType::BuildSettlement:
+        handleUndoBuildSettlement(action, playerId);
+        break;
+    case ActionType::BuildCity:
+        handleUndoBuildCity(action, playerId);
+        break;
+    case ActionType::BuyDevCard:
+        handleUndoBuyDevCard(action, playerId);
+        break;
+    case ActionType::PlayDevCardKnight:
+        handleUndoPlayDevCardKnight(action, playerId);
+        break;
+    case ActionType::PlayDevCardRoadBuilding:
+        handleUndoPlayDevCardRoadBuilding(action, playerId);
+        break;
+    case ActionType::PlayDevCardYearOfPlenty:
+        handleUndoPlayDevCardYearOfPlenty(action, playerId);
+        break;
+    case ActionType::PlayDevCardMonopoly:
+        handleUndoPlayDevCardMonopoly(action, playerId);
+        break;
+    case ActionType::TradeBank:
+        handleUndoTradeBank(action, playerId);
+        break;
+    case ActionType::ReceiveResources:
+        handleUndoReceiveResources(action, playerId);
+        break;
+    case ActionType::StealResource:
+        handleUndoStealResource(action, playerId);
+        break;
+    default:
+        break;
+    }
+}
 
 void BoardState::generateRandomBoard() {
     auto& rng = RandomDevice::get_rng();
