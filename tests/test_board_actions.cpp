@@ -242,6 +242,13 @@ TEST_F(ApplyActionTest, ExpectRobberMovementAndStealCardTrigger) {
     moveRobberAction = Action::packArg1(moveRobberAction, newRobberPosition);
     moveRobberAction = Action::packPlayerID(moveRobberAction, stealingPlayer);
     boardState.applyAction(moveRobberAction);
+    boardState.applyAction(
+        Action::packArg1(
+            Action::packPlayerID(
+                Action::packType(0, ActionType::StealResource),
+                stealingPlayer),
+            static_cast<uint8_t>(robbedResource))
+    );
     EXPECT_EQ(boardState.robberPosition, newRobberPosition);
     EXPECT_EQ(
         Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(stealingPlayer)], robbedResource),
@@ -533,23 +540,11 @@ TEST_F(ApplyActionTest, ExpectPlayDevCardKnight){
     PlayerId playingPlayer = PlayerId::Player0;
     PlayerId victimPlayer = PlayerId::Player1;
     HexId newRobberPosition = 5;
-    Resource robbedResource = Resource::Wool;
 
     boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
         boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
         DevType::Knight,
         1
-    );
-    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packResource(
-        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
-        robbedResource,
-        2
-    );
-
-    boardState.packedPlayers[static_cast<size_t>(victimPlayer)] = Player::packResource(
-        boardState.packedPlayers[static_cast<size_t>(victimPlayer)],
-        robbedResource,
-        3
     );
 
     Action::PackedAction playKnightAction{};
@@ -563,14 +558,7 @@ TEST_F(ApplyActionTest, ExpectPlayDevCardKnight){
         Player::unpackDevCard(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], DevType::Knight),
         0
     );
-    EXPECT_EQ(
-        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], robbedResource),
-        3
-    );
-    EXPECT_EQ(
-        Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(victimPlayer)], robbedResource),
-        2
-    );
+
 }
 
 TEST_F(ApplyActionTest, ExpectPlayDevCardRoadBuilding){

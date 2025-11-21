@@ -197,7 +197,7 @@ struct BoardState {
     uint8_t currentTurn = 0;
 
     Action::PackedAction actionQueue[512] = {};
-    uint8_t actionQueueSize = 0;
+    uint16_t actionQueueSize = 0;
 
     constexpr BoardState() noexcept;
     void generateRandomBoard();
@@ -207,22 +207,23 @@ struct BoardState {
     void handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId);
     void handlePlace2InitialSettlement(Action::PackedAction action, PlayerId playerId);
     void handlePlaceInitialRoad(Action::PackedAction action, PlayerId playerId);
-    void handleEndTurn();
-    void handleRollDice(Action::PackedAction action);
-    void handleMoveRobber(Action::PackedAction action, PlayerId playerId);
+    Action::PackedAction handleEndTurn();
+    Action::PackedAction handleRollDice(Action::PackedAction action);
+    Action::PackedAction handleMoveRobber(Action::PackedAction action, PlayerId playerId);
     void handleDiscardResources(Action::PackedAction action, PlayerId playerId);
     void handleBuildRoad(Action::PackedAction action, PlayerId playerId);
     void handleBuildSettlement(Action::PackedAction action, PlayerId playerId);
     void handleBuildCity(Action::PackedAction action, PlayerId playerId);
-    void handleBuyDevCard(PlayerId playerId);
-    void handlePlayDevCardKnight(Action::PackedAction action, PlayerId playerId);
+    Action::PackedAction handleBuyDevCard(PlayerId playerId);
+    Action::PackedAction handlePlayDevCardKnight(Action::PackedAction action, PlayerId playerId);
     void handlePlayDevCardRoadBuilding(Action::PackedAction action, PlayerId playerId);
     void handlePlayDevCardYearOfPlenty(Action::PackedAction action, PlayerId playerId);
-    void handlePlayDevCardMonopoly(Action::PackedAction action, PlayerId playerId);
+    Action::PackedAction handlePlayDevCardMonopoly(Action::PackedAction action, PlayerId playerId);
     void handleStealResource(Action::PackedAction action, PlayerId playerId);
     void handleTradeBank(Action::PackedAction action, PlayerId playerId);
     void handleReceiveResources(Action::PackedAction action, PlayerId playerId);
 
+    void handleUndoEndTurn();
     void handleUndoRollDice(Action::PackedAction action);
     void handleUndoMoveRobber(Action::PackedAction action, PlayerId playerId);
     void handleUndoStealResource(Action::PackedAction action, PlayerId playerId);

@@ -33,6 +33,11 @@ protected:
     }
 };
 
+constexpr Action::PackedAction endTurn =
+    Action::packPlayerID(
+        Action::packType(0, ActionType::EndTurn),
+        PlayerId::Player0);
+
 constexpr Action::PackedAction rollDice =
     Action::packPlayerID(
         Action::packType(0, ActionType::RollDice),
@@ -199,6 +204,7 @@ INSTANTIATE_TEST_SUITE_P(
     UndoLastAction,
     UndoLastActionTest,
     testing::Values(
+        endTurn,
         rollDice,
         moveRobber,
         stealResource,
