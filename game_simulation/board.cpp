@@ -764,9 +764,6 @@ void BoardState::undoLastAction() {
     Action::PackedAction action = actionQueue[--actionQueueSize];
     auto type = Action::unpackType(action);
     auto playerId = Action::unpackPlayerID(action);
-    std::cout << "---------Undoing action of type: " << static_cast<int>(type) << " by player: " << static_cast<int>(playerId) << std::endl;
-    std::cout << "---------Arg 1: " << static_cast<int>(Action::unpackArg1(action)) << std::endl;
-    std::cout << "Arg 2: " << static_cast<int>(Action::unpackArg2(action)) << std::endl;
 
     switch (type) {
     case ActionType::PlaceInitialSettlement:
