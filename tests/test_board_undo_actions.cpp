@@ -3,6 +3,7 @@
 #include "game_simulation/actions.hpp"
 #include "game_simulation/player.hpp"
 #include "game_simulation/packedBank.hpp"
+#include <array>
 
 using namespace Board;
 
@@ -167,6 +168,27 @@ constexpr Action::PackedAction placeInitialRoad =
             PlayerId::Player0),
         15);
 
+constexpr std::array<Action::PackedAction, 18> allActions = {
+    endTurn,
+    rollDice,
+    moveRobber,
+    stealResource,
+    discardResources,
+    buildRoad,
+    buildSettlement,
+    buildCity,
+    buyDevCard,
+    playDevCardKnight,
+    playDevCardRoadBuilding,
+    playDevCardYearOfPlenty,
+    playDevCardMonopoly,
+    receiveResources,
+    tradeBank,
+    placeInitialSettlement,
+    place2InitialSettlement,
+    placeInitialRoad
+};
+
 
 TEST_P(UndoLastActionTest, ExpectUndoLastAction){
     Action::PackedAction action = GetParam();
@@ -203,24 +225,15 @@ TEST_P(UndoLastActionTest, ExpectUndoLastAction){
 INSTANTIATE_TEST_SUITE_P(
     UndoLastAction,
     UndoLastActionTest,
-    testing::Values(
-        endTurn,
-        rollDice,
-        moveRobber,
-        stealResource,
-        discardResources,
-        buildRoad,
-        buildSettlement,
-        buildCity,
-        buyDevCard,
-        playDevCardKnight,
-        playDevCardRoadBuilding,
-        playDevCardYearOfPlenty,
-        playDevCardMonopoly,
-        receiveResources,
-        tradeBank,
-        placeInitialSettlement,
-        place2InitialSettlement,
-        placeInitialRoad
-    )
+    testing::ValuesIn(allActions)
 );
+
+TEST_F(UndoLastActionTest, ActionQueueShrinksAfterUndo) {
+    for (auto a : allActions) {
+        uint16_t beforeSize = boardState.actionQueueSize;
+        boardState.applyAction(a);
+        EXPECT_EQ(boardState.actionQueueSize, beforeSize + 1);
+        boardState.undoLastAction();
+        EXPECT_EQ(boardState.actionQueueSize, beforeSize);
+    }
+}

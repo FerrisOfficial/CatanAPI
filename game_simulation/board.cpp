@@ -136,8 +136,6 @@ void BoardState::handlePlaceInitialRoad(Action::PackedAction action, PlayerId pl
                 packedPlayers[static_cast<uint8_t>(playerId)],
                 StructureType::Road) - 1
         );
-
-    actionQueue[actionQueueSize++] = action;
 }
 
 void BoardState::handleUndoPlaceInitialRoad(Action::PackedAction action, PlayerId playerId) {
@@ -219,9 +217,6 @@ Action::PackedAction BoardState::handleMoveRobber(Action::PackedAction action, P
     action = Action::packArg1(action, robberPosition);
     robberPosition = hexId;
     
-    if (Action::unpackType(action) == ActionType::MoveRobber) {
-        actionQueue[actionQueueSize++] = action;
-    }
     return action;
 }
 
@@ -676,10 +671,6 @@ void BoardState::handleStealResource(Action::PackedAction action, PlayerId playe
     // handleDiscardResources();
     Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], static_cast<Resource>(chosenRes), -1);
     Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], static_cast<Resource>(chosenRes), 1);
-
-    if (Action::unpackType(action) == ActionType::StealResource) {
-        actionQueue[actionQueueSize++] = action;
-    }
 }
 
 void BoardState::handleUndoStealResource(Action::PackedAction action, PlayerId playerId) {
@@ -693,9 +684,6 @@ void BoardState::handleUndoStealResource(Action::PackedAction action, PlayerId p
 void BoardState::applyAction(Action::PackedAction action) {
     auto type = Action::unpackType(action);
     auto playerId = Action::unpackPlayerID(action);
-    std::cout << "---------Doing action of type: " << static_cast<int>(type) << " by player: " << static_cast<int>(playerId) << std::endl;
-    std::cout << "---------Arg 1: " << static_cast<int>(Action::unpackArg1(action)) << std::endl;
-    std::cout << "Arg 2: " << static_cast<int>(Action::unpackArg2(action)) << std::endl;
 
     switch (type) {
     case ActionType::PlaceInitialSettlement:
