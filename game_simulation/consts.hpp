@@ -100,3 +100,11 @@ enum class PortType : uint8_t {
     OrePort = 5,
     NoPort = 6
 };
+
+const NodeId brickPortsNodes[2] = { 15, 25 };
+const NodeId lumberPortsNodes[2] = { 36, 46 };
+const NodeId woolPortsNodes[2] = { 7, 8 };
+const NodeId grainPortsNodes[2] = { 49, 50 };
+const NodeId orePortsNodes[2] = { 38, 39 };
+const NodeId threeForOnePortsNodes[8] = { 2, 3, 5, 6, 16, 27, 52, 53 };
+
