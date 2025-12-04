@@ -26,6 +26,8 @@ namespace Action {
 
 using PackedAction = uint64_t;
 
+constexpr PackedAction getEmptyAction() {return 0;}
+
 // Action type packing/unpacking (bits 0-4)
 constexpr PackedAction packType(PackedAction a, ActionType type) {
     return (a & ~0x1FULL) | (uint64_t(static_cast<uint8_t>(type) & 0x1F));

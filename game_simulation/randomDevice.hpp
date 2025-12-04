@@ -23,4 +23,8 @@ inline std::mt19937& get_rng() {
     return rng;
 }
 
+inline int rollDices() {
+    return uniform_u32_range(1, 6) + uniform_u32_range(1, 6);
+}
+
 } // namespace RandomDevice

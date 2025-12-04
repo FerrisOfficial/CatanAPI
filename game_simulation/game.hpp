@@ -13,5 +13,13 @@ struct Game {
 
     Game(IPlayer& player1, IPlayer& player2);
     void initialPhase();
-
+    void turnLoop();
+    PlayerId runGame();
+    
+    // Breakdown helpers
+    void processDevPhase(IPlayer& currentPlayer);
+    void applyDiceRoll(uint8_t diceNumber);
+    void discardResourcesForSeven(PlayerId currentPlayerId);
+    void handleRobberPhase(IPlayer& currentPlayer, PlayerId currentPlayerId);
+    void processPlayerTurn(IPlayer& currentPlayer);
 };
