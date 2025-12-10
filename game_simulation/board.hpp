@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 #include <player.hpp>
 #include <consts.hpp>
@@ -241,6 +242,11 @@ struct BoardState {
     void handleUndoPlaceInitialSettlement(Action::PackedAction action, PlayerId playerId);
     void handleUndoPlace2InitialSettlement(Action::PackedAction action, PlayerId playerId);
     void handleUndoPlaceInitialRoad(Action::PackedAction action, PlayerId playerId);
+
+    std::vector<Action::PackedAction> getLegalActions(PlayerId playerId);
+    std::vector<Action::PackedAction> generateBuildActions(PlayerId playerId);
+    std::vector<Action::PackedAction> generateTradeActions(PlayerId playerId);
+    std::vector<Action::PackedAction> generateDevCardActions(PlayerId playerId);
 };
 
 constexpr BoardState::BoardState() noexcept {
