@@ -112,7 +112,7 @@ PlayerId Game::runGame() {
     auto vpP0 = Player::unpackVictoryPoints(this->boardState.packedPlayers[0]);
     auto vpP1 = Player::unpackVictoryPoints(this->boardState.packedPlayers[1]);
 
-    while (vpP0 < 15 and vpP1 < 15 and actualTurn < 150) 
+    while (vpP0 < 15 && vpP1 < 15 && actualTurn < 150) 
     {
         this->turnLoop();
         vpP0 = Player::unpackVictoryPoints(this->boardState.packedPlayers[0]);

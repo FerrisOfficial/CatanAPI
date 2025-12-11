@@ -41,6 +41,7 @@ set(GAME_SIM_SRC
     players/player.cpp
     game_simulation/game.cpp
     game_simulation/board.cpp
+    game_simulation/board_generate_actions.cpp
 )
 
 if(ENABLE_DISPLAY)

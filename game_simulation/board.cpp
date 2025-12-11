@@ -7,6 +7,14 @@
 
 namespace Board {
 
+namespace GenerateActions {
+    std::vector<Action::PackedAction> generateBuildActions(const BoardState& board, PlayerId playerId);
+    std::vector<Action::PackedAction> generateBankTradeActions(const BoardState& board, PlayerId playerId);
+    std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(const BoardState& board, PlayerId playerId);
+    // std::vector<Action::PackedAction> generateThreeToOnePortTradeActions(const BoardState& board, PlayerId playerId);
+    std::vector<Action::PackedAction> generateDevCardActions(const BoardState& board, PlayerId playerId);
+}
+
 void BoardState::handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId) {
     auto nodeId = Action::unpackArg1(action);
     nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::Settlement);
@@ -810,230 +818,41 @@ void BoardState::undoLastAction() {
     }
 }
 
-Action::PackedAction buildAction(ActionType type, PlayerId playerId, uint8_t arg1 = 0, uint8_t arg2 = 0, uint8_t arg3 = 0) {
-    Action::PackedAction action = 0;
-    action = Action::packType(action, type);
-    action = Action::packPlayerID(action, playerId);
-    action = Action::packArg1(action, arg1);
-    action = Action::packArg2(action, arg2);
-    action = Action::packArg3(action, arg3);
-    return action;
-};
-
 std::vector<Action::PackedAction> BoardState::generateBuildActions(PlayerId playerId){
-    std::vector<Action::PackedAction> buildActions;
+    return GenerateActions::generateBuildActions(*this, playerId);
+}
 
-    // Generate build road actions
-    for (EdgeId edgeId = 0; edgeId < EDGE_COUNT; ++edgeId) {;
-        if (!(Edge::unpackHasRoad(edges[edgeId])))
-            buildActions.push_back(buildAction(ActionType::BuildRoad, playerId, edgeId));
-    }
+std::vector<Action::PackedAction> BoardState::generateBankTradeActions(PlayerId playerId){
+    return GenerateActions::generateBankTradeActions(*this, playerId);
+}
 
-    // Generate build settlement actions
-    for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
-        if (Node::unpackStructure(nodes[nodeId]) == StructureType::NoStructure)
-            buildActions.push_back(buildAction(ActionType::BuildSettlement, playerId, nodeId));
-    }
+std::vector<Action::PackedAction> BoardState::generateTwoToOnePortTradeActions(PlayerId playerId){
+    return GenerateActions::generateTwoToOnePortTradeActions(*this, playerId);
+}
 
-    // Generate build city actions
-    for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
-        if (Node::unpackStructure(nodes[nodeId]) == StructureType::Settlement && Node::unpackOwner(nodes[nodeId]) == playerId)
-            buildActions.push_back(buildAction(ActionType::BuildCity, playerId, nodeId));
-    }
+//std::vector<Action::PackedAction> BoardState::generateOneToOnePortTradeActions(PlayerId playerId){
+//    return GenerateActions::generateOneToOnePortTradeActions(*this, playerId);
+//}
 
-    return buildActions;
-};
-
-std::vector<Action::PackedAction> BoardState::generateTradeActions(PlayerId playerId){
-    std::vector<Action::PackedAction> tradeActions;
-    auto &player = packedPlayers[static_cast<uint8_t>(playerId)];
-
-    bool hasThreeForOnePort = false;
-    bool hasBrickPort = false;
-    bool hasLumberPort = false;
-    bool hasWoolPort = false;
-    bool hasGrainPort = false;
-    bool hasOrePort = false;
-
-    // Check all nodes for player's settlements/cities
-    for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
-        StructureType structure = Node::unpackStructure(nodes[nodeId]);
-        PlayerId owner = Node::unpackOwner(nodes[nodeId]);
-        
-        // Only consider nodes where this player has a settlement or city
-        if (owner != playerId || (structure != StructureType::Settlement && structure != StructureType::City)) {
-            continue;
-        }
-        
-        PortType portType = Node::unpackPortType(nodes[nodeId]);
-        
-        if (portType == PortType::ThreeForOne) {
-            hasThreeForOnePort = true;
-        } else if (portType == PortType::BrickPort) {
-            hasBrickPort = true;
-        } else if (portType == PortType::LumberPort) {
-            hasLumberPort = true;
-        } else if (portType == PortType::WoolPort) {
-            hasWoolPort = true;
-        } else if (portType == PortType::GrainPort) {
-            hasGrainPort = true;
-        } else if (portType == PortType::OrePort) {
-            hasOrePort = true;
-        }
-    }
-
-    // Generate bank trade actions
-    for (Resource giveResource : {
-        Resource::Brick,
-        Resource::Lumber,
-        Resource::Wool,
-        Resource::Grain,
-        Resource::Ore
-    }) {
-        uint8_t playerHas = Player::unpackResource(player, giveResource);
-        
-        for (Resource receiveResource : {
-            Resource::Brick,
-            Resource::Lumber,
-            Resource::Wool,
-            Resource::Grain,
-            Resource::Ore
-        }) {
-            // można zostawić żeby mąre agenty były lepsze od randmowego :)
-            if (giveResource == receiveResource) continue;
-            
-            // 4:1 trades
-            for (uint8_t tradeCount = 1; tradeCount * 4 <= playerHas; ++tradeCount) {
-                tradeActions.push_back(buildAction(ActionType::TradeBank, playerId, 
-                    static_cast<uint8_t>(giveResource), 
-                    static_cast<uint8_t>(receiveResource), 
-                    4));
-            }
-            
-            // 3:1 trades if player has ThreeForOne port
-            if (hasThreeForOnePort) {
-                for (uint8_t tradeCount = 1; tradeCount * 3 <= playerHas; ++tradeCount) {
-                    tradeActions.push_back(buildAction(ActionType::TradeBank, playerId, 
-                        static_cast<uint8_t>(giveResource), 
-                        static_cast<uint8_t>(receiveResource), 
-                        3));
-                }
-            }
-            
-            // Generate 2:1 trades for specific resource ports
-            if (giveResource == Resource::Brick && hasBrickPort) {
-                for (uint8_t tradeCount = 1; tradeCount * 2 <= playerHas; ++tradeCount) {
-                    tradeActions.push_back(buildAction(ActionType::TradeBank, playerId, 
-                        static_cast<uint8_t>(giveResource), 
-                        static_cast<uint8_t>(receiveResource), 
-                        2));
-                }
-            } else if (giveResource == Resource::Lumber && hasLumberPort) {
-                for (uint8_t tradeCount = 1; tradeCount * 2 <= playerHas; ++tradeCount) {
-                    tradeActions.push_back(buildAction(ActionType::TradeBank, playerId, 
-                        static_cast<uint8_t>(giveResource), 
-                        static_cast<uint8_t>(receiveResource), 
-                        2));
-                }
-            } else if (giveResource == Resource::Wool && hasWoolPort) {
-                for (uint8_t tradeCount = 1; tradeCount * 2 <= playerHas; ++tradeCount) {
-                    tradeActions.push_back(buildAction(ActionType::TradeBank, playerId, 
-                        static_cast<uint8_t>(giveResource), 
-                        static_cast<uint8_t>(receiveResource), 
-                        2));
-                }
-            } else if (giveResource == Resource::Grain && hasGrainPort) {
-                for (uint8_t tradeCount = 1; tradeCount * 2 <= playerHas; ++tradeCount) {
-                    tradeActions.push_back(buildAction(ActionType::TradeBank, playerId, 
-                        static_cast<uint8_t>(giveResource), 
-                        static_cast<uint8_t>(receiveResource), 
-                        2));
-                }
-            } else if (giveResource == Resource::Ore && hasOrePort) {
-                for (uint8_t tradeCount = 1; tradeCount * 2 <= playerHas; ++tradeCount) {
-                    tradeActions.push_back(buildAction(ActionType::TradeBank, playerId, 
-                        static_cast<uint8_t>(giveResource), 
-                        static_cast<uint8_t>(receiveResource), 
-                        2));
-                }
-            }
-        }
-    }
-
-    return tradeActions;
-};
+std::vector<Action::PackedAction> BoardState::generateDevCardActions(PlayerId playerId){
+    return GenerateActions::generateDevCardActions(*this, playerId);
+}
 
 // Nie można zagrać tą kartą którą przed chwilą się kupiło (??)
 // można kupić dowolną liczbę kart, ale zac jedną
-std::vector<Action::PackedAction> BoardState::generateDevCardActions(PlayerId playerId) {
-    std::vector<Action::PackedAction> devCardActions;
-    
-    auto &player = packedPlayers[static_cast<uint8_t>(playerId)];
-    
-    uint8_t playerGrain = Player::unpackResource(player, Resource::Grain);
-    uint8_t playerOre = Player::unpackResource(player, Resource::Ore);
-    uint8_t playerWool = Player::unpackResource(player, Resource::Wool);
-    
-    uint8_t maxAffordable = std::min({playerGrain, playerOre, playerWool});
-    
-    // Buy as many dev cards as player can afford
-    for (uint8_t cardCount = 1; cardCount <= maxAffordable; ++cardCount) {
-        devCardActions.push_back(buildAction(ActionType::BuyDevCard, playerId));
-    }
-        
-    // Knight cards - need to specify new robber position
-    if (Player::unpackDevCard(player, DevType::Knight) > 0) {
-        for (HexId hexId = 0; hexId < HEX_COUNT; ++hexId) {
-            if (hexId != robberPosition) {
-                devCardActions.push_back(buildAction(ActionType::PlayDevCardKnight, playerId, hexId));
-            }
-        }
-    }
-    
-    // RoadBuilding cards - need two edge positions
-    if (Player::unpackDevCard(player, DevType::RoadBuilding) > 0) {
-        for (EdgeId firstEdge = 0; firstEdge < EDGE_COUNT; ++firstEdge) {
-            if (!Edge::unpackHasRoad(edges[firstEdge])) {
-                for (EdgeId secondEdge = firstEdge + 1; secondEdge < EDGE_COUNT; ++secondEdge) {
-                    if (!Edge::unpackHasRoad(edges[secondEdge])) {
-                        devCardActions.push_back(buildAction(ActionType::PlayDevCardRoadBuilding, playerId, firstEdge, secondEdge));
-                    }
-                }
-            }
-        }
-    }
-    
-    // YearOfPlenty cards - need two resources
-    if (Player::unpackDevCard(player, DevType::YearOfPlenty) > 0) {
-        for (Resource firstResource : {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Grain, Resource::Ore}) {
-            for (Resource secondResource : {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Grain, Resource::Ore}) {
-                devCardActions.push_back(buildAction(ActionType::PlayDevCardYearOfPlenty, playerId, 
-                    static_cast<uint8_t>(firstResource), 
-                    static_cast<uint8_t>(secondResource)));
-            }
-        }
-    }
-    
-    // Monopoly cards - need target resource
-    if (Player::unpackDevCard(player, DevType::Monopoly) > 0) {
-        for (Resource targetResource : {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Grain, Resource::Ore}) {
-            devCardActions.push_back(buildAction(ActionType::PlayDevCardMonopoly, playerId, 
-                static_cast<uint8_t>(targetResource)));
-        }
-    }
-    
-    return devCardActions;
-}
-
 std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId){
     std::vector<Action::PackedAction> legalActions;
     
     auto buildActions = generateBuildActions(playerId);
-    auto tradeActions = generateTradeActions(playerId);
+    auto bankTradeActions = generateBankTradeActions(playerId);
+    auto twoToOnePortTradeActions = generateTwoToOnePortTradeActions(playerId);
+    //auto oneToOnePortTradeActions = generateOneToOnePortTradeActions(playerId);
     auto devCardActions = generateDevCardActions(playerId);
     
     legalActions.insert(legalActions.end(), buildActions.begin(), buildActions.end());
-    legalActions.insert(legalActions.end(), tradeActions.begin(), tradeActions.end());
+    legalActions.insert(legalActions.end(), bankTradeActions.begin(), bankTradeActions.end());
+    legalActions.insert(legalActions.end(), twoToOnePortTradeActions.begin(), twoToOnePortTradeActions.end());
+    //legalActions.insert(legalActions.end(), oneToOnePortTradeActions.begin(), oneToOnePortTradeActions.end());
     legalActions.insert(legalActions.end(), devCardActions.begin(), devCardActions.end());
     
     return legalActions;

@@ -16,6 +16,7 @@ add_executable(
   test_board.cpp
   test_board_actions.cpp
   test_board_undo_actions.cpp
+  test_generate_all_actions.cpp
 )
 
 add_executable(

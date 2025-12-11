@@ -20,18 +20,18 @@ Action::PackedAction IPlayer::get2InitialRoad() {
 return 0; // Base implementation - should be overridden
 }
 
-Action::PackedAction getDevAction(){
+Action::PackedAction IPlayer::getDevAction(){
 return 0; // Base implementation - should be overridden
 }
 
-Action::PackedAction getDiscardAction(){
+Action::PackedAction IPlayer::getDiscardAction(){
 return 0; // Base implementation - should be overridden
 }
 
-Action::PackedAction getMoveRobber(){
+Action::PackedAction IPlayer::getMoveRobber(){
 return 0; // Base implementation - should be overridden
 }
 
-Action::PackedAction getTurnAction(){
+Action::PackedAction IPlayer::getTurnAction(){
 return 0; // Base implementation - should be overridden
 }
