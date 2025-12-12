@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <iostream>
 #include "board.hpp"
 #include "consts.hpp"
 #include "player.hpp"
@@ -55,6 +56,61 @@ TEST_F(ActionTest, ExpectTradeActionsWithWoolPort){
         EXPECT_EQ(Resource::Wool, static_cast<Resource>(Action::unpackArg1(action)));
         EXPECT_EQ(2, Action::unpackArg3(action));
     }
+}
+
+TEST_F(ActionTest, ExpectTradeActionsThreeToOnePort){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    PlayerId tradingPlayer = PlayerId::Player0;
+
+    // Give player a settlement on a 3:1 port
+    NodeId threeForOnePortNodeId = 2;
+    boardState.nodes[threeForOnePortNodeId] = Node::packStructure(boardState.nodes[threeForOnePortNodeId], StructureType::Settlement);
+    boardState.nodes[threeForOnePortNodeId] = Node::packOwner(boardState.nodes[threeForOnePortNodeId], tradingPlayer);
+
+    std::vector<Action::PackedAction> tradeActions;
+
+    tradeActions = boardState.generateThreeToOnePortTradeActions(tradingPlayer);
+
+    for (const auto& action : tradeActions) {
+        EXPECT_EQ(ActionType::TradeBank, Action::unpackType(action));
+        EXPECT_EQ(tradingPlayer, Action::unpackPlayerID(action));
+        EXPECT_EQ(3, Action::unpackArg3(action));
+    }
+
+    EXPECT_EQ(40, tradeActions.size());
+}
+
+TEST_F(ActionTest, ExpectNoTradeActionsWithoutResources){
+    setBankResourcesTen();
+    // Players have zero resources
+
+    PlayerId tradingPlayer = PlayerId::Player0;
+
+    // Give player a settlement on a brick port
+    NodeId brickPortNodeId = 15;
+    boardState.nodes[brickPortNodeId] = Node::packStructure(boardState.nodes[brickPortNodeId], StructureType::Settlement);
+    boardState.nodes[brickPortNodeId] = Node::packOwner(boardState.nodes[brickPortNodeId], tradingPlayer);
+
+    std::vector<Action::PackedAction> tradeActions;
+
+    tradeActions = boardState.generateTwoToOnePortTradeActions(tradingPlayer);
+
+    EXPECT_EQ(0, tradeActions.size());
+}
+
+TEST_F(ActionTest, ExpectNoTradeActionsWithoutPorts){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    PlayerId tradingPlayer = PlayerId::Player0;
+
+    std::vector<Action::PackedAction> tradeActions;
+
+    tradeActions = boardState.generateTwoToOnePortTradeActions(tradingPlayer);
+
+    EXPECT_EQ(0, tradeActions.size());
 }
 
 TEST_F(ActionTest, ExpectBuyDevCardActions){

@@ -11,7 +11,7 @@ namespace GenerateActions {
     std::vector<Action::PackedAction> generateBuildActions(const BoardState& board, PlayerId playerId);
     std::vector<Action::PackedAction> generateBankTradeActions(const BoardState& board, PlayerId playerId);
     std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(const BoardState& board, PlayerId playerId);
-    // std::vector<Action::PackedAction> generateThreeToOnePortTradeActions(const BoardState& board, PlayerId playerId);
+    std::vector<Action::PackedAction> generateThreeToOnePortTradeActions(const BoardState& board, PlayerId playerId);
     std::vector<Action::PackedAction> generateDevCardActions(const BoardState& board, PlayerId playerId);
 }
 
@@ -830,9 +830,9 @@ std::vector<Action::PackedAction> BoardState::generateTwoToOnePortTradeActions(P
     return GenerateActions::generateTwoToOnePortTradeActions(*this, playerId);
 }
 
-//std::vector<Action::PackedAction> BoardState::generateOneToOnePortTradeActions(PlayerId playerId){
-//    return GenerateActions::generateOneToOnePortTradeActions(*this, playerId);
-//}
+std::vector<Action::PackedAction> BoardState::generateThreeToOnePortTradeActions(PlayerId playerId){
+   return GenerateActions::generateThreeToOnePortTradeActions(*this, playerId);
+}
 
 std::vector<Action::PackedAction> BoardState::generateDevCardActions(PlayerId playerId){
     return GenerateActions::generateDevCardActions(*this, playerId);
@@ -846,13 +846,13 @@ std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId)
     auto buildActions = generateBuildActions(playerId);
     auto bankTradeActions = generateBankTradeActions(playerId);
     auto twoToOnePortTradeActions = generateTwoToOnePortTradeActions(playerId);
-    //auto oneToOnePortTradeActions = generateOneToOnePortTradeActions(playerId);
+    auto threeToOnePortTradeActions = generateThreeToOnePortTradeActions(playerId);
     auto devCardActions = generateDevCardActions(playerId);
     
     legalActions.insert(legalActions.end(), buildActions.begin(), buildActions.end());
     legalActions.insert(legalActions.end(), bankTradeActions.begin(), bankTradeActions.end());
     legalActions.insert(legalActions.end(), twoToOnePortTradeActions.begin(), twoToOnePortTradeActions.end());
-    //legalActions.insert(legalActions.end(), oneToOnePortTradeActions.begin(), oneToOnePortTradeActions.end());
+    legalActions.insert(legalActions.end(), threeToOnePortTradeActions.begin(), threeToOnePortTradeActions.end());
     legalActions.insert(legalActions.end(), devCardActions.begin(), devCardActions.end());
     
     return legalActions;

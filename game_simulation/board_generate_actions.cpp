@@ -35,47 +35,6 @@ Action::PackedAction buildAction(
     return action;
 }
 
-PlayerPortInfo detectPlayerPorts(const BoardState& board, PlayerId playerId) {
-    PlayerPortInfo portInfo;
-    
-    for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
-        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
-        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
-        
-        if (owner != playerId || 
-            (structure != StructureType::Settlement && structure != StructureType::City)) {
-            continue;
-        }
-        
-        PortType portType = Node::unpackPortType(board.nodes[nodeId]);
-        
-        switch (portType) {
-            case PortType::ThreeForOne:
-                portInfo.hasThreeForOnePort = true;
-                break;
-            case PortType::BrickPort:
-                portInfo.hasBrickPort = true;
-                break;
-            case PortType::LumberPort:
-                portInfo.hasLumberPort = true;
-                break;
-            case PortType::WoolPort:
-                portInfo.hasWoolPort = true;
-                break;
-            case PortType::GrainPort:
-                portInfo.hasGrainPort = true;
-                break;
-            case PortType::OrePort:
-                portInfo.hasOrePort = true;
-                break;
-            default:
-                break;
-        }
-    }
-    
-    return portInfo;
-}
-
 std::vector<Action::PackedAction> generateBuildActions(
     const BoardState& board, 
     PlayerId playerId
@@ -114,7 +73,58 @@ std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(
     std::vector<Action::PackedAction> tradeActions;
     
     auto &player = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    PlayerPortInfo portInfo = detectPlayerPorts(board, playerId);
+    
+    // Detect which 2:1 ports the player owns by checking specific port nodes
+    bool hasBrickPort = false;
+    bool hasLumberPort = false;
+    bool hasWoolPort = false;
+    bool hasGrainPort = false;
+    bool hasOrePort = false;
+    
+    // Check Brick Ports (nodes 15, 25)
+    for (NodeId nodeId : {15, 25}) {
+        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
+            hasBrickPort = true;
+        }
+    }
+    
+    // Check Lumber Ports (nodes 36, 46)
+    for (NodeId nodeId : {36, 46}) {
+        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
+            hasLumberPort = true;
+        }
+    }
+    
+    // Check Wool Ports (nodes 7, 8)
+    for (NodeId nodeId : {7, 8}) {
+        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
+            hasWoolPort = true;
+        }
+    }
+    
+    // Check Grain Ports (nodes 49, 50)
+    for (NodeId nodeId : {49, 50}) {
+        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
+            hasGrainPort = true;
+        }
+    }
+    
+    // Check Ore Ports (nodes 38, 39)
+    for (NodeId nodeId : {38, 39}) {
+        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
+            hasOrePort = true;
+        }
+    }
 
     for (Resource giveResource : {
         Resource::Brick,
@@ -128,19 +138,19 @@ std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(
         bool has2to1Port = false;
         switch (giveResource) {
             case Resource::Brick:
-                has2to1Port = portInfo.hasBrickPort;
+                has2to1Port = hasBrickPort;
                 break;
             case Resource::Lumber:
-                has2to1Port = portInfo.hasLumberPort;
+                has2to1Port = hasLumberPort;
                 break;
             case Resource::Wool:
-                has2to1Port = portInfo.hasWoolPort;
+                has2to1Port = hasWoolPort;
                 break;
             case Resource::Grain:
-                has2to1Port = portInfo.hasGrainPort;
+                has2to1Port = hasGrainPort;
                 break;
             case Resource::Ore:
-                has2to1Port = portInfo.hasOrePort;
+                has2to1Port = hasOrePort;
                 break;
             default:
                 break;
@@ -178,9 +188,19 @@ std::vector<Action::PackedAction> generateThreeToOnePortTradeActions(
     std::vector<Action::PackedAction> tradeActions;
     
     auto &player = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    PlayerPortInfo portInfo = detectPlayerPorts(board, playerId);
+    
+    // Check ThreeForOne Ports (nodes 2, 3, 5, 6, 16, 27, 52, 53)
+    bool hasThreeForOnePort = false;
+    for (NodeId nodeId : {2, 3, 5, 6, 16, 27, 52, 53}) {
+        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
+            hasThreeForOnePort = true;
+            break;
+        }
+    }
 
-    if (portInfo.hasThreeForOnePort) {
+    if (hasThreeForOnePort) {
         for (Resource giveResource : {
             Resource::Brick,
             Resource::Lumber,
@@ -221,7 +241,6 @@ std::vector<Action::PackedAction> generateBankTradeActions(
     std::vector<Action::PackedAction> tradeActions;
     
     auto &player = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    PlayerPortInfo portInfo = detectPlayerPorts(board, playerId);
 
     for (Resource giveResource : {
         Resource::Brick,

@@ -247,7 +247,7 @@ struct BoardState {
     std::vector<Action::PackedAction> generateBuildActions(PlayerId playerId);
     std::vector<Action::PackedAction> generateBankTradeActions(PlayerId playerId);
     std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(PlayerId playerId);
-    //std::vector<Action::PackedAction> generateThreeToOnePortTradeActions(PlayerId playerId);
+    std::vector<Action::PackedAction> generateThreeToOnePortTradeActions(PlayerId playerId);
     std::vector<Action::PackedAction> generateDevCardActions(PlayerId playerId);
 };
 
