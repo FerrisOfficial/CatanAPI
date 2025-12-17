@@ -1,5 +1,3 @@
-#pragma once
-
 #include "board.hpp"
 #include "actions.hpp"
 #include "consts.hpp"
@@ -7,17 +5,6 @@
 #include <vector>
 
 namespace Board {
-
-namespace GenerateActions {
-
-struct PlayerPortInfo {
-    bool hasThreeForOnePort = false;
-    bool hasBrickPort = false;
-    bool hasLumberPort = false;
-    bool hasWoolPort = false;
-    bool hasGrainPort = false;
-    bool hasOrePort = false;
-};
 
 Action::PackedAction buildAction(
     ActionType type, 
@@ -35,30 +22,103 @@ Action::PackedAction buildAction(
     return action;
 }
 
-std::vector<Action::PackedAction> generateBuildActions(
+static bool playerHasAdjacentRoad(
     const BoardState& board, 
+    PlayerId playerId, 
+    EdgeId edgeId
+) {
+    auto edge = board.edges[edgeId];
+    NodeId nodeA = Edge::unpackAdjacentNode(edge, 0);
+    NodeId nodeB = Edge::unpackAdjacentNode(edge, 1);
+
+    std::vector<EdgeId> adjacentEdges;
+    // Dodać strukturę do pobierania krawędzi sąsiednich do node'ów albo strukturę do pobierania sąsiednich krawędzi dla edge'ów
+}
+
+static bool playerHasAdjacentSettlementOrCity(
+    const BoardState& board, 
+    PlayerId playerId, 
+    EdgeId edgeId
+) {
+    auto edge = board.edges[edgeId];
+    NodeId nodeA = Edge::unpackAdjacentNode(edge, 0);
+    NodeId nodeB = Edge::unpackAdjacentNode(edge, 1);
+
+    StructureType structureA = Node::unpackStructure(board.nodes[nodeA]);
+    PlayerId ownerA = Node::unpackOwner(board.nodes[nodeA]);
+    if (ownerA == playerId && (structureA == StructureType::Settlement || structureA == StructureType::City)) {
+        return true;
+    }
+
+    StructureType structureB = Node::unpackStructure(board.nodes[nodeB]);
+    PlayerId ownerB = Node::unpackOwner(board.nodes[nodeB]);
+    if (ownerB == playerId && (structureB == StructureType::Settlement || structureB == StructureType::City)) {
+        return true;
+    }
+
+    return false;
+}
+
+static bool playerCanAffordBuildRoad(
+    const BoardState& board, 
+    PlayerId playerId
+) {
+    const auto& player = board.packedPlayers[static_cast<uint8_t>(playerId)];
+    return Player::unpackResource(player, Resource::Lumber) >= 1 &&
+           Player::unpackResource(player, Resource::Brick) >= 1;
+}
+
+static bool playerCanAffordBuildSettlement(
+    const BoardState& board, 
+    PlayerId playerId
+) {
+    const auto& player = board.packedPlayers[static_cast<uint8_t>(playerId)];
+    return Player::unpackResource(player, Resource::Lumber) >= 1 &&
+           Player::unpackResource(player, Resource::Brick) >= 1 &&
+           Player::unpackResource(player, Resource::Wool) >= 1 &&
+           Player::unpackResource(player, Resource::Grain) >= 1;
+}
+
+static bool playerCanAffordBuildCity(
+    const BoardState& board, 
+    PlayerId playerId
+) {
+    const auto& player = board.packedPlayers[static_cast<uint8_t>(playerId)];
+    return Player::unpackResource(player, Resource::Grain) >= 2 &&
+           Player::unpackResource(player, Resource::Ore) >= 3;
+}
+
+std::vector<Action::PackedAction> generateBuildRoadActions(
+    const BoardState& board, 
+    PlayerId playerId
+) {
+    std::vector<Action::PackedAction> buildRoadActions;
+
+    for (EdgeId edgeId = 0; edgeId < EDGE_COUNT; ++edgeId) {
+        if (!Edge::unpackHasRoad(board.edges[edgeId]) ) {
+            buildRoadActions.push_back(buildAction(ActionType::BuildRoad, playerId, edgeId));
+        }
+    }
+
+    return buildRoadActions;
+}
+
+std::vector<Action::PackedAction> BoardState::generateBuildActions(
     PlayerId playerId
 ) {
     std::vector<Action::PackedAction> buildActions;
 
-    // Build road actions
-    for (EdgeId edgeId = 0; edgeId < EDGE_COUNT; ++edgeId) {
-        if (!Edge::unpackHasRoad(board.edges[edgeId])) {
-            buildActions.push_back(buildAction(ActionType::BuildRoad, playerId, edgeId));
-        }
-    }
-
     // Build settlement actions
     for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
-        if (Node::unpackStructure(board.nodes[nodeId]) == StructureType::NoStructure) {
+        if (Node::unpackStructure(nodes[nodeId]) == StructureType::NoStructure) {
             buildActions.push_back(buildAction(ActionType::BuildSettlement, playerId, nodeId));
         }
     }
 
     // Build city actions
     for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
-        if (Node::unpackStructure(board.nodes[nodeId]) == StructureType::Settlement && 
-            Node::unpackOwner(board.nodes[nodeId]) == playerId) {
+        if (Node::unpackStructure(nodes[nodeId]) == StructureType::Settlement && 
+            Node::unpackOwner(nodes[nodeId]) == playerId) {
             buildActions.push_back(buildAction(ActionType::BuildCity, playerId, nodeId));
         }
     }
@@ -66,13 +126,12 @@ std::vector<Action::PackedAction> generateBuildActions(
     return buildActions;
 }
 
-std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(
-    const BoardState& board, 
+std::vector<Action::PackedAction> BoardState::generateTwoToOnePortTradeActions(
     PlayerId playerId
 ) {
     std::vector<Action::PackedAction> tradeActions;
     
-    auto &player = board.packedPlayers[static_cast<uint8_t>(playerId)];
+    auto &player = packedPlayers[static_cast<uint8_t>(playerId)];
     
     // Detect which 2:1 ports the player owns by checking specific port nodes
     bool hasBrickPort = false;
@@ -83,8 +142,8 @@ std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(
     
     // Check Brick Ports (nodes 15, 25)
     for (NodeId nodeId : {15, 25}) {
-        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
-        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        StructureType structure = Node::unpackStructure(nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(nodes[nodeId]);
         if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
             hasBrickPort = true;
         }
@@ -92,8 +151,8 @@ std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(
     
     // Check Lumber Ports (nodes 36, 46)
     for (NodeId nodeId : {36, 46}) {
-        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
-        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        StructureType structure = Node::unpackStructure(nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(nodes[nodeId]);
         if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
             hasLumberPort = true;
         }
@@ -101,8 +160,8 @@ std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(
     
     // Check Wool Ports (nodes 7, 8)
     for (NodeId nodeId : {7, 8}) {
-        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
-        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        StructureType structure = Node::unpackStructure(nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(nodes[nodeId]);
         if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
             hasWoolPort = true;
         }
@@ -110,8 +169,8 @@ std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(
     
     // Check Grain Ports (nodes 49, 50)
     for (NodeId nodeId : {49, 50}) {
-        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
-        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        StructureType structure = Node::unpackStructure(nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(nodes[nodeId]);
         if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
             hasGrainPort = true;
         }
@@ -119,8 +178,8 @@ std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(
     
     // Check Ore Ports (nodes 38, 39)
     for (NodeId nodeId : {38, 39}) {
-        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
-        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        StructureType structure = Node::unpackStructure(nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(nodes[nodeId]);
         if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
             hasOrePort = true;
         }
@@ -181,19 +240,18 @@ std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(
     return tradeActions;
 }
 
-std::vector<Action::PackedAction> generateThreeToOnePortTradeActions(
-    const BoardState& board, 
+std::vector<Action::PackedAction> BoardState::generateThreeToOnePortTradeActions(
     PlayerId playerId
 ) {
     std::vector<Action::PackedAction> tradeActions;
     
-    auto &player = board.packedPlayers[static_cast<uint8_t>(playerId)];
+    auto &player = packedPlayers[static_cast<uint8_t>(playerId)];
     
     // Check ThreeForOne Ports (nodes 2, 3, 5, 6, 16, 27, 52, 53)
     bool hasThreeForOnePort = false;
     for (NodeId nodeId : {2, 3, 5, 6, 16, 27, 52, 53}) {
-        StructureType structure = Node::unpackStructure(board.nodes[nodeId]);
-        PlayerId owner = Node::unpackOwner(board.nodes[nodeId]);
+        StructureType structure = Node::unpackStructure(nodes[nodeId]);
+        PlayerId owner = Node::unpackOwner(nodes[nodeId]);
         if (owner == playerId && (structure == StructureType::Settlement || structure == StructureType::City)) {
             hasThreeForOnePort = true;
             break;
@@ -234,14 +292,12 @@ std::vector<Action::PackedAction> generateThreeToOnePortTradeActions(
     return tradeActions;
 }
 
-std::vector<Action::PackedAction> generateBankTradeActions(
-    const BoardState& board, 
+std::vector<Action::PackedAction> BoardState::generateBankTradeActions(
     PlayerId playerId
 ) {
     std::vector<Action::PackedAction> tradeActions;
     
-    auto &player = board.packedPlayers[static_cast<uint8_t>(playerId)];
-
+    auto &player = packedPlayers[static_cast<uint8_t>(playerId)];
     for (Resource giveResource : {
         Resource::Brick,
         Resource::Lumber,
@@ -275,13 +331,12 @@ std::vector<Action::PackedAction> generateBankTradeActions(
     return tradeActions;
 }
 
-std::vector<Action::PackedAction> generateDevCardActions(
-    const BoardState& board, 
+std::vector<Action::PackedAction> BoardState::generateDevCardActions(
     PlayerId playerId
 ) {
     std::vector<Action::PackedAction> devCardActions;
     
-    auto &player = board.packedPlayers[static_cast<uint8_t>(playerId)];
+    auto &player = packedPlayers[static_cast<uint8_t>(playerId)];
     
     // BuyDevCard actions
     uint8_t playerGrain = Player::unpackResource(player, Resource::Grain);
@@ -296,7 +351,7 @@ std::vector<Action::PackedAction> generateDevCardActions(
     // Knight cards
     if (Player::unpackDevCard(player, DevType::Knight) > 0) {
         for (HexId hexId = 0; hexId < HEX_COUNT; ++hexId) {
-            if (hexId != board.robberPosition) {
+            if (hexId != robberPosition) {
                 devCardActions.push_back(buildAction(
                     ActionType::PlayDevCardKnight, playerId, hexId
                 ));
@@ -307,9 +362,9 @@ std::vector<Action::PackedAction> generateDevCardActions(
     // RoadBuilding cards
     if (Player::unpackDevCard(player, DevType::RoadBuilding) > 0) {
         for (EdgeId firstEdge = 0; firstEdge < EDGE_COUNT; ++firstEdge) {
-            if (!Edge::unpackHasRoad(board.edges[firstEdge])) {
+            if (!Edge::unpackHasRoad(edges[firstEdge])) {
                 for (EdgeId secondEdge = firstEdge + 1; secondEdge < EDGE_COUNT; ++secondEdge) {
-                    if (!Edge::unpackHasRoad(board.edges[secondEdge])) {
+                    if (!Edge::unpackHasRoad(edges[secondEdge])) {
                         devCardActions.push_back(buildAction(
                             ActionType::PlayDevCardRoadBuilding, playerId, 
                             firstEdge, secondEdge
@@ -355,6 +410,26 @@ std::vector<Action::PackedAction> generateDevCardActions(
     return devCardActions;
 }
 
-} // namespace GenerateActions
+// Nie można zagrać tą kartą którą przed chwilą się kupiło (??)
+// można kupić dowolną liczbę kart, ale zac jedną
+std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId){
+    std::vector<Action::PackedAction> legalActions;
+    
+    auto buildActions = generateBuildActions(playerId);
+    auto bankTradeActions = generateBankTradeActions(playerId);
+    auto twoToOnePortTradeActions = generateTwoToOnePortTradeActions(playerId);
+    auto threeToOnePortTradeActions = generateThreeToOnePortTradeActions(playerId);
+    auto devCardActions = generateDevCardActions(playerId);
+    
+    legalActions.insert(legalActions.end(), buildActions.begin(), buildActions.end());
+    legalActions.insert(legalActions.end(), bankTradeActions.begin(), bankTradeActions.end());
+    legalActions.insert(legalActions.end(), twoToOnePortTradeActions.begin(), twoToOnePortTradeActions.end());
+    legalActions.insert(legalActions.end(), threeToOnePortTradeActions.begin(), threeToOnePortTradeActions.end());
+    legalActions.insert(legalActions.end(), devCardActions.begin(), devCardActions.end());
+    
+    return legalActions;
+}
+
+
 
 } // namespace Board

@@ -82,6 +82,30 @@ TEST_F(ActionTest, ExpectTradeActionsThreeToOnePort){
     EXPECT_EQ(40, tradeActions.size());
 }
 
+TEST_F(ActionTest, ExpectBankTradeActions){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    PlayerId tradingPlayer = PlayerId::Player0;
+
+    std::vector<Action::PackedAction> tradeActions;
+    boardState.packedPlayers[static_cast<uint8_t>(tradingPlayer)] = Player::packResource(
+        boardState.packedPlayers[static_cast<uint8_t>(tradingPlayer)],
+        Resource::Brick,
+        16
+    );
+
+    tradeActions = boardState.generateBankTradeActions(tradingPlayer);
+
+    for (const auto& action : tradeActions) {
+        EXPECT_EQ(ActionType::TradeBank, Action::unpackType(action));
+        EXPECT_EQ(tradingPlayer, Action::unpackPlayerID(action));
+        EXPECT_EQ(4, Action::unpackArg3(action));
+    }
+
+    EXPECT_EQ(32, tradeActions.size());
+}
+
 TEST_F(ActionTest, ExpectNoTradeActionsWithoutResources){
     setBankResourcesTen();
     // Players have zero resources

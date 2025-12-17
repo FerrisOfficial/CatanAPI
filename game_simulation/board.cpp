@@ -7,14 +7,6 @@
 
 namespace Board {
 
-namespace GenerateActions {
-    std::vector<Action::PackedAction> generateBuildActions(const BoardState& board, PlayerId playerId);
-    std::vector<Action::PackedAction> generateBankTradeActions(const BoardState& board, PlayerId playerId);
-    std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(const BoardState& board, PlayerId playerId);
-    std::vector<Action::PackedAction> generateThreeToOnePortTradeActions(const BoardState& board, PlayerId playerId);
-    std::vector<Action::PackedAction> generateDevCardActions(const BoardState& board, PlayerId playerId);
-}
-
 void BoardState::handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId) {
     auto nodeId = Action::unpackArg1(action);
     nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::Settlement);
@@ -816,46 +808,6 @@ void BoardState::undoLastAction() {
     default:
         break;
     }
-}
-
-std::vector<Action::PackedAction> BoardState::generateBuildActions(PlayerId playerId){
-    return GenerateActions::generateBuildActions(*this, playerId);
-}
-
-std::vector<Action::PackedAction> BoardState::generateBankTradeActions(PlayerId playerId){
-    return GenerateActions::generateBankTradeActions(*this, playerId);
-}
-
-std::vector<Action::PackedAction> BoardState::generateTwoToOnePortTradeActions(PlayerId playerId){
-    return GenerateActions::generateTwoToOnePortTradeActions(*this, playerId);
-}
-
-std::vector<Action::PackedAction> BoardState::generateThreeToOnePortTradeActions(PlayerId playerId){
-   return GenerateActions::generateThreeToOnePortTradeActions(*this, playerId);
-}
-
-std::vector<Action::PackedAction> BoardState::generateDevCardActions(PlayerId playerId){
-    return GenerateActions::generateDevCardActions(*this, playerId);
-}
-
-// Nie można zagrać tą kartą którą przed chwilą się kupiło (??)
-// można kupić dowolną liczbę kart, ale zac jedną
-std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId){
-    std::vector<Action::PackedAction> legalActions;
-    
-    auto buildActions = generateBuildActions(playerId);
-    auto bankTradeActions = generateBankTradeActions(playerId);
-    auto twoToOnePortTradeActions = generateTwoToOnePortTradeActions(playerId);
-    auto threeToOnePortTradeActions = generateThreeToOnePortTradeActions(playerId);
-    auto devCardActions = generateDevCardActions(playerId);
-    
-    legalActions.insert(legalActions.end(), buildActions.begin(), buildActions.end());
-    legalActions.insert(legalActions.end(), bankTradeActions.begin(), bankTradeActions.end());
-    legalActions.insert(legalActions.end(), twoToOnePortTradeActions.begin(), twoToOnePortTradeActions.end());
-    legalActions.insert(legalActions.end(), threeToOnePortTradeActions.begin(), threeToOnePortTradeActions.end());
-    legalActions.insert(legalActions.end(), devCardActions.begin(), devCardActions.end());
-    
-    return legalActions;
 }
 
 void BoardState::generateRandomBoard() {
