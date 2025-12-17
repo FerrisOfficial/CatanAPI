@@ -59,12 +59,12 @@ INSTANTIATE_TEST_SUITE_P(
     )
 );
 
-class EdgePackTest : public ::testing::TestWithParam<std::tuple<bool, PlayerId, NodeId, NodeId>> {};
+class EdgePackTest : public ::testing::TestWithParam<std::tuple<bool, PlayerId, NodeId, NodeId, EdgeId, EdgeId, EdgeId, EdgeId>> {};
 
 TEST_P(EdgePackTest, EdgePacking) {
-    auto [hasRoad, owner, node1, node2] = GetParam();
+    auto [hasRoad, owner, node1, node2, edge1, edge2, edge3, edge4] = GetParam();
     
-    Edge::PackedEdge edge = Edge::makeEdge(node1, node2, hasRoad, owner);
+    Edge::PackedEdge edge = Edge::makeEdge(node1, node2, edge1, edge2, edge3, edge4, hasRoad, owner);
     
     EXPECT_EQ(Edge::unpackHasRoad(edge), hasRoad);
     EXPECT_EQ(Edge::unpackOwner(edge), owner);
@@ -76,11 +76,11 @@ INSTANTIATE_TEST_SUITE_P(
     EdgePackTests,
     EdgePackTest,
     ::testing::Values(
-        std::make_tuple(true, PlayerId::Player0, 25, 30),
-        std::make_tuple(false, PlayerId::Player1, 5, 10),
-        std::make_tuple(true, PlayerId::Player1, 53, 40),  // Max node values within range
-        std::make_tuple(false, PlayerId::Player0, 0, 0),   // Min values
-        std::make_tuple(true, PlayerId::Player0, 127, 127) // Max 7-bit values
+        std::make_tuple(true, PlayerId::Player0, 25, 24, 22, 32, 30, 37),
+        std::make_tuple(false, PlayerId::Player1, 5, 6, 4, 9, EdgeIdNone, EdgeIdNone),
+        std::make_tuple(true, PlayerId::Player1, 53, 52, 65, 70, EdgeIdNone, EdgeIdNone),  // Max node values within range
+        std::make_tuple(false, PlayerId::Player0, 0, 0, 0, 0, 0, 0),   // Min values
+        std::make_tuple(true, PlayerId::Player0, 127, 127, 127, 127, 127, 127) // Max 7-bit values
     )
 );
 

@@ -33,6 +33,7 @@ static bool playerHasAdjacentRoad(
 
     std::vector<EdgeId> adjacentEdges;
     // Dodać strukturę do pobierania krawędzi sąsiednich do node'ów albo strukturę do pobierania sąsiednich krawędzi dla edge'ów
+    return false;
 }
 
 static bool playerHasAdjacentSettlementOrCity(
@@ -95,7 +96,9 @@ std::vector<Action::PackedAction> generateBuildRoadActions(
     std::vector<Action::PackedAction> buildRoadActions;
 
     for (EdgeId edgeId = 0; edgeId < EDGE_COUNT; ++edgeId) {
-        if (!Edge::unpackHasRoad(board.edges[edgeId]) ) {
+        if (!Edge::unpackHasRoad(board.edges[edgeId]) &&
+            playerCanAffordBuildRoad(board, playerId) &&
+            (playerHasAdjacentRoad(board, playerId, edgeId) || playerHasAdjacentSettlementOrCity(board, playerId, edgeId))) {
             buildRoadActions.push_back(buildAction(ActionType::BuildRoad, playerId, edgeId));
         }
     }

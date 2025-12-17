@@ -140,12 +140,17 @@ namespace Edge {
 // Adjacent Nodes:
 // - Node 1: bits 3-9   (7 bits, max 127)
 // - Node 2: bits 10-16 (7 bits, max 127)
+// Adjacent Edges:
+// - Edge 1: bits 17-23 (7 bits, max 127)
+// - Edge 2: bits 24-30 (7 bits, max 127)
+// - Edge 3: bits 31-37 (7 bits, max 127)
+// - Edge 4: bits 38-44 (7 bits, max 127)
 
-using PackedEdge = uint32_t;
+using PackedEdge = uint64_t;
 
 // Road packing/unpacking (bit 0)
 constexpr PackedEdge packHasRoad(PackedEdge e, bool hasRoad) {
-    return (e & ~1U) | uint32_t(hasRoad);
+    return (e & ~1ULL) | uint64_t(hasRoad);
 }
 constexpr bool unpackHasRoad(PackedEdge e) {
     return e & 1;
@@ -153,7 +158,7 @@ constexpr bool unpackHasRoad(PackedEdge e) {
 
 // Owner packing/unpacking (bits 1-2)
 constexpr PackedEdge packOwner(PackedEdge e, PlayerId owner) {
-    return (e & ~(0x3U << 1)) | (uint32_t(static_cast<uint8_t>(owner) & 0x3) << 1);
+    return (e & ~(0x3ULL << 1)) | (uint64_t(static_cast<uint8_t>(owner) & 0x3) << 1);
 }
 constexpr PlayerId unpackOwner(PackedEdge e) {
     return static_cast<PlayerId>((e >> 1) & 0x3);
@@ -162,8 +167,8 @@ constexpr PlayerId unpackOwner(PackedEdge e) {
 // Adjacent node packing/unpacking (bits 3-16, 7 bits each)
 constexpr PackedEdge packAdjacentNode(PackedEdge e, uint8_t nodeIndex, NodeId nodeId) {
     uint8_t shift = 3 + (nodeIndex * 7);
-    e &= ~(0x7FU << shift);
-    e |= (uint32_t(nodeId & 0x7F) << shift);
+    e &= ~(0x7FULL << shift);
+    e |= (uint64_t(nodeId & 0x7F) << shift);
     return e;
 }
 constexpr NodeId unpackAdjacentNode(PackedEdge e, uint8_t nodeIndex) {
@@ -171,14 +176,32 @@ constexpr NodeId unpackAdjacentNode(PackedEdge e, uint8_t nodeIndex) {
     return (e >> shift) & 0x7F;
 }
 
+// Adjacent edge packing/unpacking (bits 17-44, 7 bits each)
+constexpr PackedEdge packAdjacentEdge(PackedEdge e, uint8_t edgeIndex, EdgeId edgeId) {
+    uint8_t shift = 17 + (edgeIndex * 7);
+    e &= ~(0x7FULL << shift);
+    e |= (uint64_t(edgeId & 0x7F) << shift);
+    return e;
+}
+constexpr EdgeId unpackAdjacentEdge(PackedEdge e, uint8_t edgeIndex) {
+    uint8_t shift = 17 + (edgeIndex * 7);
+    return (e >> shift) & 0x7F;
+}
+
 // Convenience function to create a new edge
 constexpr PackedEdge makeEdge(NodeId node1, NodeId node2,
-                             bool hasRoad = false, PlayerId owner = PlayerId::NoPlayer) {
+                            EdgeId edge1, EdgeId edge2,
+                            EdgeId edge3, EdgeId edge4,
+                            bool hasRoad = false, PlayerId owner = PlayerId::NoPlayer) {
     PackedEdge e = 0;
     e = packHasRoad(e, hasRoad);
     e = packOwner(e, owner);
     e = packAdjacentNode(e, 0, node1);
     e = packAdjacentNode(e, 1, node2);
+    e = packAdjacentEdge(e, 0, edge1);
+    e = packAdjacentEdge(e, 1, edge2);
+    e = packAdjacentEdge(e, 2, edge3);
+    e = packAdjacentEdge(e, 3, edge4);
     return e;
 }
 
@@ -362,78 +385,78 @@ constexpr BoardState::BoardState() noexcept {
     nodes[53] = Node::packPortType(nodes[53], PortType::ThreeForOne);
 
     // ------- EDGES -------
-    edges[0]  = Edge::makeEdge(0, 1);
-    edges[1]  = Edge::makeEdge(1, 2);
-    edges[2]  = Edge::makeEdge(2, 3);
-    edges[3]  = Edge::makeEdge(3, 4);
-    edges[4]  = Edge::makeEdge(4, 5);
-    edges[5]  = Edge::makeEdge(5, 6);
-    edges[6]  = Edge::makeEdge(0, 8);
-    edges[7]  = Edge::makeEdge(2, 10);
-    edges[8]  = Edge::makeEdge(4, 12);
-    edges[9]  = Edge::makeEdge(6, 14);
-    edges[10] = Edge::makeEdge(7, 8);
-    edges[11] = Edge::makeEdge(8, 9);
-    edges[12] = Edge::makeEdge(9, 10);
-    edges[13] = Edge::makeEdge(10, 11);
-    edges[14] = Edge::makeEdge(11, 12);
-    edges[15] = Edge::makeEdge(12, 13);
-    edges[16] = Edge::makeEdge(13, 14);
-    edges[17] = Edge::makeEdge(14, 15);
-    edges[18] = Edge::makeEdge(7, 17);
-    edges[19] = Edge::makeEdge(9, 19);
-    edges[20] = Edge::makeEdge(11, 21);
-    edges[21] = Edge::makeEdge(13, 23);
-    edges[22] = Edge::makeEdge(15, 25);
-    edges[23] = Edge::makeEdge(16, 17);
-    edges[24] = Edge::makeEdge(17, 18);
-    edges[25] = Edge::makeEdge(18, 19);
-    edges[26] = Edge::makeEdge(19, 20);
-    edges[27] = Edge::makeEdge(20, 21);
-    edges[28] = Edge::makeEdge(21, 22);
-    edges[29] = Edge::makeEdge(29, 23);
-    edges[30] = Edge::makeEdge(23, 24);
-    edges[31] = Edge::makeEdge(24, 25);
-    edges[32] = Edge::makeEdge(25, 26);
-    edges[33] = Edge::makeEdge(16, 27);
-    edges[34] = Edge::makeEdge(18, 29);
-    edges[35] = Edge::makeEdge(20, 31);
-    edges[36] = Edge::makeEdge(22, 33);
-    edges[37] = Edge::makeEdge(24, 35);
-    edges[38] = Edge::makeEdge(26, 37);
-    edges[39] = Edge::makeEdge(27, 28);
-    edges[40] = Edge::makeEdge(28, 29);
-    edges[41] = Edge::makeEdge(29, 30);
-    edges[42] = Edge::makeEdge(30, 31);
-    edges[43] = Edge::makeEdge(31, 32);
-    edges[44] = Edge::makeEdge(32, 33);
-    edges[45] = Edge::makeEdge(33, 34);
-    edges[46] = Edge::makeEdge(34, 35);
-    edges[47] = Edge::makeEdge(35, 36);
-    edges[48] = Edge::makeEdge(36, 37);
-    edges[49] = Edge::makeEdge(28, 38);
-    edges[50] = Edge::makeEdge(30, 40);
-    edges[51] = Edge::makeEdge(32, 42);
-    edges[52] = Edge::makeEdge(34, 44);
-    edges[53] = Edge::makeEdge(36, 46);
-    edges[54] = Edge::makeEdge(38, 39);
-    edges[55] = Edge::makeEdge(39, 40);
-    edges[56] = Edge::makeEdge(40, 41);
-    edges[57] = Edge::makeEdge(41, 42);
-    edges[58] = Edge::makeEdge(42, 43);
-    edges[59] = Edge::makeEdge(43, 44);
-    edges[60] = Edge::makeEdge(44, 45);
-    edges[61] = Edge::makeEdge(45, 46);
-    edges[62] = Edge::makeEdge(39, 47);
-    edges[63] = Edge::makeEdge(41, 49);
-    edges[64] = Edge::makeEdge(43, 51);
-    edges[65] = Edge::makeEdge(45, 53);
-    edges[66] = Edge::makeEdge(47, 48);
-    edges[67] = Edge::makeEdge(48, 49);
-    edges[68] = Edge::makeEdge(49, 50);
-    edges[69] = Edge::makeEdge(50, 51);
-    edges[70] = Edge::makeEdge(51, 52);
-    edges[71] = Edge::makeEdge(52, 53);
+    edges[0]  = Edge::makeEdge(0, 1, 6, 1, EdgeIdNone, EdgeIdNone);
+    edges[1]  = Edge::makeEdge(1, 2, 0, 7, 2, EdgeIdNone);
+    edges[2]  = Edge::makeEdge(2, 3, 1, 7, 3, EdgeIdNone);
+    edges[3]  = Edge::makeEdge(3, 4, 2, 8, 4, EdgeIdNone);
+    edges[4]  = Edge::makeEdge(4, 5, 3, 8, 5, EdgeIdNone);
+    edges[5]  = Edge::makeEdge(5, 6, 4, 9, EdgeIdNone, EdgeIdNone);
+    edges[6]  = Edge::makeEdge(0, 8, 0, 10, 11, EdgeIdNone);
+    edges[7]  = Edge::makeEdge(2, 10, 1, 2, 12, 13);
+    edges[8]  = Edge::makeEdge(4, 12, 3, 4, 14, 15);
+    edges[9]  = Edge::makeEdge(6, 14, 5, 16, 17, EdgeIdNone);
+    edges[10] = Edge::makeEdge(7, 8, 6, 11, 18, EdgeIdNone);
+    edges[11] = Edge::makeEdge(8, 9, 6, 10, 12, 19);
+    edges[12] = Edge::makeEdge(9, 10, 7, 13, 11, 19);
+    edges[13] = Edge::makeEdge(10, 11, 7, 12, 14, 20);
+    edges[14] = Edge::makeEdge(11, 12, 8, 15, 13, 20);
+    edges[15] = Edge::makeEdge(12, 13, 8, 14, 16, 21);
+    edges[16] = Edge::makeEdge(13, 14, 9, 17, 15, 21);
+    edges[17] = Edge::makeEdge(14, 15, 9, 16, 22, EdgeIdNone);
+    edges[18] = Edge::makeEdge(7, 17, 10, 23, 24, EdgeIdNone);
+    edges[19] = Edge::makeEdge(9, 19, 11, 12, 25, 26);
+    edges[20] = Edge::makeEdge(11, 21, 13, 14, 27, 28);
+    edges[21] = Edge::makeEdge(13, 23, 15, 16, 29, 30);
+    edges[22] = Edge::makeEdge(15, 25, 17, 31, 32, EdgeIdNone);
+    edges[23] = Edge::makeEdge(16, 17, 18, 24, 33, EdgeIdNone);
+    edges[24] = Edge::makeEdge(17, 18, 18, 23, 25, 34);
+    edges[25] = Edge::makeEdge(18, 19, 19, 26, 24, 34);
+    edges[26] = Edge::makeEdge(19, 20, 19, 25, 27, 35);
+    edges[27] = Edge::makeEdge(20, 21, 20, 28, 26, 35);
+    edges[28] = Edge::makeEdge(21, 22, 20, 27, 29, 36);
+    edges[29] = Edge::makeEdge(29, 23, 21, 30, 28, 36);
+    edges[30] = Edge::makeEdge(23, 24, 21, 29, 31, 37);
+    edges[31] = Edge::makeEdge(24, 25, 22, 32, 30, 37);
+    edges[32] = Edge::makeEdge(25, 26, 22, 31, 38, EdgeIdNone);
+    edges[33] = Edge::makeEdge(16, 27, 23, 39, EdgeIdNone, EdgeIdNone);
+    edges[34] = Edge::makeEdge(18, 29, 24, 25, 40, 41);
+    edges[35] = Edge::makeEdge(20, 31, 26, 27, 42, 43);
+    edges[36] = Edge::makeEdge(22, 33, 28, 29, 44, 45);
+    edges[37] = Edge::makeEdge(24, 35, 30, 31, 46, 47);
+    edges[38] = Edge::makeEdge(26, 37, 32, 48, EdgeIdNone, EdgeIdNone);
+    edges[39] = Edge::makeEdge(27, 28, 33, 40, 49, EdgeIdNone);
+    edges[40] = Edge::makeEdge(28, 29, 34, 41, 39, 49);
+    edges[41] = Edge::makeEdge(29, 30, 34, 40, 42, 50);
+    edges[42] = Edge::makeEdge(30, 31, 35, 43, 41, 50);
+    edges[43] = Edge::makeEdge(31, 32, 35, 42, 44, 51);
+    edges[44] = Edge::makeEdge(32, 33, 36, 45, 43, 51);
+    edges[45] = Edge::makeEdge(33, 34, 36, 44, 46, 52);
+    edges[46] = Edge::makeEdge(34, 35, 37, 47, 45, 52);
+    edges[47] = Edge::makeEdge(35, 36, 37, 46, 48, 53);
+    edges[48] = Edge::makeEdge(36, 37, 38, EdgeIdNone, 47, 53);
+    edges[49] = Edge::makeEdge(28, 38, 39, 40, 54, EdgeIdNone);
+    edges[50] = Edge::makeEdge(30, 40, 41, 42, 55, 56);
+    edges[51] = Edge::makeEdge(32, 42, 43, 44, 57, 58);
+    edges[52] = Edge::makeEdge(34, 44, 45, 46, 59, 60);
+    edges[53] = Edge::makeEdge(36, 46, 47, 48, 61, EdgeIdNone);
+    edges[54] = Edge::makeEdge(38, 39, 49, 55, 62, EdgeIdNone);
+    edges[55] = Edge::makeEdge(39, 40, 50, 56, 54, 62);
+    edges[56] = Edge::makeEdge(40, 41, 50, 55, 57, 63);
+    edges[57] = Edge::makeEdge(41, 42, 51, 58, 56, 63);
+    edges[58] = Edge::makeEdge(42, 43, 51, 57, 59, 64);
+    edges[59] = Edge::makeEdge(43, 44, 52, 60, 58, 64);
+    edges[60] = Edge::makeEdge(44, 45, 52, 59, 61, 65);
+    edges[61] = Edge::makeEdge(45, 46, 53, EdgeIdNone, 60, 65);
+    edges[62] = Edge::makeEdge(39, 47, 54, 55, 66, EdgeIdNone);
+    edges[63] = Edge::makeEdge(41, 49, 56, 57, 67, 68);
+    edges[64] = Edge::makeEdge(43, 51, 58, 59, 69, 70);
+    edges[65] = Edge::makeEdge(45, 53, 60, 61, 71, EdgeIdNone);
+    edges[66] = Edge::makeEdge(47, 48, 62, 67, EdgeIdNone, EdgeIdNone);
+    edges[67] = Edge::makeEdge(48, 49, 63, 68, 66, EdgeIdNone);
+    edges[68] = Edge::makeEdge(49, 50, 63, 67, 69, EdgeIdNone);
+    edges[69] = Edge::makeEdge(50, 51, 64, 70, 68, EdgeIdNone);
+    edges[70] = Edge::makeEdge(51, 52, 64, 69, 71, EdgeIdNone);
+    edges[71] = Edge::makeEdge(52, 53, 65, EdgeIdNone, 70, EdgeIdNone);
 }
 
 } // namespace Board
