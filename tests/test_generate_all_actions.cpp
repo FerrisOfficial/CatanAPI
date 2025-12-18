@@ -270,26 +270,9 @@ INSTANTIATE_TEST_SUITE_P(
     )
 );
 
-class ActionTestStructureTypeParam : public ::testing::TestWithParam<StructureType> {
-protected:
-    Board::BoardState boardState;
-
-    void SetUp() override {
-        boardState.generateRandomBoard();
-    }
-
-    void setPlayersResourcesSeven() {
-        for (size_t p = 0; p < 2; ++p) {
-            for (size_t res = 0; res < 5; ++res) {
-                boardState.packedPlayers[p] = Player::packResource(
-                    boardState.packedPlayers[p],
-                    static_cast<Resource>(res),
-                    7
-                );
-            }
-        }
-    }
-};
+class ActionTestStructureTypeParam
+    : public ActionTest,
+      public ::testing::WithParamInterface<StructureType> { };
 
 // TEST_P(ActionTestStructureTypeParam, ExpectNoBuildWithNoAvaliableStructures){
 //     setPlayersResourcesSeven();
@@ -318,3 +301,108 @@ protected:
 //     EXPECT_EQ(0, buildActions.size());
 // }
 
+class ActionTestBuildSettlementWithRoadsOnBoardParam
+    : public ActionTest,
+      public ::testing::WithParamInterface<std::tuple<EdgeId, EdgeId, int>> { };
+
+
+TEST_F(ActionTest, ExpectBuildSettlementActionsWithOneRoad){
+    setPlayersResourcesSeven();
+
+    boardState.edges[20] = Edge::packHasRoad(boardState.edges[20], true);
+    boardState.edges[20] = Edge::packOwner(boardState.edges[20], PlayerId::Player0);
+
+    std::vector<Action::PackedAction> buildSettlementActions;
+
+    buildSettlementActions = boardState.generateBuildSettlementActions(PlayerId::Player0);
+    EXPECT_EQ(buildSettlementActions.size(), 2);
+    for (const auto& action : buildSettlementActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::BuildSettlement, type);
+    }
+}
+
+TEST_P(ActionTestBuildSettlementWithRoadsOnBoardParam, ExpectBuildSettlementActionsWithTwoRoads){
+    setPlayersResourcesSeven();
+
+    std::vector<Action::PackedAction> buildSettlementActions;
+    std::tuple<EdgeId, EdgeId, int> givenEdgeId = GetParam();
+    EdgeId roadEdgeId1 = std::get<0>(givenEdgeId);
+    EdgeId roadEdgeId2 = std::get<1>(givenEdgeId);
+    int expectedNumActions = std::get<2>(givenEdgeId);
+
+    // Give player two starting roads to build off of
+    boardState.edges[roadEdgeId1] = Edge::packHasRoad(boardState.edges[roadEdgeId1], true);
+    boardState.edges[roadEdgeId1] = Edge::packOwner(boardState.edges[roadEdgeId1], PlayerId::Player0);
+    boardState.edges[roadEdgeId2] = Edge::packHasRoad(boardState.edges[roadEdgeId2], true);
+    boardState.edges[roadEdgeId2] = Edge::packOwner(boardState.edges[roadEdgeId2], PlayerId::Player0);
+
+    buildSettlementActions = boardState.generateBuildSettlementActions(PlayerId::Player0);
+
+    EXPECT_EQ(buildSettlementActions.size(), expectedNumActions);
+    for (const auto& action : buildSettlementActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::BuildSettlement, type);
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    BuildSettlementWithTwoRoadsTests,
+    ActionTestBuildSettlementWithRoadsOnBoardParam,
+    ::testing::Values(
+        std::make_tuple(7, 50, 4),
+        std::make_tuple(35, 36, 4),
+        std::make_tuple(44, 51, 3),
+        std::make_tuple(23, 33, 3)
+    )
+);
+
+TEST_F(ActionTest, ExpectBuildSettlementWithGoodDistance){
+    setPlayersResourcesSeven();
+
+    // Place a settlement to block nearby placements
+    NodeId blockingNodeId = 11;
+    boardState.nodes[blockingNodeId] = Node::packStructure(boardState.nodes[blockingNodeId], StructureType::Settlement);
+    boardState.nodes[blockingNodeId] = Node::packOwner(boardState.nodes[blockingNodeId], PlayerId::Player0);
+
+    // Add roads to allow building near the blocking settlement
+    for (int i = 0; i < 3; ++i) {
+        EdgeId adjacentEdgeId = Node::unpackAdjacentEdge(boardState.nodes[blockingNodeId], i);
+        boardState.edges[adjacentEdgeId] = Edge::packHasRoad(boardState.edges[adjacentEdgeId], true);
+        boardState.edges[adjacentEdgeId] = Edge::packOwner(boardState.edges[adjacentEdgeId], PlayerId::Player0);
+    }
+    boardState.edges[27] = Edge::packHasRoad(boardState.edges[27], true);
+    boardState.edges[27] = Edge::packOwner(boardState.edges[27], PlayerId::Player0);
+
+    boardState.edges[33] = Edge::packHasRoad(boardState.edges[33], true);
+    boardState.edges[33] = Edge::packOwner(boardState.edges[33], PlayerId::Player0);
+
+    std::vector<NodeId> ExpectedNodeIds = {16, 20, 27};
+
+    std::vector<Action::PackedAction> buildSettlementActions;
+
+    buildSettlementActions = boardState.generateBuildSettlementActions(PlayerId::Player0);
+
+    EXPECT_EQ(buildSettlementActions.size(), 3);
+
+    int i = 0;
+    for (const auto& action : buildSettlementActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::BuildSettlement, type);
+        EXPECT_EQ(ExpectedNodeIds[i], Action::unpackArg1(action));
+        ++i;
+    }
+}
+
+TEST_F(ActionTest, ExpectNoBuildSettlementActionsOnEmptyBoard){
+    setPlayersResourcesSeven();
+    std::vector<Action::PackedAction> buildSettlementActions;
+
+    buildSettlementActions = boardState.generateBuildSettlementActions(PlayerId::Player0);
+
+    EXPECT_EQ(buildSettlementActions.size(), 0);
+    for (const auto& action : buildSettlementActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::BuildSettlement, type);
+    }
+}

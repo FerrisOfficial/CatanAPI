@@ -3,6 +3,8 @@
 #include "consts.hpp"
 #include "player.hpp"
 #include <vector>
+#include <iostream>
+#include <algorithm>
 
 namespace Board {
 
@@ -124,67 +126,52 @@ std::vector<Action::PackedAction> BoardState::generateBuildRoadActions(
     return buildRoadActions;
 }
 
-// std::vector<Action::PackedAction> BoardState::generateBuildSettlementActions(
-//     PlayerId playerId
-// ) {
-//     std::vector<Action::PackedAction> buildSettlementActions;
-
-//     for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
-//         if (Node::unpackStructure(nodes[nodeId]) == StructureType::NoStructure &&
-//             playerCanAffordBuildStructure(*this, playerId, StructureType::Settlement) &&
-//             playerHasAvailableStructure(*this, playerId, StructureType::Settlement)) {
-            
-//             // Check distance rule: no adjacent settlements/cities
-//             bool hasAdjacentSettlementOrCity = false;
-//             for (int i = 0; i < 3; ++i) {
-//                 EdgeId adjacentEdgeId = Node::unpackAdjacentEdge(nodes[nodeId], i);
-//                 if (adjacentEdgeId != EdgeIdNone) {
-//                     Edge::PackedEdge adjacentEdge = edges[adjacentEdgeId];
-//                     NodeId adjacentNodeA = Edge::unpackAdjacentNode(adjacentEdge, 0);
-//                     NodeId adjacentNodeB = Edge::unpackAdjacentNode(adjacentEdge, 1);
-                    
-//                     for (NodeId adjacentNodeId : {adjacentNodeA, adjacentNodeB}) {
-//                         if (adjacentNodeId != nodeId && adjacentNodeId != NodeIdNone) {
-//                             StructureType structure = Node::unpackStructure(nodes[adjacentNodeId]);
-//                             if (structure == StructureType::Settlement || structure == StructureType::City) {
-//                                 hasAdjacentSettlementOrCity = true;
-//                                 break;
-//                             }
-//                         }
-//                     }
-//                 }
-//                 if (hasAdjacentSettlementOrCity) break;
-//             }
-//             if (hasAdjacentSettlementOrCity) continue;
-
-//             buildSettlementActions.push_back(buildAction(ActionType::BuildSettlement, playerId, nodeId));
-//         }
-//     }
-
-//     return buildSettlementActions;
-// }
-
-std::vector<Action::PackedAction> BoardState::generateBuildActions(
+std::vector<Action::PackedAction> BoardState::generateBuildSettlementActions(
     PlayerId playerId
 ) {
-    std::vector<Action::PackedAction> buildActions;
+    std::vector<Action::PackedAction> buildSettlementActions;
 
-    // Build settlement actions
     for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
-        if (Node::unpackStructure(nodes[nodeId]) == StructureType::NoStructure) {
-            buildActions.push_back(buildAction(ActionType::BuildSettlement, playerId, nodeId));
+        if (Node::unpackStructure(nodes[nodeId]) == StructureType::NoStructure &&
+            playerCanAffordBuildStructure(*this, playerId, StructureType::Settlement) &&
+            playerHasAvailableStructure(*this, playerId, StructureType::Settlement)) {
+            
+            // Check distance rule: no adjacent settlements/cities and at least one adjacent road
+            bool hasAdjacentSettlementOrCity = false;
+            bool hasAtLeastOneAdjacentRoad = false;
+
+            for (int i = 0; i < 3; ++i) {
+                EdgeId adjacentEdgeId = Node::unpackAdjacentEdge(nodes[nodeId], i);
+                
+                if (Edge::unpackHasRoad(edges[adjacentEdgeId]) &&
+                    Edge::unpackOwner(edges[adjacentEdgeId]) == playerId) {
+                    hasAtLeastOneAdjacentRoad = true;
+                }
+
+                if (adjacentEdgeId != EdgeIdNone) {
+                    Edge::PackedEdge adjacentEdge = edges[adjacentEdgeId];
+                    NodeId adjacentNodeA = Edge::unpackAdjacentNode(adjacentEdge, 0);
+                    NodeId adjacentNodeB = Edge::unpackAdjacentNode(adjacentEdge, 1);
+                    
+                    for (NodeId adjacentNodeId : {adjacentNodeA, adjacentNodeB}) {
+                        if (adjacentNodeId != nodeId) {
+                            StructureType structure = Node::unpackStructure(nodes[adjacentNodeId]);
+                            if (structure == StructureType::Settlement || structure == StructureType::City) {
+                                hasAdjacentSettlementOrCity = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (hasAdjacentSettlementOrCity) break;
+            }
+            if (hasAdjacentSettlementOrCity || !hasAtLeastOneAdjacentRoad) continue;
+            
+            buildSettlementActions.push_back(buildAction(ActionType::BuildSettlement, playerId, nodeId));
         }
     }
 
-    // Build city actions
-    for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
-        if (Node::unpackStructure(nodes[nodeId]) == StructureType::Settlement && 
-            Node::unpackOwner(nodes[nodeId]) == playerId) {
-            buildActions.push_back(buildAction(ActionType::BuildCity, playerId, nodeId));
-        }
-    }
-
-    return buildActions;
+    return buildSettlementActions;
 }
 
 std::vector<Action::PackedAction> BoardState::generateTwoToOnePortTradeActions(
@@ -473,17 +460,19 @@ std::vector<Action::PackedAction> BoardState::generateDevCardActions(
 }
 
 // Nie można zagrać tą kartą którą przed chwilą się kupiło (??)
-// można kupić dowolną liczbę kart, ale zac jedną
+// można kupić dowolną liczbę kart, ale grać jedną
 std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId){
     std::vector<Action::PackedAction> legalActions;
     
-    auto buildActions = generateBuildActions(playerId);
+    auto buildRoadActions = generateBuildRoadActions(playerId);
+    auto buildSettlementActions = generateBuildSettlementActions(playerId);
     auto bankTradeActions = generateBankTradeActions(playerId);
     auto twoToOnePortTradeActions = generateTwoToOnePortTradeActions(playerId);
     auto threeToOnePortTradeActions = generateThreeToOnePortTradeActions(playerId);
     auto devCardActions = generateDevCardActions(playerId);
     
-    legalActions.insert(legalActions.end(), buildActions.begin(), buildActions.end());
+    legalActions.insert(legalActions.end(), buildRoadActions.begin(), buildRoadActions.end());
+    legalActions.insert(legalActions.end(), buildSettlementActions.begin(), buildSettlementActions.end());
     legalActions.insert(legalActions.end(), bankTradeActions.begin(), bankTradeActions.end());
     legalActions.insert(legalActions.end(), twoToOnePortTradeActions.begin(), twoToOnePortTradeActions.end());
     legalActions.insert(legalActions.end(), threeToOnePortTradeActions.begin(), threeToOnePortTradeActions.end());

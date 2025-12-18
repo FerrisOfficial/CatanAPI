@@ -264,9 +264,8 @@ struct BoardState {
     void handleUndoPlaceInitialRoad(Action::PackedAction action, PlayerId playerId);
 
     std::vector<Action::PackedAction> getLegalActions(PlayerId playerId);
-    std::vector<Action::PackedAction> generateBuildActions(PlayerId playerId);
     std::vector<Action::PackedAction> generateBuildRoadActions(PlayerId playerId);
-    // std::vector<Action::PackedAction> generateBuildSettlementActions(PlayerId playerId);
+    std::vector<Action::PackedAction> generateBuildSettlementActions(PlayerId playerId);
     std::vector<Action::PackedAction> generateBankTradeActions(PlayerId playerId);
     std::vector<Action::PackedAction> generateTwoToOnePortTradeActions(PlayerId playerId);
     std::vector<Action::PackedAction> generateThreeToOnePortTradeActions(PlayerId playerId);
