@@ -28,11 +28,21 @@ static bool playerHasAdjacentRoad(
     EdgeId edgeId
 ) {
     auto edge = board.edges[edgeId];
-    NodeId nodeA = Edge::unpackAdjacentNode(edge, 0);
-    NodeId nodeB = Edge::unpackAdjacentNode(edge, 1);
+    EdgeId adjacentEdge1 = Edge::unpackAdjacentEdge(edge, 0);
+    EdgeId adjacentEdge2 = Edge::unpackAdjacentEdge(edge, 1);
+    EdgeId adjacentEdge3 = Edge::unpackAdjacentEdge(edge, 2);
+    EdgeId adjacentEdge4 = Edge::unpackAdjacentEdge(edge, 3);
 
-    std::vector<EdgeId> adjacentEdges;
-    // Dodać strukturę do pobierania krawędzi sąsiednich do node'ów albo strukturę do pobierania sąsiednich krawędzi dla edge'ów
+    for (EdgeId adjacentEdgeId : {adjacentEdge1, adjacentEdge2, adjacentEdge3, adjacentEdge4}) {
+        if (adjacentEdgeId != EdgeIdNone) {
+            auto adjacentEdge = board.edges[adjacentEdgeId];
+            if (Edge::unpackHasRoad(adjacentEdge) && 
+                Edge::unpackOwner(adjacentEdge) == playerId) {
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 
@@ -60,45 +70,48 @@ static bool playerHasAdjacentSettlementOrCity(
     return false;
 }
 
-static bool playerCanAffordBuildRoad(
+static bool playerCanAffordBuildStructure(
     const BoardState& board, 
-    PlayerId playerId
+    PlayerId playerId, 
+    StructureType structureType
 ) {
     const auto& player = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    return Player::unpackResource(player, Resource::Lumber) >= 1 &&
-           Player::unpackResource(player, Resource::Brick) >= 1;
+    switch (structureType) {
+        case StructureType::Road:
+            return Player::unpackResource(player, Resource::Lumber) >= 1 &&
+                   Player::unpackResource(player, Resource::Brick) >= 1;
+        case StructureType::Settlement:
+            return Player::unpackResource(player, Resource::Lumber) >= 1 &&
+                   Player::unpackResource(player, Resource::Brick) >= 1 &&
+                   Player::unpackResource(player, Resource::Wool) >= 1 &&
+                   Player::unpackResource(player, Resource::Grain) >= 1;
+        case StructureType::City:
+            return Player::unpackResource(player, Resource::Grain) >= 2 &&
+                   Player::unpackResource(player, Resource::Ore) >= 3;
+        default:
+            return false;
+    }
 }
 
-static bool playerCanAffordBuildSettlement(
+static bool playerHasAvailableStructure(
     const BoardState& board, 
-    PlayerId playerId
+    PlayerId playerId,
+    StructureType structureType
 ) {
     const auto& player = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    return Player::unpackResource(player, Resource::Lumber) >= 1 &&
-           Player::unpackResource(player, Resource::Brick) >= 1 &&
-           Player::unpackResource(player, Resource::Wool) >= 1 &&
-           Player::unpackResource(player, Resource::Grain) >= 1;
+    return Player::unpackAvailableStructures(player, structureType) > 0;
 }
 
-static bool playerCanAffordBuildCity(
-    const BoardState& board, 
-    PlayerId playerId
-) {
-    const auto& player = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    return Player::unpackResource(player, Resource::Grain) >= 2 &&
-           Player::unpackResource(player, Resource::Ore) >= 3;
-}
-
-std::vector<Action::PackedAction> generateBuildRoadActions(
-    const BoardState& board, 
+std::vector<Action::PackedAction> BoardState::generateBuildRoadActions(
     PlayerId playerId
 ) {
     std::vector<Action::PackedAction> buildRoadActions;
 
     for (EdgeId edgeId = 0; edgeId < EDGE_COUNT; ++edgeId) {
-        if (!Edge::unpackHasRoad(board.edges[edgeId]) &&
-            playerCanAffordBuildRoad(board, playerId) &&
-            (playerHasAdjacentRoad(board, playerId, edgeId) || playerHasAdjacentSettlementOrCity(board, playerId, edgeId))) {
+        if (!Edge::unpackHasRoad(edges[edgeId]) &&
+            playerCanAffordBuildStructure(*this, playerId, StructureType::Road) &&
+            playerHasAvailableStructure(*this, playerId, StructureType::Road) &&
+            (playerHasAdjacentRoad(*this, playerId, edgeId) || playerHasAdjacentSettlementOrCity(*this, playerId, edgeId))) {
             buildRoadActions.push_back(buildAction(ActionType::BuildRoad, playerId, edgeId));
         }
     }
@@ -350,7 +363,8 @@ std::vector<Action::PackedAction> BoardState::generateDevCardActions(
     for (uint8_t cardCount = 1; cardCount <= maxAffordable; ++cardCount) {
         devCardActions.push_back(buildAction(ActionType::BuyDevCard, playerId));
     }
-        
+    
+    // Play Dev Cards
     // Knight cards
     if (Player::unpackDevCard(player, DevType::Knight) > 0) {
         for (HexId hexId = 0; hexId < HEX_COUNT; ++hexId) {
