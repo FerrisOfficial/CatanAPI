@@ -28,13 +28,18 @@ static bool playerHasAdjacentRoad(
     EdgeId edgeId
 ) {
     auto edge = board.edges[edgeId];
-    EdgeId adjacentEdge1 = Edge::unpackAdjacentEdge(edge, 0);
-    EdgeId adjacentEdge2 = Edge::unpackAdjacentEdge(edge, 1);
-    EdgeId adjacentEdge3 = Edge::unpackAdjacentEdge(edge, 2);
-    EdgeId adjacentEdge4 = Edge::unpackAdjacentEdge(edge, 3);
+    NodeId adjacentNode1 = Edge::unpackAdjacentNode(edge, 0);
+    NodeId adjacentNode2 = Edge::unpackAdjacentNode(edge, 1);
 
-    for (EdgeId adjacentEdgeId : {adjacentEdge1, adjacentEdge2, adjacentEdge3, adjacentEdge4}) {
-        if (adjacentEdgeId != EdgeIdNone) {
+    EdgeId adjacentEdge1 = Node::unpackAdjacentEdge(board.nodes[adjacentNode1], 0);
+    EdgeId adjacentEdge2 = Node::unpackAdjacentEdge(board.nodes[adjacentNode1], 1);
+    EdgeId adjacentEdge3 = Node::unpackAdjacentEdge(board.nodes[adjacentNode1], 2);
+    EdgeId adjacentEdge4 = Node::unpackAdjacentEdge(board.nodes[adjacentNode2], 0);
+    EdgeId adjacentEdge5 = Node::unpackAdjacentEdge(board.nodes[adjacentNode2], 1);
+    EdgeId adjacentEdge6 = Node::unpackAdjacentEdge(board.nodes[adjacentNode2], 2);
+
+    for (EdgeId adjacentEdgeId : {adjacentEdge1, adjacentEdge2, adjacentEdge3, adjacentEdge4, adjacentEdge5, adjacentEdge6}) {
+        if (adjacentEdgeId != EdgeIdNone && adjacentEdgeId != edgeId) {
             auto adjacentEdge = board.edges[adjacentEdgeId];
             if (Edge::unpackHasRoad(adjacentEdge) && 
                 Edge::unpackOwner(adjacentEdge) == playerId) {
@@ -118,6 +123,46 @@ std::vector<Action::PackedAction> BoardState::generateBuildRoadActions(
 
     return buildRoadActions;
 }
+
+// std::vector<Action::PackedAction> BoardState::generateBuildSettlementActions(
+//     PlayerId playerId
+// ) {
+//     std::vector<Action::PackedAction> buildSettlementActions;
+
+//     for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
+//         if (Node::unpackStructure(nodes[nodeId]) == StructureType::NoStructure &&
+//             playerCanAffordBuildStructure(*this, playerId, StructureType::Settlement) &&
+//             playerHasAvailableStructure(*this, playerId, StructureType::Settlement)) {
+            
+//             // Check distance rule: no adjacent settlements/cities
+//             bool hasAdjacentSettlementOrCity = false;
+//             for (int i = 0; i < 3; ++i) {
+//                 EdgeId adjacentEdgeId = Node::unpackAdjacentEdge(nodes[nodeId], i);
+//                 if (adjacentEdgeId != EdgeIdNone) {
+//                     Edge::PackedEdge adjacentEdge = edges[adjacentEdgeId];
+//                     NodeId adjacentNodeA = Edge::unpackAdjacentNode(adjacentEdge, 0);
+//                     NodeId adjacentNodeB = Edge::unpackAdjacentNode(adjacentEdge, 1);
+                    
+//                     for (NodeId adjacentNodeId : {adjacentNodeA, adjacentNodeB}) {
+//                         if (adjacentNodeId != nodeId && adjacentNodeId != NodeIdNone) {
+//                             StructureType structure = Node::unpackStructure(nodes[adjacentNodeId]);
+//                             if (structure == StructureType::Settlement || structure == StructureType::City) {
+//                                 hasAdjacentSettlementOrCity = true;
+//                                 break;
+//                             }
+//                         }
+//                     }
+//                 }
+//                 if (hasAdjacentSettlementOrCity) break;
+//             }
+//             if (hasAdjacentSettlementOrCity) continue;
+
+//             buildSettlementActions.push_back(buildAction(ActionType::BuildSettlement, playerId, nodeId));
+//         }
+//     }
+
+//     return buildSettlementActions;
+// }
 
 std::vector<Action::PackedAction> BoardState::generateBuildActions(
     PlayerId playerId

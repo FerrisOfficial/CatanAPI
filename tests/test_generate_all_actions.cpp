@@ -156,7 +156,6 @@ class ActionTestEdgeParam
     : public ActionTest,
       public ::testing::WithParamInterface<std::tuple<EdgeId, EdgeId, EdgeId, EdgeId, EdgeId>> { };
 
-
 TEST_P(ActionTestEdgeParam, ExpectBuildRoadFromRoadActions){
     setPlayersResourcesSeven();
 
@@ -225,9 +224,9 @@ TEST_F(ActionTest, ExpectBuildRoadFromTwoRoadsActions){
     }
 }
 
-class ActionTestNodeParam 
-        : public ActionTest,
-            public ::testing::WithParamInterface<std::tuple<NodeId, EdgeId, EdgeId, EdgeId, StructureType>> { };
+class ActionTestNodeParam
+    : public ActionTest,
+      public ::testing::WithParamInterface<std::tuple<NodeId, EdgeId, EdgeId, EdgeId, StructureType>> { };
 
 TEST_P(ActionTestNodeParam, ExpectBuildRoadFromSettlementActions){
     setPlayersResourcesSeven();
