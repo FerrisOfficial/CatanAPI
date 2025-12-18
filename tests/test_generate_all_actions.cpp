@@ -152,27 +152,9 @@ TEST_F(ActionTest, ExpectBuyDevCardActions){
     }
 }
 
-class ActionTestEdgeParam : public ::testing::TestWithParam<std::tuple<EdgeId, EdgeId, EdgeId, EdgeId, EdgeId>> {
-protected:
-    Board::BoardState boardState;
-
-    void SetUp() override {
-        boardState.generateRandomBoard();
-    }
-
-    void setPlayersResourcesSeven() {
-        for (size_t p = 0; p < 2; ++p) {
-            for (size_t res = 0; res < 5; ++res) {
-                boardState.packedPlayers[p] = Player::packResource(
-                    boardState.packedPlayers[p],
-                    static_cast<Resource>(res),
-                    7
-                );
-            }
-        }
-    }
-
-};
+class ActionTestEdgeParam
+    : public ActionTest,
+      public ::testing::WithParamInterface<std::tuple<EdgeId, EdgeId, EdgeId, EdgeId, EdgeId>> { };
 
 
 TEST_P(ActionTestEdgeParam, ExpectBuildRoadFromRoadActions){
@@ -243,27 +225,9 @@ TEST_F(ActionTest, ExpectBuildRoadFromTwoRoadsActions){
     }
 }
 
-class ActionTestNodeParam : public ::testing::TestWithParam<std::tuple<NodeId, EdgeId, EdgeId, EdgeId, StructureType>> {
-protected:
-    Board::BoardState boardState;
-
-    void SetUp() override {
-        boardState.generateRandomBoard();
-    }
-
-    void setPlayersResourcesSeven() {
-        for (size_t p = 0; p < 2; ++p) {
-            for (size_t res = 0; res < 5; ++res) {
-                boardState.packedPlayers[p] = Player::packResource(
-                    boardState.packedPlayers[p],
-                    static_cast<Resource>(res),
-                    7
-                );
-            }
-        }
-    }
-
-};
+class ActionTestNodeParam 
+        : public ActionTest,
+            public ::testing::WithParamInterface<std::tuple<NodeId, EdgeId, EdgeId, EdgeId, StructureType>> { };
 
 TEST_P(ActionTestNodeParam, ExpectBuildRoadFromSettlementActions){
     setPlayersResourcesSeven();
