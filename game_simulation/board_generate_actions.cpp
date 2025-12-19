@@ -174,6 +174,23 @@ std::vector<Action::PackedAction> BoardState::generateBuildSettlementActions(
     return buildSettlementActions;
 }
 
+std::vector<Action::PackedAction> BoardState::generateBuildCityActions(
+    PlayerId playerId
+) {
+    std::vector<Action::PackedAction> buildCityActions;
+
+    for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
+        if (Node::unpackStructure(nodes[nodeId]) == StructureType::Settlement &&
+            Node::unpackOwner(nodes[nodeId]) == playerId &&
+            playerCanAffordBuildStructure(*this, playerId, StructureType::City) &&
+            playerHasAvailableStructure(*this, playerId, StructureType::City)) {
+            buildCityActions.push_back(buildAction(ActionType::BuildCity, playerId, nodeId));
+        }
+    }
+
+    return buildCityActions;
+}
+
 std::vector<Action::PackedAction> BoardState::generateTwoToOnePortTradeActions(
     PlayerId playerId
 ) {

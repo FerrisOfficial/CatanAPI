@@ -1,9 +1,12 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <iostream>
+#include <algorithm>
 #include "board.hpp"
 #include "consts.hpp"
 #include "player.hpp"
 #include "actions.hpp"
+using ::testing::UnorderedElementsAre;
 
 using namespace Board;
 
@@ -241,6 +244,13 @@ TEST_P(ActionTestNodeParam, ExpectBuildRoadFromSettlementActions){
         std::get<3>(givenId)
     };
 
+    expectedEdgeId.erase(
+        std::remove(expectedEdgeId.begin(), expectedEdgeId.end(), EdgeIdNone),
+        expectedEdgeId.end()
+    );
+
+    std::vector<EdgeId> resultEdgeId;
+
     // Give player a settlement to build off of
     boardState.nodes[settlementNodeId] = Node::packStructure(boardState.nodes[settlementNodeId], structureType);
     boardState.nodes[settlementNodeId] = Node::packOwner(boardState.nodes[settlementNodeId], PlayerId::Player0);
@@ -249,13 +259,14 @@ TEST_P(ActionTestNodeParam, ExpectBuildRoadFromSettlementActions){
 
     EXPECT_LE(buildRoadActions.size(), 3);
     EXPECT_GE(buildRoadActions.size(), 1);
-    int i = 0;
+
     for (const auto& action : buildRoadActions) {
         ActionType type = Action::unpackType(action);
         EXPECT_EQ(ActionType::BuildRoad, type);
-        EXPECT_EQ(expectedEdgeId[i], Action::unpackArg1(action));
-        ++i;
+        resultEdgeId.push_back(static_cast<EdgeId>(Action::unpackArg1(action)));
     }
+
+    EXPECT_THAT(resultEdgeId, ::testing::UnorderedElementsAreArray(expectedEdgeId));
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -269,37 +280,6 @@ INSTANTIATE_TEST_SUITE_P(
         std::make_tuple(52, 70, 71, EdgeIdNone, StructureType::City)
     )
 );
-
-class ActionTestStructureTypeParam
-    : public ActionTest,
-      public ::testing::WithParamInterface<StructureType> { };
-
-// TEST_P(ActionTestStructureTypeParam, ExpectNoBuildWithNoAvaliableStructures){
-//     setPlayersResourcesSeven();
-
-//     StructureType structureType = GetParam();
-
-//     // Remove all available structures of the given type from Player0
-//     boardState.packedPlayers[static_cast<uint8_t>(PlayerId::Player0)] = Player::packAvailableStructures(
-//         boardState.packedPlayers[static_cast<uint8_t>(PlayerId::Player0)],
-//         structureType,
-//         0
-//     );
-
-//     std::vector<Action::PackedAction> buildActions;
-
-//     if (structureType == StructureType::Road) {
-//         buildActions = boardState.generateBuildRoadActions(PlayerId::Player0);
-//     }
-//     // else if (structureType == StructureType::Settlement) {
-//     //     buildActions = boardState.generateBuildSettlementActions(PlayerId::Player0);
-//     // }
-//     // else if (structureType == StructureType::City) {
-//     //     buildActions = boardState.generateBuildCityActions(PlayerId::Player0);
-//     // }
-
-//     EXPECT_EQ(0, buildActions.size());
-// }
 
 class ActionTestBuildSettlementWithRoadsOnBoardParam
     : public ActionTest,
@@ -377,21 +357,20 @@ TEST_F(ActionTest, ExpectBuildSettlementWithGoodDistance){
     boardState.edges[33] = Edge::packHasRoad(boardState.edges[33], true);
     boardState.edges[33] = Edge::packOwner(boardState.edges[33], PlayerId::Player0);
 
-    std::vector<NodeId> ExpectedNodeIds = {16, 20, 27};
-
+    std::vector<NodeId> resultNodeIds;
     std::vector<Action::PackedAction> buildSettlementActions;
 
     buildSettlementActions = boardState.generateBuildSettlementActions(PlayerId::Player0);
 
     EXPECT_EQ(buildSettlementActions.size(), 3);
 
-    int i = 0;
     for (const auto& action : buildSettlementActions) {
         ActionType type = Action::unpackType(action);
         EXPECT_EQ(ActionType::BuildSettlement, type);
-        EXPECT_EQ(ExpectedNodeIds[i], Action::unpackArg1(action));
-        ++i;
+        resultNodeIds.push_back(static_cast<NodeId>(Action::unpackArg1(action)));
     }
+
+    EXPECT_THAT(resultNodeIds, UnorderedElementsAre(16, 20, 27));
 }
 
 TEST_F(ActionTest, ExpectNoBuildSettlementActionsOnEmptyBoard){
@@ -406,3 +385,120 @@ TEST_F(ActionTest, ExpectNoBuildSettlementActionsOnEmptyBoard){
         EXPECT_EQ(ActionType::BuildSettlement, type);
     }
 }
+
+TEST_F(ActionTest, ExpectBuildCityOnSettlementActions){
+    setPlayersResourcesSeven();
+
+    // Give player a settlement to upgrade
+    NodeId settlementNodeId = 5;
+    boardState.nodes[settlementNodeId] = Node::packStructure(boardState.nodes[settlementNodeId], StructureType::Settlement);
+    boardState.nodes[settlementNodeId] = Node::packOwner(boardState.nodes[settlementNodeId], PlayerId::Player0);
+
+    std::vector<Action::PackedAction> buildCityActions;
+
+    buildCityActions = boardState.generateBuildCityActions(PlayerId::Player0);
+
+    EXPECT_EQ(buildCityActions.size(), 1);
+    for (const auto& action : buildCityActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::BuildCity, type);
+        EXPECT_EQ(settlementNodeId, Action::unpackArg1(action));
+    }
+}
+
+class ActionTestStructureTypeParam
+    : public ActionTest,
+      public ::testing::WithParamInterface<StructureType> { };
+
+TEST_P(ActionTestStructureTypeParam, ExpectNoBuildWithNoAvaliableStructures){
+    setPlayersResourcesSeven();
+
+    StructureType structureType = GetParam();
+
+    // Remove all available structures of the given type from Player0
+    boardState.packedPlayers[static_cast<uint8_t>(PlayerId::Player0)] = Player::packAvailableStructures(
+        boardState.packedPlayers[static_cast<uint8_t>(PlayerId::Player0)],
+        structureType,
+        0
+    );
+
+    std::vector<Action::PackedAction> buildActions;
+
+    if (structureType == StructureType::Road) {
+        buildActions = boardState.generateBuildRoadActions(PlayerId::Player0);
+    }
+    else if (structureType == StructureType::Settlement) {
+        buildActions = boardState.generateBuildSettlementActions(PlayerId::Player0);
+    }
+    else if (structureType == StructureType::City) {
+        buildActions = boardState.generateBuildCityActions(PlayerId::Player0);
+    }
+
+    EXPECT_EQ(0, buildActions.size());
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    NoBuildWithNoAvaliableStructuresTests,
+    ActionTestStructureTypeParam,
+    ::testing::Values(
+        StructureType::Road,
+        StructureType::Settlement,
+        StructureType::City
+    )
+);
+
+TEST_P(ActionTestStructureTypeParam, ExpectNoBuildWithNoAvaliableResources){
+    StructureType structureType = GetParam();
+    std::vector<Action::PackedAction> buildActions;
+
+    if (structureType == StructureType::Road) {
+        buildActions = boardState.generateBuildRoadActions(PlayerId::Player0);
+    }
+    else if (structureType == StructureType::Settlement) {
+        buildActions = boardState.generateBuildSettlementActions(PlayerId::Player0);
+    }
+    else if (structureType == StructureType::City) {
+        buildActions = boardState.generateBuildCityActions(PlayerId::Player0);
+    }
+
+    EXPECT_EQ(0, buildActions.size());
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    NoBuildWithNoAvaliableResourcesTests,
+    ActionTestStructureTypeParam,
+    ::testing::Values(
+        StructureType::Road,
+        StructureType::Settlement,
+        StructureType::City
+    )
+);
+
+TEST_P(ActionTestStructureTypeParam, ExpectNoBuildOnEmptyBoard){
+    setPlayersResourcesSeven();
+
+    StructureType structureType = GetParam();
+    std::vector<Action::PackedAction> buildActions;
+
+    if (structureType == StructureType::Road) {
+        buildActions = boardState.generateBuildRoadActions(PlayerId::Player0);
+    }
+    else if (structureType == StructureType::Settlement) {
+        buildActions = boardState.generateBuildSettlementActions(PlayerId::Player0);
+    }
+    else if (structureType == StructureType::City) {
+        buildActions = boardState.generateBuildCityActions(PlayerId::Player0);
+    }
+
+    EXPECT_EQ(0, buildActions.size());
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    NoBuildOnEmptyBoardTests,
+    ActionTestStructureTypeParam,
+    ::testing::Values(
+        StructureType::Road,
+        StructureType::Settlement,
+        StructureType::City
+    )
+);

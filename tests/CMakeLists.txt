@@ -33,30 +33,35 @@ add_executable(
 target_link_libraries(
   player_tests
   gtest_main
+  gmock
   game_simulation
 )
 
 target_link_libraries(
   actions_tests
   gtest_main
+  gmock
   game_simulation
 )
 
 target_link_libraries(
   board_tests
   gtest_main
+  gmock
   game_simulation
 )
 
 target_link_libraries(
   game_tests
   gtest_main
+  gmock
   game_simulation
 )
 
 target_link_libraries(
   bank_tests
   gtest_main
+  gmock
   game_simulation
 )
 
