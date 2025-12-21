@@ -492,7 +492,6 @@ void BoardState::handlePlayDevCardYearOfPlenty(Action::PackedAction action, Play
     Player::changeResourceQuantity(p, firstResource, 1);
     Bank::changeResourceQuantity(packedBank, firstResource, -1);
 
-
     // Add second resource to player
     Player::changeResourceQuantity(p, secondResource, 1);
     Bank::changeResourceQuantity(packedBank, secondResource, -1);

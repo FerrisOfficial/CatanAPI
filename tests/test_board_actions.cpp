@@ -457,17 +457,31 @@ TEST_F(ApplyActionTest, ExpectBuildCity) {
     }
 }
 
-TEST_F(ApplyActionTest, ExpectBuyDevelopmentCard) {
+class ActionTestDevCardTypeParam
+    : public ApplyActionTest,
+      public ::testing::WithParamInterface<DevType> { };
+
+TEST_P(ActionTestDevCardTypeParam, ExpectBuyOneDevelopmentCard) {
     setBankResourcesTen();
     setPlayersResourcesSeven();
 
-    // Ensure the bank contains only Victory Point development cards for this test.
-    boardState.packedBank = Bank::packDevCard(boardState.packedBank, DevType::Knight, 0);
-    boardState.packedBank = Bank::packDevCard(boardState.packedBank, DevType::RoadBuilding, 0);
-    boardState.packedBank = Bank::packDevCard(boardState.packedBank, DevType::YearOfPlenty, 0);
-    boardState.packedBank = Bank::packDevCard(boardState.packedBank, DevType::Monopoly, 0);
-    boardState.packedBank = Bank::packDevCard(boardState.packedBank, DevType::VictoryPoint, 5);
-    boardState.packedBank = Bank::packTotalDevCount(boardState.packedBank, 5);
+    DevType devCardInBank = GetParam();
+
+    // Ensure the bank contains only one type of development cards for this test.
+    for (DevType devType : {
+        DevType::Knight,
+        DevType::RoadBuilding,
+        DevType::YearOfPlenty,
+        DevType::Monopoly,
+        DevType::VictoryPoint
+    }) {
+        if (devType == devCardInBank) {
+            boardState.packedBank = Bank::packDevCard(boardState.packedBank, devType, 3);
+        } else {
+            boardState.packedBank = Bank::packDevCard(boardState.packedBank, devType, 0);
+        }
+    }
+    boardState.packedBank = Bank::packTotalDevCount(boardState.packedBank, 3);
 
     PlayerId buyingPlayer = PlayerId::Player1;
 
@@ -481,7 +495,7 @@ TEST_F(ApplyActionTest, ExpectBuyDevelopmentCard) {
     EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Ore), 11);
     EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Brick), 10);
     EXPECT_EQ(Bank::unpackResource(boardState.packedBank, Resource::Lumber), 10);
-    EXPECT_EQ(Bank::unpackDevCard(boardState.packedBank, DevType::VictoryPoint), 4);
+    EXPECT_EQ(Bank::unpackDevCard(boardState.packedBank, devCardInBank), 2);
     EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], Resource::Brick), 7);
     EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], Resource::Lumber), 7);
     EXPECT_EQ(Player::unpackResource(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], Resource::Grain), 6);
@@ -495,6 +509,65 @@ TEST_F(ApplyActionTest, ExpectBuyDevelopmentCard) {
     if (Player::unpackDevCard(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], DevType::VictoryPoint) == 1) {
         EXPECT_EQ(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)]), 1);
     }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    DevCardTypes,
+    ActionTestDevCardTypeParam,
+    ::testing::Values(
+        DevType::Knight,
+        DevType::RoadBuilding,
+        DevType::YearOfPlenty,
+        DevType::Monopoly,
+        DevType::VictoryPoint
+    )
+);
+
+TEST_F(ApplyActionTest, ExpectBuyAllDevCards){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    // Ensure the bank contains only one type of development cards for this test.
+    for (DevType devType : {
+        DevType::Knight,
+        DevType::RoadBuilding,
+        DevType::YearOfPlenty,
+        DevType::Monopoly,
+        DevType::VictoryPoint
+    }) {
+        boardState.packedBank = Bank::packDevCard(boardState.packedBank, devType, 1);
+    }
+    boardState.packedBank = Bank::packTotalDevCount(boardState.packedBank, 5);
+
+    PlayerId buyingPlayer = PlayerId::Player0;
+
+    for (int i = 0; i < 5; ++i) {
+        Action::PackedAction buyDevCardAction{};
+        buyDevCardAction = Action::packType(buyDevCardAction, ActionType::BuyDevCard);
+        buyDevCardAction = Action::packPlayerID(buyDevCardAction, buyingPlayer);
+        boardState.applyAction(buyDevCardAction);
+    }
+
+    for (DevType devType : {
+        DevType::Knight,
+        DevType::RoadBuilding,
+        DevType::YearOfPlenty,
+        DevType::Monopoly,
+        DevType::VictoryPoint
+    }) {
+        EXPECT_EQ(Bank::unpackDevCard(boardState.packedBank, devType), 0);
+        EXPECT_EQ(
+            Player::unpackDevCard(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)], devType),
+            1
+        );
+    }
+
+    EXPECT_EQ(Bank::unpackTotalDevCount(boardState.packedBank), 0);
+    EXPECT_EQ(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)]), 1);
+    EXPECT_EQ(
+        Player::totalDevCards(boardState.packedPlayers[static_cast<size_t>(buyingPlayer)]),
+        5
+    );
 }
 
 TEST_F(ApplyActionTest, ExpectTradeBank) {

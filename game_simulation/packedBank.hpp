@@ -61,17 +61,13 @@ constexpr uint8_t unpackResource(PackedBank pb, Resource r) {
     uint8_t shift = static_cast<uint8_t>(r) * 5;
     return static_cast<uint8_t>((pb >> shift) & 0x1F);
 }
-
-constexpr PackedBank packDevCard(PackedBank pb, DevType d, uint8_t value) {
-    switch(d) {
-        case DevType::Knight:       pb &= ~(PackedBank(0xFULL) << 25); pb |= PackedBank(value & 0xF) << 25; break;
-        case DevType::RoadBuilding: pb &= ~(PackedBank(0x3ULL) << 29); pb |= PackedBank(value & 0x3) << 29; break;
-        case DevType::YearOfPlenty: pb &= ~(PackedBank(0x3ULL) << 31); pb |= PackedBank(value & 0x3) << 31; break;
-        case DevType::Monopoly:     pb &= ~(PackedBank(0x3ULL) << 33); pb |= PackedBank(value & 0x3) << 33; break;
-        case DevType::VictoryPoint: pb &= ~(PackedBank(0x7ULL) << 35); pb |= PackedBank(value & 0x7) << 35; break;
-        default: break;
-    }
+constexpr PackedBank packTotalDevCount(PackedBank pb, uint8_t value) {
+    pb &= ~(PackedBank(0x1FULL) << 38);
+    pb |= (PackedBank(value & 0x1F) << 38);
     return pb;
+}
+constexpr uint8_t unpackTotalDevCount(PackedBank pb) {
+    return static_cast<uint8_t>((pb >> 38) & 0x1F);
 }
 
 constexpr uint8_t unpackDevCard(PackedBank pb, DevType d) {
@@ -85,15 +81,6 @@ constexpr uint8_t unpackDevCard(PackedBank pb, DevType d) {
     }
 }
 
-constexpr PackedBank packTotalDevCount(PackedBank pb, uint8_t value) {
-    pb &= ~(PackedBank(0x1FULL) << 38);
-    pb |= (PackedBank(value & 0x1F) << 38);
-    return pb;
-}
-constexpr uint8_t unpackTotalDevCount(PackedBank pb) {
-    return static_cast<uint8_t>((pb >> 38) & 0x1F);
-}
-
 constexpr uint8_t computeTotalDevCards(PackedBank pb) {
     return static_cast<uint8_t>(
         unpackDevCard(pb, DevType::Knight) +
@@ -102,6 +89,19 @@ constexpr uint8_t computeTotalDevCards(PackedBank pb) {
         unpackDevCard(pb, DevType::Monopoly) +
         unpackDevCard(pb, DevType::VictoryPoint)
     );
+}
+
+constexpr PackedBank packDevCard(PackedBank pb, DevType d, uint8_t value) {
+    switch(d) {
+        case DevType::Knight:       pb &= ~(PackedBank(0xFULL) << 25); pb |= PackedBank(value & 0xF) << 25; break;
+        case DevType::RoadBuilding: pb &= ~(PackedBank(0x3ULL) << 29); pb |= PackedBank(value & 0x3) << 29; break;
+        case DevType::YearOfPlenty: pb &= ~(PackedBank(0x3ULL) << 31); pb |= PackedBank(value & 0x3) << 31; break;
+        case DevType::Monopoly:     pb &= ~(PackedBank(0x3ULL) << 33); pb |= PackedBank(value & 0x3) << 33; break;
+        case DevType::VictoryPoint: pb &= ~(PackedBank(0x7ULL) << 35); pb |= PackedBank(value & 0x7) << 35; break;
+        default: break;
+    }
+    pb = packTotalDevCount(pb, computeTotalDevCards(pb));
+    return pb;
 }
 
 constexpr PackedBank buyableTransaction(PackedBank pb, BuyableType b, DevType d = DevType::NoDev, bool sell = true) {

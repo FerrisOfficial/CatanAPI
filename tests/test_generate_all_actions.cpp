@@ -146,13 +146,250 @@ TEST_F(ActionTest, ExpectBuyDevCardActions){
 
     std::vector<Action::PackedAction> buyDevCardActions;
 
-    buyDevCardActions = boardState.generateDevCardActions(PlayerId::Player0);
+    buyDevCardActions = boardState.generateBuyDevCardActions(PlayerId::Player0);
 
     EXPECT_EQ(7, buyDevCardActions.size());
     for (const auto& action : buyDevCardActions) {
         ActionType type = Action::unpackType(action);
         EXPECT_EQ(ActionType::BuyDevCard, type);
     }
+}
+
+TEST_F(ActionTest, ExpectNoBuyDevCardActionsWithoutResources){
+    setBankResourcesTen();
+    // Players have zero resources
+
+    std::vector<Action::PackedAction> buyDevCardActions;
+
+    buyDevCardActions = boardState.generateBuyDevCardActions(PlayerId::Player0);
+
+    EXPECT_EQ(0, buyDevCardActions.size());
+}
+
+TEST_F(ActionTest, ExpectNoBuyDevCardActionsWhenDeckEmpty){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    // Empties the development card deck
+    for ( DevType devType : {
+        DevType::Knight,
+        DevType::RoadBuilding,
+        DevType::YearOfPlenty,
+        DevType::Monopoly,
+        DevType::VictoryPoint
+    }) {
+        boardState.packedBank = Bank::packDevCard(
+            boardState.packedBank,
+            devType,
+            0
+        );
+    }
+
+    std::vector<Action::PackedAction> buyDevCardActions;
+
+    buyDevCardActions = boardState.generateBuyDevCardActions(PlayerId::Player0);
+
+    EXPECT_EQ(0, buyDevCardActions.size());
+}
+
+TEST_F(ActionTest, ExpectPlayDevCardKnightActions){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    PlayerId playingPlayer = PlayerId::Player0;
+    HexId robberPosition = boardState.robberPosition;
+
+    // Give player a knight development card
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        DevType::Knight,
+        1
+    );
+
+    std::vector<Action::PackedAction> playDevCardActions;
+
+    playDevCardActions = boardState.generatePlayDevCardKnightActions(playingPlayer);
+
+    EXPECT_EQ(18, playDevCardActions.size());
+    for (const auto& action : playDevCardActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::PlayDevCardKnight, type);
+        EXPECT_NE(robberPosition, Action::unpackArg1(action));
+    }
+}
+
+TEST_F(ActionTest, ExpectPlayDevCardRoadBuildingFromRoadActions){
+    PlayerId playingPlayer = PlayerId::Player1;
+
+    // Give player a road building development card
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        DevType::RoadBuilding,
+        1
+    );
+
+    // Place some roads to limit available options
+    for (EdgeId edgeId = 0; edgeId <= 6; ++edgeId) {
+        boardState.edges[edgeId] = Edge::packHasRoad(boardState.edges[edgeId], true);
+        boardState.edges[edgeId] = Edge::packOwner(boardState.edges[edgeId], playingPlayer);
+    }
+
+    std::vector<Action::PackedAction> playDevCardActions;
+
+    playDevCardActions = boardState.generatePlayDevCardRoadBuildingActions(playingPlayer);
+
+    std::vector<std::pair<EdgeId, EdgeId>> expectedEdgeId = {
+        {7, 8}, {7, 9}, {7, 10}, {7, 11}, {7,12}, {7, 13},
+        {8, 7}, {8, 9}, {8, 10}, {8, 11}, {8, 14}, {8, 15},
+        {9, 7}, {9, 8}, {9, 10}, {9, 11}, {9, 16}, {9, 17},
+        {10, 7}, {10, 8}, {10, 9}, {10, 11}, {10, 18},
+        {11, 7}, {11, 8}, {11, 9}, {11, 10}, {11, 12}, {11, 19}
+    };
+    std::vector<std::pair<EdgeId, EdgeId>> resultEdgeId;
+
+    EXPECT_EQ(playDevCardActions.size(), 29);
+    for (const auto& action : playDevCardActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::PlayDevCardRoadBuilding, type);
+        resultEdgeId.push_back(std::make_pair(
+            static_cast<EdgeId>(Action::unpackArg1(action)),
+            static_cast<EdgeId>(Action::unpackArg2(action))
+        ));
+    }
+    EXPECT_THAT(resultEdgeId, ::testing::UnorderedElementsAreArray(expectedEdgeId));
+}
+
+TEST_F(ActionTest, ExpectPlayDevCardRoadBuildingFromSettlementActions){
+    PlayerId playingPlayer = PlayerId::Player0;
+
+    // Give player a road building development card
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        DevType::RoadBuilding,
+        1
+    );
+
+    // Give player a settlement to build roads from
+    NodeId settlementNodeId = 11;
+    boardState.nodes[settlementNodeId] = Node::packStructure(boardState.nodes[settlementNodeId], StructureType::Settlement);
+    boardState.nodes[settlementNodeId] = Node::packOwner(boardState.nodes[settlementNodeId], playingPlayer);
+
+    std::vector<Action::PackedAction> playDevCardActions;
+
+    playDevCardActions = boardState.generatePlayDevCardRoadBuildingActions(playingPlayer);
+
+    std::vector<std::pair<EdgeId, EdgeId>> expectedEdgeId = {
+        {13, 7}, {13, 12}, {14, 8}, {14, 15},
+        {20, 27}, {20, 28}, {13, 14}, {13, 20},
+        {14, 13}, {14, 20}, {20, 13}, {20, 14}
+    };
+    std::vector<std::pair<EdgeId, EdgeId>> resultEdgeId;
+
+    EXPECT_EQ(playDevCardActions.size(), 12);
+    for (const auto& action : playDevCardActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::PlayDevCardRoadBuilding, type);
+        resultEdgeId.push_back(std::make_pair(
+            static_cast<EdgeId>(Action::unpackArg1(action)),
+            static_cast<EdgeId>(Action::unpackArg2(action))
+        ));
+    }
+    EXPECT_THAT(resultEdgeId, ::testing::UnorderedElementsAreArray(expectedEdgeId));
+}
+
+TEST_F(ActionTest, ExpectPlayDevCardRoadBuildingActionWhenOneRoadAvailable){
+    PlayerId playingPlayer = PlayerId::Player1;
+
+    // Give player a road building development card
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        DevType::RoadBuilding,
+        1
+    );
+
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packAvailableStructures(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        StructureType::Road,
+        1
+    );
+
+    // Place roads to limit available options
+    for (EdgeId edgeId = 0; edgeId <= 6; ++edgeId) {
+        boardState.edges[edgeId] = Edge::packHasRoad(boardState.edges[edgeId], true);
+        boardState.edges[edgeId] = Edge::packOwner(boardState.edges[edgeId], playingPlayer);
+    }
+
+    std::vector<Action::PackedAction> playDevCardActions;
+
+    std::vector<EdgeId> expectedEdgeId = {7, 8, 9, 10, 11};
+    std::vector<EdgeId> resultEdgeId;
+
+    playDevCardActions = boardState.generatePlayDevCardRoadBuildingActions(playingPlayer);
+
+    EXPECT_EQ(5, playDevCardActions.size());
+    for (const auto& action : playDevCardActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::PlayDevCardRoadBuilding, type);
+        EXPECT_EQ(EdgeIdNone, Action::unpackArg2(action));
+        resultEdgeId.push_back(static_cast<EdgeId>(Action::unpackArg1(action)));
+    }
+    EXPECT_THAT(resultEdgeId, ::testing::UnorderedElementsAreArray(expectedEdgeId));
+}
+
+TEST_F(ActionTest, ExpectPlayDevCardYearOfPlentyActions){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    PlayerId playingPlayer = PlayerId::Player1;
+
+    // Give player a year of plenty development card
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        DevType::YearOfPlenty,
+        1
+    );
+
+    std::vector<Action::PackedAction> playDevCardActions;
+
+    playDevCardActions = boardState.generatePlayDevCardYearOfPlentyActions(playingPlayer);
+
+    EXPECT_EQ(25, playDevCardActions.size());
+    for (const auto& action : playDevCardActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::PlayDevCardYearOfPlenty, type);
+    }
+}
+
+TEST_F(ActionTest, ExpectPlayDevCardMonopolyActions){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    PlayerId playingPlayer = PlayerId::Player0;
+
+    // Give player a monopoly development card
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        DevType::Monopoly,
+        1
+    );
+
+    std::vector<Action::PackedAction> playDevCardActions;
+
+    playDevCardActions = boardState.generatePlayDevCardMonopolyActions(playingPlayer);
+
+    std::vector<Resource> expectedResources = {
+        Resource::Brick, Resource::Lumber, Resource::Wool,
+        Resource::Grain, Resource::Ore
+    };
+    std::vector<Resource> resultResources;
+
+    EXPECT_EQ(5, playDevCardActions.size());
+    for (const auto& action : playDevCardActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::PlayDevCardMonopoly, type);
+        resultResources.push_back(static_cast<Resource>(Action::unpackArg1(action)));
+    }
+    EXPECT_THAT(resultResources, ::testing::UnorderedElementsAreArray(expectedResources));
 }
 
 class ActionTestEdgeParam
@@ -171,6 +408,11 @@ TEST_P(ActionTestEdgeParam, ExpectBuildRoadFromRoadActions){
         std::get<3>(givenEdgeId),
         std::get<4>(givenEdgeId)
     };
+    std::vector<EdgeId> resultEdgeId;
+    expectedEdgeId.erase(
+        std::remove(expectedEdgeId.begin(), expectedEdgeId.end(), EdgeIdNone),
+        expectedEdgeId.end()
+    );
 
     // Give player a starting road to build off of
     // boardState
@@ -181,13 +423,12 @@ TEST_P(ActionTestEdgeParam, ExpectBuildRoadFromRoadActions){
 
     EXPECT_LE(buildRoadActions.size(), 4);
     EXPECT_GE(buildRoadActions.size(), 1);
-    int i = 0;
     for (const auto& action : buildRoadActions) {
         ActionType type = Action::unpackType(action);
         EXPECT_EQ(ActionType::BuildRoad, type);
-        EXPECT_EQ(expectedEdgeId[i], Action::unpackArg1(action));
-        ++i;
+        resultEdgeId.push_back(static_cast<EdgeId>(Action::unpackArg1(action)));
     }
+    EXPECT_THAT(resultEdgeId, ::testing::UnorderedElementsAreArray(expectedEdgeId));
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -215,16 +456,18 @@ TEST_F(ActionTest, ExpectBuildRoadFromTwoRoadsActions){
 
     buildRoadActions = boardState.generateBuildRoadActions(PlayerId::Player0);
 
-    std::vector<EdgeId> expectedEdgeIds = {6, 11, 18, 45, 46, 59, 60};
+    std::vector<EdgeId> expectedEdgeId = {6, 11, 18, 45, 46, 59, 60};
+    std::vector<EdgeId> resultEdgeId;
 
-    EXPECT_EQ(buildRoadActions.size(), expectedEdgeIds.size());
+    EXPECT_EQ(buildRoadActions.size(), expectedEdgeId.size());
     int i = 0;
     for (const auto& action : buildRoadActions) {
         ActionType type = Action::unpackType(action);
         EXPECT_EQ(ActionType::BuildRoad, type);
-        EXPECT_EQ(expectedEdgeIds[i], Action::unpackArg1(action));
-        ++i;
+        resultEdgeId.push_back(static_cast<EdgeId>(Action::unpackArg1(action)));
     }
+
+    EXPECT_THAT(resultEdgeId, ::testing::UnorderedElementsAreArray(expectedEdgeId));
 }
 
 class ActionTestNodeParam

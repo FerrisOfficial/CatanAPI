@@ -396,10 +396,10 @@ std::vector<Action::PackedAction> BoardState::generateBankTradeActions(
     return tradeActions;
 }
 
-std::vector<Action::PackedAction> BoardState::generateDevCardActions(
+std::vector<Action::PackedAction> BoardState::generateBuyDevCardActions(
     PlayerId playerId
 ) {
-    std::vector<Action::PackedAction> devCardActions;
+    std::vector<Action::PackedAction> buyDevCardActions;
     
     auto &player = packedPlayers[static_cast<uint8_t>(playerId)];
     
@@ -407,41 +407,117 @@ std::vector<Action::PackedAction> BoardState::generateDevCardActions(
     uint8_t playerGrain = Player::unpackResource(player, Resource::Grain);
     uint8_t playerOre = Player::unpackResource(player, Resource::Ore);
     uint8_t playerWool = Player::unpackResource(player, Resource::Wool);
-    uint8_t maxAffordable = std::min({playerGrain, playerOre, playerWool});
-    
+    uint8_t playerCanBuy = std::min({playerGrain, playerOre, playerWool});
+    uint8_t availableDevCards = Bank::unpackTotalDevCount(packedBank);
+    uint8_t maxAffordable = std::min(playerCanBuy, availableDevCards);
+
     for (uint8_t cardCount = 1; cardCount <= maxAffordable; ++cardCount) {
-        devCardActions.push_back(buildAction(ActionType::BuyDevCard, playerId));
+        buyDevCardActions.push_back(buildAction(ActionType::BuyDevCard, playerId));
     }
     
-    // Play Dev Cards
-    // Knight cards
+    return buyDevCardActions;
+}
+
+std::vector<Action::PackedAction> BoardState::generatePlayDevCardKnightActions(
+    PlayerId playerId
+) {
+    std::vector<Action::PackedAction> knightActions;
+    
+    auto &player = packedPlayers[static_cast<uint8_t>(playerId)];
+
     if (Player::unpackDevCard(player, DevType::Knight) > 0) {
         for (HexId hexId = 0; hexId < HEX_COUNT; ++hexId) {
             if (hexId != robberPosition) {
-                devCardActions.push_back(buildAction(
+                knightActions.push_back(buildAction(
                     ActionType::PlayDevCardKnight, playerId, hexId
                 ));
             }
         }
     }
+
+    return knightActions;
+}
+
+static bool edgeIsValidForRoadBuildingDevCard(
+    const BoardState& board,
+    PlayerId playerId,
+    EdgeId edgeId
+) {
+    return !Edge::unpackHasRoad(board.edges[edgeId]) &&
+           playerHasAvailableStructure(board, playerId, StructureType::Road) &&
+           (playerHasAdjacentRoad(board, playerId, edgeId) ||
+            playerHasAdjacentSettlementOrCity(board, playerId, edgeId));
+}
+
+// Zawiera duplikaty (budowanie dwóch dróg na tych samych krawędziach w różnej kolejności)
+std::vector<Action::PackedAction> BoardState::generatePlayDevCardRoadBuildingActions(
+    PlayerId playerId
+) {
+    std::vector<Action::PackedAction> roadBuildingActions;
     
-    // RoadBuilding cards
+    auto &player = packedPlayers[static_cast<uint8_t>(playerId)];
+    
     if (Player::unpackDevCard(player, DevType::RoadBuilding) > 0) {
-        for (EdgeId firstEdge = 0; firstEdge < EDGE_COUNT; ++firstEdge) {
-            if (!Edge::unpackHasRoad(edges[firstEdge])) {
-                for (EdgeId secondEdge = firstEdge + 1; secondEdge < EDGE_COUNT; ++secondEdge) {
-                    if (!Edge::unpackHasRoad(edges[secondEdge])) {
-                        devCardActions.push_back(buildAction(
-                            ActionType::PlayDevCardRoadBuilding, playerId, 
-                            firstEdge, secondEdge
-                        ));
+        const uint8_t availableRoads =
+            Player::unpackAvailableStructures(player, StructureType::Road);
+
+        if (availableRoads >= 1) {
+            std::vector<EdgeId> firstCandidates;
+            firstCandidates.reserve(EDGE_COUNT);
+
+            for (EdgeId e = 0; e < EDGE_COUNT; ++e) {
+                if (edgeIsValidForRoadBuildingDevCard(*this, playerId, e)) {
+                    firstCandidates.push_back(e);
+                }
+            }
+
+            if (availableRoads == 1) {
+                // Only one road can be built
+                for (EdgeId firstEdge : firstCandidates) {
+                    roadBuildingActions.push_back(buildAction(
+                        ActionType::PlayDevCardRoadBuilding,
+                        playerId,
+                        firstEdge,
+                        EdgeIdNone
+                    ));
+                }
+            } else {
+                // Two roads can be built
+                for (size_t i = 0; i < firstCandidates.size(); ++i) {
+                    EdgeId firstEdge = firstCandidates[i];
+
+                    // Temporarily modify board to account for first road being built
+                    BoardState tempBoard = *this;
+                    tempBoard.handleBuildRoad(buildAction(
+                        ActionType::BuildRoad, playerId, firstEdge
+                    ), playerId);
+
+                    for (EdgeId secondEdge = 0; secondEdge < EDGE_COUNT; ++secondEdge) {
+                        if (secondEdge != firstEdge &&
+                            edgeIsValidForRoadBuildingDevCard(tempBoard, playerId, secondEdge)) {
+                            roadBuildingActions.push_back(buildAction(
+                                ActionType::PlayDevCardRoadBuilding,
+                                playerId,
+                                firstEdge,
+                                secondEdge
+                            ));
+                        }
                     }
                 }
             }
         }
     }
+        
+    return roadBuildingActions;
+}
+
+std::vector<Action::PackedAction> BoardState::generatePlayDevCardYearOfPlentyActions(
+    PlayerId playerId
+) {
+    std::vector<Action::PackedAction> yearOfPlentyActions;
     
-    // YearOfPlenty cards
+    auto &player = packedPlayers[static_cast<uint8_t>(playerId)];
+    
     if (Player::unpackDevCard(player, DevType::YearOfPlenty) > 0) {
         for (Resource firstResource : {
             Resource::Brick, Resource::Lumber, Resource::Wool, 
@@ -451,7 +527,7 @@ std::vector<Action::PackedAction> BoardState::generateDevCardActions(
                 Resource::Brick, Resource::Lumber, Resource::Wool, 
                 Resource::Grain, Resource::Ore
             }) {
-                devCardActions.push_back(buildAction(
+                yearOfPlentyActions.push_back(buildAction(
                     ActionType::PlayDevCardYearOfPlenty, playerId, 
                     static_cast<uint8_t>(firstResource), 
                     static_cast<uint8_t>(secondResource)
@@ -459,21 +535,30 @@ std::vector<Action::PackedAction> BoardState::generateDevCardActions(
             }
         }
     }
+        
+    return yearOfPlentyActions;
+}
+
+std::vector<Action::PackedAction> BoardState::generatePlayDevCardMonopolyActions(
+    PlayerId playerId
+) {
+    std::vector<Action::PackedAction> monopolyActions;
     
-    // Monopoly cards
+    auto &player = packedPlayers[static_cast<uint8_t>(playerId)];
+    
     if (Player::unpackDevCard(player, DevType::Monopoly) > 0) {
         for (Resource targetResource : {
             Resource::Brick, Resource::Lumber, Resource::Wool, 
             Resource::Grain, Resource::Ore
         }) {
-            devCardActions.push_back(buildAction(
+            monopolyActions.push_back(buildAction(
                 ActionType::PlayDevCardMonopoly, playerId, 
                 static_cast<uint8_t>(targetResource)
             ));
         }
     }
         
-    return devCardActions;
+    return monopolyActions;
 }
 
 // Nie można zagrać tą kartą którą przed chwilą się kupiło (??)
@@ -486,14 +571,22 @@ std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId)
     auto bankTradeActions = generateBankTradeActions(playerId);
     auto twoToOnePortTradeActions = generateTwoToOnePortTradeActions(playerId);
     auto threeToOnePortTradeActions = generateThreeToOnePortTradeActions(playerId);
-    auto devCardActions = generateDevCardActions(playerId);
+    auto buyDevCardActions = generateBuyDevCardActions(playerId);
+    auto playDevCardKnightdActions = generatePlayDevCardKnightActions(playerId);
+    auto playDevCardRoadBuildingActions = generatePlayDevCardRoadBuildingActions(playerId);
+    auto playDevCardYearOfPlentyActions = generatePlayDevCardYearOfPlentyActions(playerId);
+    auto playDevCardMonopolyActions = generatePlayDevCardMonopolyActions(playerId);
     
     legalActions.insert(legalActions.end(), buildRoadActions.begin(), buildRoadActions.end());
     legalActions.insert(legalActions.end(), buildSettlementActions.begin(), buildSettlementActions.end());
     legalActions.insert(legalActions.end(), bankTradeActions.begin(), bankTradeActions.end());
     legalActions.insert(legalActions.end(), twoToOnePortTradeActions.begin(), twoToOnePortTradeActions.end());
     legalActions.insert(legalActions.end(), threeToOnePortTradeActions.begin(), threeToOnePortTradeActions.end());
-    legalActions.insert(legalActions.end(), devCardActions.begin(), devCardActions.end());
+    legalActions.insert(legalActions.end(), buyDevCardActions.begin(), buyDevCardActions.end());
+    legalActions.insert(legalActions.end(), playDevCardKnightdActions.begin(), playDevCardKnightdActions.end());
+    legalActions.insert(legalActions.end(), playDevCardRoadBuildingActions.begin(), playDevCardRoadBuildingActions.end());
+    legalActions.insert(legalActions.end(), playDevCardYearOfPlentyActions.begin(), playDevCardYearOfPlentyActions.end());
+    legalActions.insert(legalActions.end(), playDevCardMonopolyActions.begin(), playDevCardMonopolyActions.end());
     
     return legalActions;
 }
