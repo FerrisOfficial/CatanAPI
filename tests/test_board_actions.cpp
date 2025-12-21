@@ -631,7 +631,82 @@ TEST_F(ApplyActionTest, ExpectPlayDevCardKnight){
         Player::unpackDevCard(boardState.packedPlayers[static_cast<size_t>(playingPlayer)], DevType::Knight),
         0
     );
+    EXPECT_EQ(
+        Player::unpackUsedKnights(boardState.packedPlayers[static_cast<size_t>(playingPlayer)]),
+        1
+    );
+}
 
+TEST_F(ApplyActionTest, ExpectLargestArmyFlag){
+    PlayerId playerA = PlayerId::Player0;
+    PlayerId playerB = PlayerId::Player1;
+
+    boardState.packedPlayers[static_cast<size_t>(playerA)] = Player::packUsedKnights(
+        boardState.packedPlayers[static_cast<size_t>(playerA)],
+        2
+    );
+    boardState.packedPlayers[static_cast<size_t>(playerB)] = Player::packUsedKnights(
+        boardState.packedPlayers[static_cast<size_t>(playerB)],
+        2
+    );
+
+    // Player B plays a knight to reach 3 used knights
+    boardState.packedPlayers[static_cast<size_t>(playerB)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playerB)],
+        DevType::Knight,
+        1
+    );
+
+    Action::PackedAction playKnightAction{};
+    playKnightAction = Action::packType(playKnightAction, ActionType::PlayDevCardKnight);
+    playKnightAction = Action::packArg1(playKnightAction, 4);
+    playKnightAction = Action::packPlayerID(playKnightAction, playerB);
+    boardState.applyAction(playKnightAction);
+
+    EXPECT_TRUE(Player::unpackLargestArmyFlag(boardState.packedPlayers[static_cast<size_t>(playerB)]));
+}
+
+TEST_F(ApplyActionTest, ExpectChangeLargestArmyFlag){
+    PlayerId playerA = PlayerId::Player0;
+    PlayerId playerB = PlayerId::Player1;
+
+    boardState.packedPlayers[static_cast<size_t>(playerA)] = Player::packUsedKnights(
+        boardState.packedPlayers[static_cast<size_t>(playerA)],
+        3
+    );
+    boardState.packedPlayers[static_cast<size_t>(playerA)] = Player::packLargestArmyFlag(
+        boardState.packedPlayers[static_cast<size_t>(playerA)],
+        true
+    );
+
+    EXPECT_TRUE(Player::unpackLargestArmyFlag(boardState.packedPlayers[static_cast<size_t>(playerA)]));
+
+    boardState.packedPlayers[static_cast<size_t>(playerB)] = Player::packUsedKnights(
+        boardState.packedPlayers[static_cast<size_t>(playerB)],
+        2
+    );
+
+    // Player B plays a knight to reach 4 used knights
+    boardState.packedPlayers[static_cast<size_t>(playerB)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playerB)],
+        DevType::Knight,
+        2
+    );
+
+    Action::PackedAction playKnightAction1{};
+    playKnightAction1 = Action::packType(playKnightAction1, ActionType::PlayDevCardKnight);
+    playKnightAction1 = Action::packArg1(playKnightAction1, 4);
+    playKnightAction1 = Action::packPlayerID(playKnightAction1, playerB);
+    boardState.applyAction(playKnightAction1);
+
+    Action::PackedAction playKnightAction2{};
+    playKnightAction2 = Action::packType(playKnightAction2, ActionType::PlayDevCardKnight);
+    playKnightAction2 = Action::packArg1(playKnightAction2, 6);
+    playKnightAction2 = Action::packPlayerID(playKnightAction2, playerB);
+    boardState.applyAction(playKnightAction2);
+
+    EXPECT_TRUE(Player::unpackLargestArmyFlag(boardState.packedPlayers[static_cast<size_t>(playerB)]));
+    EXPECT_FALSE(Player::unpackLargestArmyFlag(boardState.packedPlayers[static_cast<size_t>(playerA)]));
 }
 
 TEST_F(ApplyActionTest, ExpectPlayDevCardRoadBuilding){

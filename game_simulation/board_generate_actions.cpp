@@ -591,6 +591,4 @@ std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId)
     return legalActions;
 }
 
-
-
 } // namespace Board

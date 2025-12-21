@@ -219,6 +219,9 @@ TEST_P(UndoLastActionTest, ExpectUndoLastAction){
         EXPECT_EQ(boardState.edges[i], beforeEdges[i]);
     }
 
+    EXPECT_EQ(boardState.packedPlayers[0], beforePlayers[0]);
+    EXPECT_EQ(boardState.packedPlayers[1], beforePlayers[1]);
+
     EXPECT_EQ(boardState.robberPosition, beforeRobber);
 }
 

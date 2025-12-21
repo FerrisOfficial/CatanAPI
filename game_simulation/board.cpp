@@ -393,12 +393,32 @@ void BoardState::handleUndoBuyDevCard(Action::PackedAction action, PlayerId play
 Action::PackedAction BoardState::handlePlayDevCardKnight(Action::PackedAction action, PlayerId playerId) {
     // Decrement knight dev card count
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
+    auto enemyPlayerId = (playerId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
     auto previousRobberPosition = robberPosition;
     p = Player::packDevCard(
         p,
         DevType::Knight,
         Player::unpackDevCard(p, DevType::Knight) - 1
     );
+
+    p = Player::packUsedKnights(
+        p,
+        Player::unpackUsedKnights(p) + 1
+    );
+
+    uint8_t usedKnights = Player::unpackUsedKnights(p);
+    if ((usedKnights >= 3) && (Player::unpackUsedKnights(static_cast<uint8_t>(enemyPlayerId)) < usedKnights) && !(Player::unpackLargestArmyFlag(p))) {
+        packedPlayers[static_cast<uint8_t>(playerId)] =
+            Player::packLargestArmyFlag(
+                packedPlayers[static_cast<uint8_t>(playerId)],
+                true
+            );
+        packedPlayers[static_cast<uint8_t>(enemyPlayerId)] =
+            Player::packLargestArmyFlag(
+                packedPlayers[static_cast<uint8_t>(enemyPlayerId)],
+                false
+            );
+    }
 
     handleMoveRobber(action, playerId);
     action = Action::packArg1(action, previousRobberPosition);
@@ -415,6 +435,28 @@ void BoardState::handleUndoPlayDevCardKnight(Action::PackedAction action, Player
         DevType::Knight,
         Player::unpackDevCard(p, DevType::Knight) + 1
     );
+
+    p = Player::packUsedKnights(
+        p,
+        Player::unpackUsedKnights(p) - 1
+    );
+    
+    uint8_t usedKnights = Player::unpackUsedKnights(p);
+    auto enemyPlayerId = (playerId == PlayerId::Player0) ? PlayerId ::Player1 : PlayerId::Player0;
+    if (usedKnights < 3 && Player::unpackLargestArmyFlag(p)) {
+        packedPlayers[static_cast<uint8_t>(playerId)] =
+            Player::packLargestArmyFlag(
+                packedPlayers[static_cast<uint8_t>(playerId)],
+                false
+            );
+        if (Player::unpackUsedKnights(static_cast<uint8_t>(enemyPlayerId)) >= 3) {
+            packedPlayers[static_cast<uint8_t>(enemyPlayerId)] =
+                Player::packLargestArmyFlag(
+                    packedPlayers[static_cast<uint8_t>(enemyPlayerId)],
+                    true
+                );
+        }
+    }
 
     action = Action::packArg1(action, robberPosition);
     handleUndoMoveRobber(action, playerId);
