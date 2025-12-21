@@ -745,3 +745,28 @@ INSTANTIATE_TEST_SUITE_P(
         StructureType::City
     )
 );
+
+TEST_F(ActionTest, ExpectGenerateAllActions){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    PlayerId currentPlayer = PlayerId::Player0;
+
+    // Give player a settlement on a wool port
+    NodeId woolPortNodeId = 7;
+    boardState.nodes[woolPortNodeId] = Node::packStructure(boardState.nodes[woolPortNodeId], StructureType::Settlement);
+    boardState.nodes[woolPortNodeId] = Node::packOwner(boardState.nodes[woolPortNodeId], currentPlayer);
+
+    // Give player a knight development card
+    boardState.packedPlayers[static_cast<size_t>(currentPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(currentPlayer)],
+        DevType::Knight,
+        1
+    );
+
+    std::vector<Action::PackedAction> allActions;
+
+    allActions = boardState.getLegalActions(currentPlayer);
+
+    EXPECT_GT(allActions.size(), 0);
+}
