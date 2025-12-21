@@ -77,29 +77,6 @@ static bool playerHasAdjacentSettlementOrCity(
     return false;
 }
 
-static bool playerCanAffordBuildStructure(
-    const BoardState& board, 
-    PlayerId playerId, 
-    StructureType structureType
-) {
-    const auto& player = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    switch (structureType) {
-        case StructureType::Road:
-            return Player::unpackResource(player, Resource::Lumber) >= 1 &&
-                   Player::unpackResource(player, Resource::Brick) >= 1;
-        case StructureType::Settlement:
-            return Player::unpackResource(player, Resource::Lumber) >= 1 &&
-                   Player::unpackResource(player, Resource::Brick) >= 1 &&
-                   Player::unpackResource(player, Resource::Wool) >= 1 &&
-                   Player::unpackResource(player, Resource::Grain) >= 1;
-        case StructureType::City:
-            return Player::unpackResource(player, Resource::Grain) >= 2 &&
-                   Player::unpackResource(player, Resource::Ore) >= 3;
-        default:
-            return false;
-    }
-}
-
 static bool playerHasAvailableStructure(
     const BoardState& board, 
     PlayerId playerId,
@@ -116,7 +93,7 @@ std::vector<Action::PackedAction> BoardState::generateBuildRoadActions(
 
     for (EdgeId edgeId = 0; edgeId < EDGE_COUNT; ++edgeId) {
         if (!Edge::unpackHasRoad(edges[edgeId]) &&
-            playerCanAffordBuildStructure(*this, playerId, StructureType::Road) &&
+            Player::hasEnoughResources(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Road) &&
             playerHasAvailableStructure(*this, playerId, StructureType::Road) &&
             (playerHasAdjacentRoad(*this, playerId, edgeId) || playerHasAdjacentSettlementOrCity(*this, playerId, edgeId))) {
             buildRoadActions.push_back(buildAction(ActionType::BuildRoad, playerId, edgeId));
@@ -133,7 +110,7 @@ std::vector<Action::PackedAction> BoardState::generateBuildSettlementActions(
 
     for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
         if (Node::unpackStructure(nodes[nodeId]) == StructureType::NoStructure &&
-            playerCanAffordBuildStructure(*this, playerId, StructureType::Settlement) &&
+            Player::hasEnoughResources(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Settlement) &&
             playerHasAvailableStructure(*this, playerId, StructureType::Settlement)) {
             
             // Check distance rule: no adjacent settlements/cities and at least one adjacent road
@@ -182,7 +159,7 @@ std::vector<Action::PackedAction> BoardState::generateBuildCityActions(
     for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
         if (Node::unpackStructure(nodes[nodeId]) == StructureType::Settlement &&
             Node::unpackOwner(nodes[nodeId]) == playerId &&
-            playerCanAffordBuildStructure(*this, playerId, StructureType::City) &&
+            Player::hasEnoughResources(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::City) &&
             playerHasAvailableStructure(*this, playerId, StructureType::City)) {
             buildCityActions.push_back(buildAction(ActionType::BuildCity, playerId, nodeId));
         }
