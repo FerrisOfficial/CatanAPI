@@ -232,6 +232,111 @@ void BoardState::handleUndoMoveRobber(Action::PackedAction action, PlayerId play
     handleUndoStealResource(undoStealAction, playerId);
 }
 
+static bool nodeBlocksRoad(BoardState board, PlayerId playerId, NodeId nodeId) {
+    auto structure = Node::unpackStructure(board.nodes[nodeId]);
+    auto owner = Node::unpackOwner(board.nodes[nodeId]);
+    return (structure == StructureType::Settlement || structure == StructureType::City) && owner != playerId;
+}
+
+static int dfsLongestFromEdge(BoardState board, PlayerId playerId, EdgeId edgeId, NodeId cameFromNode,
+                                  std::vector<uint8_t>& used)
+{
+    used[edgeId] = 1;
+    int best = 1;
+
+    NodeId n0 = Edge::unpackAdjacentNode(board.edges[edgeId], 0);
+    NodeId n1 = Edge::unpackAdjacentNode(board.edges[edgeId], 1);
+    NodeId currentNode = (n0 == cameFromNode) ? n1 : n0;
+
+    if (nodeBlocksRoad(board, playerId, currentNode)) {
+        used[edgeId] = 0;
+        return best;
+    }
+
+    for (int i = 0; i < 3; ++i) {
+        EdgeId next = Node::unpackAdjacentEdge(board.nodes[currentNode], i);
+        if (next == EdgeIdNone) continue;
+        if (used[next]) continue;
+
+        if (!Edge::unpackHasRoad(board.edges[next])) continue;
+        if (Edge::unpackOwner(board.edges[next]) != playerId) continue;
+
+        best = std::max(best, 1 + dfsLongestFromEdge(board, playerId, next, currentNode, used));
+    }
+
+    used[edgeId] = 0;
+    return best;
+}
+
+static uint8_t computeLongestRoad(BoardState board, PlayerId playerId) {
+    int best = 0;
+    std::vector<uint8_t> used(EDGE_COUNT, 0);
+
+    for (EdgeId e = 0; e < EDGE_COUNT; ++e) {
+        if (!Edge::unpackHasRoad(board.edges[e])) continue;
+        if (Edge::unpackOwner(board.edges[e]) != playerId) continue;
+
+        NodeId a = Edge::unpackAdjacentNode(board.edges[e], 0);
+        NodeId b = Edge::unpackAdjacentNode(board.edges[e], 1);
+
+        int leftLen  = dfsLongestFromEdge(board, playerId, e, a, used);
+        int rightLen = dfsLongestFromEdge(board, playerId, e, b, used);
+
+        // Combine both directions through edge e. Each dfs counts edge e once,
+        // so subtract 1 to avoid double-counting the starting edge.
+        best = std::max(best, leftLen + rightLen - 1);
+    }
+
+    if (best < 0) best = 0;
+    if (best > 15) best = 15;
+    return static_cast<uint8_t>(best);
+}
+
+static void updateLongestRoadAwards(BoardState &board, PlayerId playingPlayer, uint8_t playingPlayerLength) {
+    auto enemyPlayer = (playingPlayer == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+
+    uint8_t enemyPlayerLength = computeLongestRoad(board, enemyPlayer);
+    board.packedPlayers[static_cast<uint8_t>(enemyPlayer)] =
+        Player::packLongestRoadLength(
+            board.packedPlayers[static_cast<uint8_t>(enemyPlayer)],
+            enemyPlayerLength
+        );
+
+    if (playingPlayerLength >= 5 && playingPlayerLength > enemyPlayerLength) {
+        // playing player takes longest road
+        board.packedPlayers[static_cast<uint8_t>(playingPlayer)] =
+            Player::packLongestRoadFlag(board.packedPlayers[static_cast<uint8_t>(playingPlayer)], true);
+        board.packedPlayers[static_cast<uint8_t>(enemyPlayer)] =
+            Player::packLongestRoadFlag(board.packedPlayers[static_cast<uint8_t>(enemyPlayer)], false);
+        return;
+    }
+
+    if (enemyPlayerLength >= 5 && enemyPlayerLength > playingPlayerLength) {
+        // enemy player takes longest road
+        board.packedPlayers[static_cast<uint8_t>(playingPlayer)] =
+            Player::packLongestRoadFlag(board.packedPlayers[static_cast<uint8_t>(playingPlayer)], false);
+        board.packedPlayers[static_cast<uint8_t>(enemyPlayer)] =
+            Player::packLongestRoadFlag(board.packedPlayers[static_cast<uint8_t>(enemyPlayer)], true);
+        return;
+    }
+
+    // Tie or neither qualifies:
+    // - If both lengths < 5, clear any flags
+    // - If both lengths >= 5 and equal, preserve existing flags (do nothing)
+    if (playingPlayerLength < 5 && enemyPlayerLength < 5) {
+        board.packedPlayers[static_cast<uint8_t>(playingPlayer)] =
+            Player::packLongestRoadFlag(board.packedPlayers[static_cast<uint8_t>(playingPlayer)], false);
+        board.packedPlayers[static_cast<uint8_t>(enemyPlayer)] =
+            Player::packLongestRoadFlag(board.packedPlayers[static_cast<uint8_t>(enemyPlayer)], false);
+    }
+}
+
+static void updateLongestRoadAwards(BoardState &board, PlayerId playingPlayer) {
+    uint8_t len = computeLongestRoad(board, playingPlayer);
+    updateLongestRoadAwards(board, playingPlayer, len);
+}
+
+
 void BoardState::handleBuildRoad(Action::PackedAction action, PlayerId playerId) {
     auto edgeId = Action::unpackArg1(action);
     edges[edgeId] = Edge::packHasRoad(edges[edgeId], true);
@@ -240,6 +345,16 @@ void BoardState::handleBuildRoad(Action::PackedAction action, PlayerId playerId)
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Road);
     packedBank = Bank::buyableTransaction(packedBank, BuyableType::Road);
+
+    // Recompute longest road for player
+    uint8_t longestRoad = computeLongestRoad(*this, playerId);
+    packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packLongestRoadLength(
+            packedPlayers[static_cast<uint8_t>(playerId)],
+            longestRoad
+        );
+
+    updateLongestRoadAwards(*this, playerId, longestRoad);
 }
 
 void BoardState::handleUndoBuildRoad(Action::PackedAction action, PlayerId playerId) {
@@ -250,7 +365,16 @@ void BoardState::handleUndoBuildRoad(Action::PackedAction action, PlayerId playe
     // Refund resources to player
     packedBank = Bank::buyableTransaction(packedBank, BuyableType::Road, DevType::NoDev, false);
     Player::refund(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Road);
-}
+
+    uint8_t longestRoad = computeLongestRoad(*this, playerId);
+    packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packLongestRoadLength(
+            packedPlayers[static_cast<uint8_t>(playerId)],
+            longestRoad
+        );
+
+    updateLongestRoadAwards(*this, playerId, longestRoad);
+}    
 
 void BoardState::handleBuildSettlement(Action::PackedAction action, PlayerId playerId) {
     auto nodeId = Action::unpackArg1(action);
@@ -276,6 +400,8 @@ void BoardState::handleBuildSettlement(Action::PackedAction action, PlayerId pla
     // Deduct resources from player
     Player::buy(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Settlement);
     packedBank = Bank::buyableTransaction(packedBank, BuyableType::Settlement);
+
+    updateLongestRoadAwards(*this, playerId);
 }
 
 void BoardState::handleUndoBuildSettlement(Action::PackedAction action, PlayerId playerId) {
@@ -302,6 +428,8 @@ void BoardState::handleUndoBuildSettlement(Action::PackedAction action, PlayerId
     // Refund resources to player
     packedBank = Bank::buyableTransaction(packedBank, BuyableType::Settlement, DevType::NoDev, false);
     Player::refund(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Settlement);
+
+    updateLongestRoadAwards(*this, playerId);
 }
 
 void BoardState::handleBuildCity(Action::PackedAction action, PlayerId playerId) {

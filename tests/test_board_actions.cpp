@@ -341,6 +341,260 @@ TEST_F(ApplyActionTest, ExpectBuildRoad) {
     EXPECT_TRUE(Edge::unpackHasRoad(roadEdge));
     EXPECT_EQ(Edge::unpackOwner(roadEdge), buildingPlayer);
     EXPECT_EQ(Player::unpackAvailableStructures(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], StructureType::Road), 14);
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]),
+        1
+    );
+    EXPECT_FALSE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)])
+    );
+}
+
+TEST_F(ApplyActionTest, ExpectBuildRoadGetLongestRoadAward) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    PlayerId buildingPlayer = PlayerId::Player0;
+
+    for (EdgeId e = 0; e < 4; ++e) {
+        Action::PackedAction buildRoadAction{};
+        buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+        buildRoadAction = Action::packArg1(buildRoadAction, e);
+        buildRoadAction = Action::packPlayerID(buildRoadAction, buildingPlayer);
+        boardState.applyAction(buildRoadAction);
+    }
+
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]),
+        4
+    );
+    EXPECT_FALSE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)])
+    );
+
+    Action::PackedAction buildRoadAction{};
+    buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+    buildRoadAction = Action::packArg1(buildRoadAction, 4);
+    buildRoadAction = Action::packPlayerID(buildRoadAction, buildingPlayer);
+    boardState.applyAction(buildRoadAction);
+
+    // Build random road
+    Action::PackedAction buildAnotherRoadAction{};
+    buildAnotherRoadAction = Action::packType(buildAnotherRoadAction, ActionType::BuildRoad);
+    buildAnotherRoadAction = Action::packArg1(buildAnotherRoadAction, 21);
+    buildAnotherRoadAction = Action::packPlayerID(buildAnotherRoadAction, buildingPlayer);
+    boardState.applyAction(buildAnotherRoadAction);
+
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]),
+        5
+    );
+    EXPECT_TRUE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)])
+    );
+}
+
+TEST_F(ApplyActionTest, ExpectBuildRoadNotGetLongestRoadAwardDueToTie) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    PlayerId buildingPlayer = PlayerId::Player0;
+    PlayerId enemyPlayer = PlayerId::Player1;
+
+    for (EdgeId e = 0; e < 5; ++e) {
+        Action::PackedAction buildRoadAction{};
+        buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+        buildRoadAction = Action::packArg1(buildRoadAction, e);
+        buildRoadAction = Action::packPlayerID(buildRoadAction, buildingPlayer);
+        boardState.applyAction(buildRoadAction);
+    }
+
+    for (EdgeId e = 10; e < 15; ++e) {
+        Action::PackedAction buildRoadAction{};
+        buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+        buildRoadAction = Action::packArg1(buildRoadAction, e);
+        buildRoadAction = Action::packPlayerID(buildRoadAction, enemyPlayer);
+        boardState.applyAction(buildRoadAction);
+    }
+
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]),
+        5
+    );
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(enemyPlayer)]),
+        5
+    );
+    EXPECT_TRUE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)])
+    );
+    EXPECT_FALSE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(enemyPlayer)])
+    );
+}
+
+TEST_F(ApplyActionTest, ExpectNewPlayerGetLongestRoadAward) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    PlayerId firstPlayer = PlayerId::Player0;
+    PlayerId secondPlayer = PlayerId::Player1;
+
+    for (EdgeId e = 0; e < 5; ++e) {
+        Action::PackedAction buildRoadAction{};
+        buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+        buildRoadAction = Action::packArg1(buildRoadAction, e);
+        buildRoadAction = Action::packPlayerID(buildRoadAction, firstPlayer);
+        boardState.applyAction(buildRoadAction);
+    }
+
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(firstPlayer)]),
+        5
+    );
+    EXPECT_TRUE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(firstPlayer)])
+    );
+    EXPECT_FALSE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(secondPlayer)])
+    );
+
+    for (EdgeId e = 39; e < 47; ++e) {
+        Action::PackedAction buildRoadAction{};
+        buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+        buildRoadAction = Action::packArg1(buildRoadAction, e);
+        buildRoadAction = Action::packPlayerID(buildRoadAction, secondPlayer);
+        boardState.applyAction(buildRoadAction);
+    }
+
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(secondPlayer)]),
+        8
+    );
+    EXPECT_FALSE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(firstPlayer)])
+    );
+    EXPECT_TRUE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(secondPlayer)])
+    );
+}
+
+TEST_F(ApplyActionTest, ExpectChooseLongestRoadFromTwoForAward) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    PlayerId buildingPlayer = PlayerId::Player0;
+
+    // Build first road of length 5
+    for (EdgeId e = 0; e < 5; ++e) {
+        Action::PackedAction buildRoadAction{};
+        buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+        buildRoadAction = Action::packArg1(buildRoadAction, e);
+        buildRoadAction = Action::packPlayerID(buildRoadAction, buildingPlayer);
+        boardState.applyAction(buildRoadAction);
+    }
+
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]),
+        5
+    );
+    EXPECT_TRUE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)])
+    );
+
+    setPlayersResourcesSeven();
+    // Build second road of length 6
+    for (EdgeId e = 10; e < 16; ++e) {
+        Action::PackedAction buildRoadAction{};
+        buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+        buildRoadAction = Action::packArg1(buildRoadAction, e);
+        buildRoadAction = Action::packPlayerID(buildRoadAction, buildingPlayer);
+        boardState.applyAction(buildRoadAction);
+    }
+
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]),
+        6
+    );
+    EXPECT_TRUE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)])
+    );
+}
+
+TEST_F(ApplyActionTest, ExpectUndoBuildRoadUpdateLongestRoad) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    PlayerId buildingPlayer = PlayerId::Player0;
+
+    for (EdgeId e = 0; e < 5; ++e) {
+        Action::PackedAction buildRoadAction{};
+        buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+        buildRoadAction = Action::packArg1(buildRoadAction, e);
+        buildRoadAction = Action::packPlayerID(buildRoadAction, buildingPlayer);
+        boardState.applyAction(buildRoadAction);
+    }
+
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]),
+        5
+    );
+    EXPECT_TRUE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)])
+    );
+    EXPECT_FALSE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(PlayerId::Player1)])
+    );
+
+    // Undo last road
+    boardState.undoLastAction();
+
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]),
+        4
+    );
+    EXPECT_FALSE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)])
+    );
+    EXPECT_FALSE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(PlayerId::Player1)])
+    );
+}
+
+TEST_F(ApplyActionTest, ExpectLoseLongestRoadFlagDueToEnemySettlement){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    PlayerId buildingPlayer = PlayerId::Player0;
+    PlayerId enemyPlayer = PlayerId::Player1;
+
+    for (EdgeId e = 23; e < 30; ++e) {
+        Action::PackedAction buildRoadAction{};
+        buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+        buildRoadAction = Action::packArg1(buildRoadAction, e);
+        buildRoadAction = Action::packPlayerID(buildRoadAction, buildingPlayer);
+        boardState.applyAction(buildRoadAction);
+    }
+
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]),
+        7
+    );
+    EXPECT_TRUE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)])
+    );
+
+    // Enemy builds settlement breaking the road
+    Action::PackedAction buildSettlementAction{};
+    buildSettlementAction = Action::packType(buildSettlementAction, ActionType::BuildSettlement);
+    buildSettlementAction = Action::packArg1(buildSettlementAction, 19); // Node in the middle of the road
+    buildSettlementAction = Action::packPlayerID(buildSettlementAction, enemyPlayer);
+    boardState.applyAction(buildSettlementAction);
+
+    EXPECT_EQ(
+        Player::unpackLongestRoadLength(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]),
+        4
+    );
+    EXPECT_FALSE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)])
+    );
+    EXPECT_FALSE(
+        Player::unpackLongestRoadFlag(boardState.packedPlayers[static_cast<size_t>(enemyPlayer)])
+    );
 }
 
 TEST_F(ApplyActionTest, ExpectBuildSettlement) {
@@ -386,6 +640,35 @@ TEST_F(ApplyActionTest, ExpectBuildSettlement) {
             );
         }
     }
+}
+
+TEST_F(ApplyActionTest, ExpectBuikdSettlementBetweenEnemyRoads) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    PlayerId buildingPlayer = PlayerId::Player0;
+    PlayerId enemyPlayer = PlayerId::Player1;
+    NodeId settlementNodeId = 32;
+
+    // Enemy builds roads around the settlement location
+    for (EdgeId e = 42; e <= 48; ++e) {
+        Action::PackedAction buildRoadAction{};
+        buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
+        buildRoadAction = Action::packArg1(buildRoadAction, e);
+        buildRoadAction = Action::packPlayerID(buildRoadAction, enemyPlayer);
+        boardState.applyAction(buildRoadAction);
+    }
+
+    Action::PackedAction buildSettlementAction{};
+    buildSettlementAction = Action::packType(buildSettlementAction, ActionType::BuildSettlement);
+    buildSettlementAction = Action::packArg1(buildSettlementAction, settlementNodeId);
+    buildSettlementAction = Action::packPlayerID(buildSettlementAction, buildingPlayer);
+    boardState.applyAction(buildSettlementAction);
+
+    Node::PackedNode settlementNode = boardState.nodes[settlementNodeId];
+    EXPECT_EQ(Node::unpackStructure(settlementNode), StructureType::Settlement);
+    EXPECT_EQ(Node::unpackOwner(settlementNode), buildingPlayer);
+    EXPECT_EQ(Player::unpackAvailableStructures(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)], StructureType::Settlement), 4);
+    EXPECT_EQ(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<size_t>(buildingPlayer)]), 1);
 }
 
 TEST_F(ApplyActionTest, ExpectBuildCity) {
