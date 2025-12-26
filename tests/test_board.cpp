@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 #include "board.hpp"
+#include "consts.hpp"
+#include "player.hpp"
+#include "actions.hpp"
 
 using namespace Board;
 
@@ -29,18 +32,21 @@ INSTANTIATE_TEST_SUITE_P(
     )
 );
 
-class NodePackTest : public ::testing::TestWithParam<std::tuple<HexId, HexId, HexId, StructureType, PlayerId, PortType>> {};
+class NodePackTest : public ::testing::TestWithParam<std::tuple<HexId, HexId, HexId, EdgeId, EdgeId, EdgeId, StructureType, PlayerId, PortType>> {};
 
 TEST_P(NodePackTest, NodePacking) {
-    auto [hex1, hex2, hex3, structure, owner, portType] = GetParam();
+    auto [hex1, hex2, hex3, edge1, edge2, edge3, structure, owner, portType] = GetParam();
     
-    Node::PackedNode node = Node::makeNode(hex1, hex2, hex3, structure, owner, portType);
+    Node::PackedNode node = Node::makeNode(hex1, hex2, hex3, edge1, edge2, edge3, structure, owner, portType);
     
     EXPECT_EQ(Node::unpackStructure(node), structure);
     EXPECT_EQ(Node::unpackOwner(node), owner);
     EXPECT_EQ(Node::unpackAdjacentHex(node, 0), hex1);
     EXPECT_EQ(Node::unpackAdjacentHex(node, 1), hex2);
     EXPECT_EQ(Node::unpackAdjacentHex(node, 2), hex3);
+    EXPECT_EQ(Node::unpackAdjacentEdge(node, 0), edge1);
+    EXPECT_EQ(Node::unpackAdjacentEdge(node, 1), edge2);
+    EXPECT_EQ(Node::unpackAdjacentEdge(node, 2), edge3);
     EXPECT_EQ(Node::unpackPortType(node), portType);
 }
 
@@ -48,11 +54,11 @@ INSTANTIATE_TEST_SUITE_P(
     NodePackTests,
     NodePackTest,
     ::testing::Values(
-        std::make_tuple(5, 10, 15, StructureType::Settlement, PlayerId::Player0, PortType::WoolPort),
-        std::make_tuple(18, 7, 2, StructureType::City, PlayerId::Player1, PortType::GrainPort),
-        std::make_tuple(0, 0, 0, StructureType::NoStructure, PlayerId::Player0, PortType::NoPort),
-        std::make_tuple(19, 19, 19, StructureType::Road, PlayerId::Player1, PortType::OrePort),  // Max hex values
-        std::make_tuple(1, 8, 12, StructureType::City, PlayerId::Player0, PortType::LumberPort)
+        std::make_tuple(4, 5, 9,  20, 27, 28, StructureType::Settlement, PlayerId::Player0, PortType::WoolPort),
+        std::make_tuple(5, 6, 10,  21, 29, 30, StructureType::City, PlayerId::Player1, PortType::GrainPort),
+        std::make_tuple(0, 0, 0,  0, 0, 0, StructureType::NoStructure, PlayerId::Player0, PortType::NoPort),
+        std::make_tuple(7, 12, HexIdNone, 39, 40, 49, StructureType::Road, PlayerId::Player1, PortType::OrePort),  // Max hex values
+        std::make_tuple(15, HexIdNone, HexIdNone,  53, 61, EdgeIdNone, StructureType::City, PlayerId::Player0, PortType::LumberPort)
     )
 );
 
@@ -73,9 +79,9 @@ INSTANTIATE_TEST_SUITE_P(
     EdgePackTests,
     EdgePackTest,
     ::testing::Values(
-        std::make_tuple(true, PlayerId::Player0, 25, 30),
-        std::make_tuple(false, PlayerId::Player1, 5, 10),
-        std::make_tuple(true, PlayerId::Player1, 53, 40),  // Max node values within range
+        std::make_tuple(true, PlayerId::Player0, 25, 24),
+        std::make_tuple(false, PlayerId::Player1, 5, 6),
+        std::make_tuple(true, PlayerId::Player1, 53, 52),  // Max node values within range
         std::make_tuple(false, PlayerId::Player0, 0, 0),   // Min values
         std::make_tuple(true, PlayerId::Player0, 127, 127) // Max 7-bit values
     )
@@ -179,7 +185,8 @@ TEST(BoardTest, BitBoundaries) {
 TEST(BoardTest, InitializedNodesAndEdges) {
     // The 'None' HexId was stored using HexId(-1) masked into 5 bits -> 31
     constexpr HexId NoneMasked = 0x1F;
-
+    
+    Board::BoardState boardState;
     // nodes[0]  = Node::makeNode(None, 0, None);
     Node::PackedNode n0 = boardState.nodes[0];
     EXPECT_EQ(Node::unpackAdjacentHex(n0, 0), NoneMasked);

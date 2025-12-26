@@ -12,7 +12,8 @@ using EdgeId = uint8_t;
 using HexId = uint8_t; 
 using DiceNumber = uint8_t;
 
-constexpr HexId HexIdNone = HEX_COUNT + 1; 
+constexpr HexId HexIdNone = 0x1F;
+constexpr EdgeId EdgeIdNone = 0x7F;
 
 enum class PlayerId : uint8_t { 
     Player0 = 0, 
@@ -62,12 +63,12 @@ constexpr std::array<std::array<uint8_t,5>,4> StructureCost {{
 enum class ActionType : uint8_t {
     // Turn flow
     RollDice = 1, // Arg1: dice value (2-12)
-    EndTurn = 2,
+    EndTurn = 2, // None
 
     // Robber
     MoveRobber = 3, // Arg1: HexId to move the robber to
-    StealResource = 4, // Arg1: Resource type (0-4) 
-    DiscardResources = 5, // Resources
+    StealResource = 4, // None
+    DiscardResources = 5, // Resources that player chose to discard
 
     // Buying/Building
     BuildRoad = 6, // Arg1: EdgeId to build road on
@@ -76,14 +77,14 @@ enum class ActionType : uint8_t {
     BuyDevCard = 9, // None
 
     // Playing Development Cards
-    PlayDevCardKnight = 10, // Arg1: HexId to move the robber to, Arg2: Resource type (0-4)
+    PlayDevCardKnight = 10, // Arg1: HexId to move the robber to
     PlayDevCardRoadBuilding = 11, // Arg1: EdgeId to build first road on, Arg2: EdgeId to build second road on
-    PlayDevCardYearOfPlenty = 12, // Resources
+    PlayDevCardYearOfPlenty = 12, // Agr1: Resource type (0-4) for first resource, Arg2: Resource type (0-4) for second resource
     PlayDevCardMonopoly = 13, // Arg1: Resource type (0-4)
 
     // Trading
-    TradeBank = 14, // Resources, Arg1: Resource type (0-4)
-    ReceiveResources = 15, // Resources
+    TradeBank = 14, // Arg1: Give bank resource type (0-4), Arg2: Take resource type (0-4), Arg3: trade ratio (2-4)
+    ReceiveResources = 15, // Resources, Arg1: Resource type (0-4), Arg2: amount to give
 
     // Setup
     PlaceInitialSettlement = 16, // Arg1: NodeId to place settlement on
@@ -100,3 +101,11 @@ enum class PortType : uint8_t {
     OrePort = 5,
     NoPort = 6
 };
+
+const NodeId brickPortsNodes[2] = { 15, 25 };
+const NodeId lumberPortsNodes[2] = { 36, 46 };
+const NodeId woolPortsNodes[2] = { 7, 8 };
+const NodeId grainPortsNodes[2] = { 49, 50 };
+const NodeId orePortsNodes[2] = { 38, 39 };
+const NodeId threeForOnePortsNodes[8] = { 2, 3, 5, 6, 16, 27, 52, 53 };
+

@@ -11,4 +11,8 @@ struct IPlayer {
     Action::PackedAction getInitialRoad();
     Action::PackedAction get2InitialSettlement();
     Action::PackedAction get2InitialRoad();
+    Action::PackedAction getDevAction();
+    Action::PackedAction getDiscardAction();
+    Action::PackedAction getMoveRobber();
+    Action::PackedAction getTurnAction();
 };

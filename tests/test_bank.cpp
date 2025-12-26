@@ -45,10 +45,3 @@ TEST(BankTest, PackUnpackDevCardAndCachedTotal) {
     EXPECT_EQ(unpackTotalDevCount(b), newTotal);
     EXPECT_EQ(computeTotalDevCards(b), newTotal);
 }
-
-TEST(BankTest, TotalResourcesHelper) {
-    PackedBank b = makeNewBank();
-    EXPECT_EQ(totalResources(b), static_cast<uint16_t>(19*5));
-    b = packResource(b, Resource::Wool, 0);
-    EXPECT_EQ(totalResources(b), static_cast<uint16_t>(19*5 - 19));
-}

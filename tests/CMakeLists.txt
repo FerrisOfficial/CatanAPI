@@ -14,6 +14,9 @@ add_executable(
 add_executable(
   board_tests
   test_board.cpp
+  test_board_actions.cpp
+  test_board_undo_actions.cpp
+  test_generate_all_actions.cpp
 )
 
 add_executable(
@@ -30,30 +33,35 @@ add_executable(
 target_link_libraries(
   player_tests
   gtest_main
+  gmock
   game_simulation
 )
 
 target_link_libraries(
   actions_tests
   gtest_main
+  gmock
   game_simulation
 )
 
 target_link_libraries(
   board_tests
   gtest_main
+  gmock
   game_simulation
 )
 
 target_link_libraries(
   game_tests
   gtest_main
+  gmock
   game_simulation
 )
 
 target_link_libraries(
   bank_tests
   gtest_main
+  gmock
   game_simulation
 )
 
