@@ -61,6 +61,8 @@ constexpr std::array<std::array<uint8_t,5>,4> StructureCost {{
 }};
 
 enum class ActionType : uint8_t {
+    NoAction = 0,
+
     // Turn flow
     RollDice = 1, // Arg1: dice value (2-12)
     EndTurn = 2, // None

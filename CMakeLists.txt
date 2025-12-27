@@ -6,14 +6,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ----------------------------
-# 🟩 Define option early
+# 🟩 Display option
 # ----------------------------
 option(ENABLE_DISPLAY "Enable active display (displayActive)" ON)
 
 include(FetchContent)
 
 # ----------------------------
-# 🧩 GoogleTest setup
+# 🧩 GoogleTest setup (needed for tests)
 # ----------------------------
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
@@ -62,7 +62,7 @@ target_include_directories(game_simulation PUBLIC
 )
 
 # ----------------------------
-# 🎨 SFML (only if display enabled)
+# 🎨 SFML (if display enabled)
 # ----------------------------
 if(ENABLE_DISPLAY)
   target_compile_definitions(game_simulation PUBLIC DISPLAY)
@@ -85,42 +85,7 @@ else()
 endif()
 
 # ----------------------------
-# 🎨 clang-format
-# ----------------------------
-find_program(CLANG_FORMAT_EXE
-  NAMES clang-format clang-format-17 clang-format-16
-)
-
-if(CLANG_FORMAT_EXE)
-  file(GLOB_RECURSE CLANG_FORMAT_FILES
-    ${CMAKE_SOURCE_DIR}/*.cpp
-    ${CMAKE_SOURCE_DIR}/*.h
-    ${CMAKE_SOURCE_DIR}/*.hpp
-    ${CMAKE_SOURCE_DIR}/*.c
-  )
-
-  add_custom_target(clang-format
-    COMMAND ${CLANG_FORMAT_EXE}
-            -i
-            --style=file
-            ${CLANG_FORMAT_FILES}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Running clang-format on all source files"
-  )
-
-  add_custom_target(clang-format-check
-    COMMAND ${CLANG_FORMAT_EXE}
-            --dry-run
-            --Werror
-            --style=file
-            ${CLANG_FORMAT_FILES}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Checking clang-format compliance"
-  )
-endif()
-
-# ----------------------------
-# 🧪 Testing
+# 🧪 Enable testing
 # ----------------------------
 enable_testing()
 add_subdirectory(tests)

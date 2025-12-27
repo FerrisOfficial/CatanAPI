@@ -1,5 +1,5 @@
 #include "game.hpp"
-#include "randomDevice.hpp"
+#include "utils/randomDevice.hpp"
 
 Game::Game(IPlayer& p1, IPlayer& p2)
     : player1(p1)
@@ -27,9 +27,15 @@ void Game::initialPhase() {
     this->boardState.applyAction(p1SecondInitialPlacement.second);
 }
 
-void Game::processDevPhase(IPlayer& currentPlayer) {
+bool Game::processDevPhase(IPlayer& currentPlayer) {
     auto devAction = currentPlayer.getDevAction();
+
+    if (Action::unpackType(devAction) == ActionType::NoAction) {
+        return false;
+    }
+
     this->boardState.applyAction(devAction);
+    return true;
 }
 
 void Game::applyDiceRoll(uint8_t diceNumber) {
@@ -87,7 +93,7 @@ void Game::turnLoop() {
     PlayerId currentPlayerId = this->boardState.currentPlayer;
     IPlayer& currentPlayer = (currentPlayerId == PlayerId::Player0) ? player1 : player2;
 
-    processDevPhase(currentPlayer);
+    bool didUseDev = processDevPhase(currentPlayer);
 
     auto rolledDiceNumber = RandomDevice::rollDices();
     if (rolledDiceNumber != 7) {
@@ -96,6 +102,9 @@ void Game::turnLoop() {
         discardResourcesForSeven(currentPlayerId);
         handleRobberPhase(currentPlayer, currentPlayerId);
     }
+
+    if (!didUseDev)
+        processDevPhase(currentPlayer);
 
     processPlayerTurn(currentPlayer);
 }

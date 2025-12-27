@@ -273,6 +273,8 @@ struct BoardState {
     std::vector<Action::PackedAction> generatePlayDevCardRoadBuildingActions(PlayerId playerId);
     std::vector<Action::PackedAction> generatePlayDevCardYearOfPlentyActions(PlayerId playerId);
     std::vector<Action::PackedAction> generatePlayDevCardMonopolyActions(PlayerId playerId);
+    std::vector<Action::PackedAction> generatePlaceInitialStructures(PlayerId playerId);
+    std::vector<Action::PackedAction> generatePlace2InitialStructures(PlayerId playerId);
 };
 
 constexpr BoardState::BoardState() noexcept {

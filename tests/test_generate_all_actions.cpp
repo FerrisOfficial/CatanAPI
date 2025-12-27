@@ -770,3 +770,36 @@ TEST_F(ActionTest, ExpectGenerateAllActions){
 
     EXPECT_GT(allActions.size(), 0);
 }
+
+TEST_F(ActionTest, ExpectGeneratePlaceInitialStructuresActions){
+    std::vector<Action::PackedAction> placeInitialStructuresActions;
+
+    placeInitialStructuresActions = boardState.generatePlaceInitialStructures(PlayerId::Player0);
+
+    EXPECT_EQ(placeInitialStructuresActions.size(), 144);
+    for (const auto& action : placeInitialStructuresActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::PlaceInitialStructures, type);
+        EXPECT_LT(Action::unpackArg1(action), NODE_COUNT);
+        EXPECT_LT(Action::unpackArg2(action), EDGE_COUNT);
+    }
+}
+
+TEST_F(ActionTest, ExpectGeneratePlace2InitialStructuresActions){
+    std::vector<Action::PackedAction> placeInitialStructuresActions;
+
+    boardState.nodes[31] = Node::packStructure(boardState.nodes[31], StructureType::Settlement);
+    boardState.nodes[31] = Node::packOwner(boardState.nodes[31], PlayerId::Player0);
+    boardState.edges[42] = Edge::packHasRoad(boardState.edges[42], true);
+    boardState.edges[42] = Edge::packOwner(boardState.edges[42], PlayerId::Player0);
+
+    placeInitialStructuresActions = boardState.generatePlace2InitialStructures(PlayerId::Player0);
+
+    EXPECT_EQ(placeInitialStructuresActions.size(), 132);
+    for (const auto& action : placeInitialStructuresActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::Place2InitialStructures, type);
+        EXPECT_LT(Action::unpackArg1(action), NODE_COUNT);
+        EXPECT_LT(Action::unpackArg2(action), EDGE_COUNT);
+    }
+}

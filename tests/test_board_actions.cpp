@@ -111,7 +111,7 @@ TEST_F(ApplyActionTest, ExpextPlace2InitialSettlement) {
     
     
     Action::PackedAction place2SettlementAction{};
-    place2SettlementAction = Action::packType(place2SettlementAction, ActionType::Place2InitialSettlement);
+    place2SettlementAction = Action::packType(place2SettlementAction, ActionType::Place2InitialStructures);
     place2SettlementAction = Action::packPlayerID(place2SettlementAction, playerId);
     place2SettlementAction = Action::packArg1(place2SettlementAction, settlementNodeId);
     

@@ -1,15 +1,17 @@
 #include "player.hpp"
 
+#include <utility>
+
 IPlayer::IPlayer() {
 boardState = nullptr;
 }
 
 std::pair<Action::PackedAction, Action::PackedAction> IPlayer::getInitialPlacement() {
-return 0; // Base implementation - should be overridden
+return std::make_pair(0, 0); // Base implementation - should be overridden
 }
 
 std::pair<Action::PackedAction, Action::PackedAction> IPlayer::get2InitialPlacement() {
-return 0; // Base implementation - should be overridden
+return std::make_pair(0, 0); // Base implementation - should be overridden
 }
 
 Action::PackedAction IPlayer::getDevAction(){
