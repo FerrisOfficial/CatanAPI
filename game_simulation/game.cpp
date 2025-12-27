@@ -10,25 +10,21 @@ Game::Game(IPlayer& p1, IPlayer& p2)
 }
 
 void Game::initialPhase() {
-    auto p1InitialSettlement = player1.getInitialSettlement();
-    auto p1InitialRoad = player1.getInitialRoad();
-    this->boardState.applyAction(p1InitialSettlement);
-    this->boardState.applyAction(p1InitialRoad);
+    auto p1InitialPlacement = player1.getInitialPlacement();
+    this->boardState.applyAction(p1InitialPlacement.first);
+    this->boardState.applyAction(p1InitialPlacement.second);
 
-    auto p2InitialSettlement = player2.getInitialSettlement();
-    auto p2InitialRoad = player2.getInitialRoad();
-    this->boardState.applyAction(p2InitialSettlement);
-    this->boardState.applyAction(p2InitialRoad);
+    auto p2InitialPlacement = player2.getInitialPlacement();
+    this->boardState.applyAction(p2InitialPlacement.first);
+    this->boardState.applyAction(p2InitialPlacement.second);
 
-    auto p2SecondInitialSettlement = player2.get2InitialSettlement();
-    auto p2SecondInitialRoad = player2.get2InitialRoad();
-    this->boardState.applyAction(p2SecondInitialSettlement);
-    this->boardState.applyAction(p2SecondInitialRoad);
+    auto p2SecondInitialPlacement = player2.get2InitialPlacement();
+    this->boardState.applyAction(p2SecondInitialPlacement.first);
+    this->boardState.applyAction(p2SecondInitialPlacement.second);
 
-    auto p1SecondInitialSettlement = player1.get2InitialSettlement();
-    auto p1SecondInitialRoad = player1.get2InitialRoad();
-    this->boardState.applyAction(p1SecondInitialSettlement);
-    this->boardState.applyAction(p1SecondInitialRoad);
+    auto p1SecondInitialPlacement = player1.get2InitialPlacement();
+    this->boardState.applyAction(p1SecondInitialPlacement.first);
+    this->boardState.applyAction(p1SecondInitialPlacement.second);
 }
 
 void Game::processDevPhase(IPlayer& currentPlayer) {
@@ -117,6 +113,18 @@ PlayerId Game::runGame() {
         this->turnLoop();
         vpP0 = Player::unpackVictoryPoints(this->boardState.packedPlayers[0]);
         vpP1 = Player::unpackVictoryPoints(this->boardState.packedPlayers[1]);
+        if (Player::unpackLargestArmyFlag(this->boardState.packedPlayers[0])) {
+            vpP0 += 2;
+        }
+        if (Player::unpackLargestArmyFlag(this->boardState.packedPlayers[1])) {
+            vpP1 += 2;
+        }
+        if (Player::unpackLongestRoadFlag(this->boardState.packedPlayers[0])) {
+            vpP0 += 2;
+        }
+        if (Player::unpackLongestRoadFlag(this->boardState.packedPlayers[1])) {
+            vpP1 += 2;
+    }
         actualTurn = this->boardState.currentTurn;
     }
 

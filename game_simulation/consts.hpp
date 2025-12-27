@@ -87,9 +87,8 @@ enum class ActionType : uint8_t {
     ReceiveResources = 15, // Resources, Arg1: Resource type (0-4), Arg2: amount to give
 
     // Setup
-    PlaceInitialSettlement = 16, // Arg1: NodeId to place settlement on
-    Place2InitialSettlement = 17, // Arg1: NodeId to place settlement on
-    PlaceInitialRoad = 18, // Arg1: EdgeId to place road on
+    PlaceInitialStructures = 16, // Arg1: NodeId to place settlement on, Arg2: EdgeId to place road on
+    Place2InitialStructures = 17 // Arg1: NodeId to place settlement on, Arg2: EdgeId to place road on
 };
 
 enum class PortType : uint8_t {

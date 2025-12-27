@@ -4,19 +4,11 @@ IPlayer::IPlayer() {
 boardState = nullptr;
 }
 
-Action::PackedAction IPlayer::getInitialSettlement() {
+std::pair<Action::PackedAction, Action::PackedAction> IPlayer::getInitialPlacement() {
 return 0; // Base implementation - should be overridden
 }
 
-Action::PackedAction IPlayer::getInitialRoad() {
-return 0; // Base implementation - should be overridden
-}
-
-Action::PackedAction IPlayer::get2InitialSettlement() {
-return 0; // Base implementation - should be overridden
-}
-
-Action::PackedAction IPlayer::get2InitialRoad() {
+std::pair<Action::PackedAction, Action::PackedAction> IPlayer::get2InitialPlacement() {
 return 0; // Base implementation - should be overridden
 }
 

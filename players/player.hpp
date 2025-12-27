@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include "game_simulation/board.hpp"
 #include "game_simulation/actions.hpp"
 
@@ -7,10 +8,8 @@ struct IPlayer {
     Board::BoardState* boardState;
     IPlayer();
 
-    Action::PackedAction getInitialSettlement();
-    Action::PackedAction getInitialRoad();
-    Action::PackedAction get2InitialSettlement();
-    Action::PackedAction get2InitialRoad();
+    std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement();
+    std::pair<Action::PackedAction, Action::PackedAction> get2InitialPlacement();
     Action::PackedAction getDevAction();
     Action::PackedAction getDiscardAction();
     Action::PackedAction getMoveRobber();

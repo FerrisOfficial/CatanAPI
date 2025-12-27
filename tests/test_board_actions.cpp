@@ -34,23 +34,46 @@ protected:
 
 };
 
-TEST_F(ApplyActionTest, ExpextPlaceInitialSettlement) {
+TEST_F(ApplyActionTest, ExpectPlaceInitialStructures) {
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+    NodeId settlementNodeId = 10;
+    EdgeId roadEdgeId = 12;
+    Node::PackedNode settlementNode = boardState.nodes[settlementNodeId];
+
     PlayerId playerId = PlayerId::Player0;
 
-    Action::PackedAction placeSettlementAction{};
-    placeSettlementAction = Action::packType(placeSettlementAction, ActionType::PlaceInitialSettlement);
-    placeSettlementAction = Action::packPlayerID(placeSettlementAction, playerId);
-    placeSettlementAction = Action::packArg1(placeSettlementAction, 0); // NodeId 0
-    
-    boardState.applyAction(placeSettlementAction);
+    boardState.packedPlayers[static_cast<size_t>(playerId)] = 
+        Player::packVictoryPoints(
+            boardState.packedPlayers[static_cast<size_t>(playerId)],
+            0
+        );
+    boardState.packedPlayers[static_cast<size_t>(playerId)] = 
+        Player::packAvailableStructures(
+            boardState.packedPlayers[static_cast<size_t>(playerId)],
+            StructureType::Settlement,
+            5
+        );
 
-    EXPECT_EQ(Node::unpackStructure(boardState.nodes[0]), StructureType::Settlement);
-    EXPECT_EQ(Node::unpackOwner(boardState.nodes[0]), playerId);
+    
+    
+    Action::PackedAction placeInitialStructuresAction{};
+    placeInitialStructuresAction = Action::packType(placeInitialStructuresAction, ActionType::PlaceInitialStructures);
+    placeInitialStructuresAction = Action::packPlayerID(placeInitialStructuresAction, playerId);
+    placeInitialStructuresAction = Action::packArg1(placeInitialStructuresAction, settlementNodeId);
+    placeInitialStructuresAction = Action::packArg2(placeInitialStructuresAction, roadEdgeId);
+    
+    boardState.applyAction(placeInitialStructuresAction);
+
+    EXPECT_EQ(Node::unpackStructure(boardState.nodes[settlementNodeId]), StructureType::Settlement);
+    EXPECT_EQ(Node::unpackOwner(boardState.nodes[settlementNodeId]), playerId);
     EXPECT_EQ(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<size_t>(playerId)]), 1);
     EXPECT_EQ(Player::unpackAvailableStructures(
         boardState.packedPlayers[static_cast<size_t>(playerId)],
         StructureType::Settlement
-    ), 4); // Starting with 5 settlements
+    ), 4);
+    EXPECT_EQ(Edge::unpackHasRoad(boardState.edges[roadEdgeId]), true);
+    EXPECT_EQ(Edge::unpackOwner(boardState.edges[roadEdgeId]), playerId);
 }
 
 TEST_F(ApplyActionTest, ExpextPlace2InitialSettlement) {
@@ -112,24 +135,6 @@ TEST_F(ApplyActionTest, ExpextPlace2InitialSettlement) {
             );
         }
     }
-}
-
-
-TEST_F(ApplyActionTest, ExpectPlaceInitialRoad){
-    PlayerId playerId = PlayerId::Player0;
-    EdgeId roadEdgeId = 10;
-
-    Action::PackedAction buildRoadAction{};
-    buildRoadAction = Action::packType(buildRoadAction, ActionType::BuildRoad);
-    buildRoadAction = Action::packArg1(buildRoadAction, roadEdgeId);
-    buildRoadAction = Action::packPlayerID(buildRoadAction, playerId);
-    boardState.applyAction(buildRoadAction);
-    
-    Edge::PackedEdge roadEdge = boardState.edges[roadEdgeId];
-    EXPECT_TRUE(Edge::unpackHasRoad(roadEdge));
-    EXPECT_EQ(Edge::unpackOwner(roadEdge), playerId);
-    EXPECT_EQ(Player::unpackAvailableStructures(boardState.packedPlayers[static_cast<size_t>(playerId)], StructureType::Road), 14);
-
 }
 
 TEST_F(ApplyActionTest, ExpectResourceDistributionOnEightRoll) {

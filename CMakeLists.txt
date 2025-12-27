@@ -10,7 +10,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ----------------------------
 option(ENABLE_DISPLAY "Enable active display (displayActive)" ON)
 
-# Include FetchContent for dependencies
 include(FetchContent)
 
 # ----------------------------
@@ -28,27 +27,27 @@ FetchContent_MakeAvailable(googletest)
 # 📦 Include directories
 # ----------------------------
 include_directories(
-    ${CMAKE_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/game_simulation
-    ${CMAKE_SOURCE_DIR}/players
-    ${CMAKE_SOURCE_DIR}/display
+  ${CMAKE_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/game_simulation
+  ${CMAKE_SOURCE_DIR}/players
+  ${CMAKE_SOURCE_DIR}/display
 )
 
 # ----------------------------
 # 🧱 Source files
 # ----------------------------
 set(GAME_SIM_SRC
-    players/player.cpp
-    game_simulation/game.cpp
-    game_simulation/board.cpp
-    game_simulation/board_generate_actions.cpp
+  players/player.cpp
+  game_simulation/game.cpp
+  game_simulation/board.cpp
+  game_simulation/board_generate_actions.cpp
 )
 
 if(ENABLE_DISPLAY)
-    list(APPEND GAME_SIM_SRC display/displayActive.cpp)
-    message(STATUS "Display enabled: including displayActive.cpp")
+  list(APPEND GAME_SIM_SRC display/displayActive.cpp)
+  message(STATUS "Display enabled: including displayActive.cpp")
 else()
-    message(STATUS "Display disabled: only using displayNotActive.hpp (no .cpp added)")
+  message(STATUS "Display disabled: only using displayNotActive.hpp (no .cpp added)")
 endif()
 
 # ----------------------------
@@ -57,9 +56,9 @@ endif()
 add_library(game_simulation ${GAME_SIM_SRC})
 
 target_include_directories(game_simulation PUBLIC
-    ${CMAKE_SOURCE_DIR}/game_simulation
-    ${CMAKE_SOURCE_DIR}/players
-    ${CMAKE_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/game_simulation
+  ${CMAKE_SOURCE_DIR}/players
+  ${CMAKE_SOURCE_DIR}
 )
 
 # ----------------------------
@@ -67,6 +66,7 @@ target_include_directories(game_simulation PUBLIC
 # ----------------------------
 if(ENABLE_DISPLAY)
   target_compile_definitions(game_simulation PUBLIC DISPLAY)
+
   FetchContent_Declare(
     sfml
     URL https://github.com/SFML/SFML/archive/refs/tags/2.6.1.zip
@@ -82,6 +82,41 @@ if(ENABLE_DISPLAY)
   message(STATUS "Building with DISPLAY enabled (SFML fetched and linked)")
 else()
   message(STATUS "Building with DISPLAY disabled (header-only stub)")
+endif()
+
+# ----------------------------
+# 🎨 clang-format
+# ----------------------------
+find_program(CLANG_FORMAT_EXE
+  NAMES clang-format clang-format-17 clang-format-16
+)
+
+if(CLANG_FORMAT_EXE)
+  file(GLOB_RECURSE CLANG_FORMAT_FILES
+    ${CMAKE_SOURCE_DIR}/*.cpp
+    ${CMAKE_SOURCE_DIR}/*.h
+    ${CMAKE_SOURCE_DIR}/*.hpp
+    ${CMAKE_SOURCE_DIR}/*.c
+  )
+
+  add_custom_target(clang-format
+    COMMAND ${CLANG_FORMAT_EXE}
+            -i
+            --style=file
+            ${CLANG_FORMAT_FILES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Running clang-format on all source files"
+  )
+
+  add_custom_target(clang-format-check
+    COMMAND ${CLANG_FORMAT_EXE}
+            --dry-run
+            --Werror
+            --style=file
+            ${CLANG_FORMAT_FILES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Checking clang-format compliance"
+  )
 endif()
 
 # ----------------------------

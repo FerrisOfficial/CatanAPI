@@ -225,9 +225,8 @@ struct BoardState {
     void applyAction(Action::PackedAction action);
     void undoLastAction();
 
-    void handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId);
-    void handlePlace2InitialSettlement(Action::PackedAction action, PlayerId playerId);
-    void handlePlaceInitialRoad(Action::PackedAction action, PlayerId playerId);
+    void handlePlaceInitialStructures(Action::PackedAction action, PlayerId playerId);
+    void handlePlace2InitialStructures(Action::PackedAction action, PlayerId playerId);
     Action::PackedAction handleEndTurn();
     Action::PackedAction handleRollDice(Action::PackedAction action);
     Action::PackedAction handleMoveRobber(Action::PackedAction action, PlayerId playerId);
@@ -261,7 +260,6 @@ struct BoardState {
     void handleUndoReceiveResources(Action::PackedAction action, PlayerId playerId);
     void handleUndoPlaceInitialSettlement(Action::PackedAction action, PlayerId playerId);
     void handleUndoPlace2InitialSettlement(Action::PackedAction action, PlayerId playerId);
-    void handleUndoPlaceInitialRoad(Action::PackedAction action, PlayerId playerId);
 
     std::vector<Action::PackedAction> getLegalActions(PlayerId playerId);
     std::vector<Action::PackedAction> generateBuildRoadActions(PlayerId playerId);
@@ -275,7 +273,6 @@ struct BoardState {
     std::vector<Action::PackedAction> generatePlayDevCardRoadBuildingActions(PlayerId playerId);
     std::vector<Action::PackedAction> generatePlayDevCardYearOfPlentyActions(PlayerId playerId);
     std::vector<Action::PackedAction> generatePlayDevCardMonopolyActions(PlayerId playerId);
-    // std::vector<Action::PackedAction> generatePlayDevCardActions(PlayerId playerId);
 };
 
 constexpr BoardState::BoardState() noexcept {

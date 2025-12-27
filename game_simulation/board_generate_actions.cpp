@@ -538,8 +538,7 @@ std::vector<Action::PackedAction> BoardState::generatePlayDevCardMonopolyActions
     return monopolyActions;
 }
 
-// Nie można zagrać tą kartą którą przed chwilą się kupiło (??)
-// można kupić dowolną liczbę kart, ale grać jedną
+
 std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId){
     std::vector<Action::PackedAction> legalActions;
     
