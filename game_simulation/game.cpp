@@ -15,26 +15,26 @@ void Game::initialPhase() {
 
     logger.log_players(this->boardState);
     auto p1InitialPlacement = player1.getInitialPlacement();
-    logger.log("Player 1 initial placement: ", std::to_string(static_cast<int>(Action::unpackType(p1InitialPlacement.second))));
+    logger.log("Player 1 id of initial settlement: ", std::to_string(static_cast<int>(Action::unpackArg1(p1InitialPlacement.second))));
     this->boardState.applyAction(p1InitialPlacement.second);
     this->boardState.applyAction(Action::packType(Action::getEmptyAction(), ActionType::EndTurn));
 
 
     logger.log_players(this->boardState);
     auto p2InitialPlacement = player2.getInitialPlacement();
-    logger.log("Player 2 initial placement: ", std::to_string(static_cast<int>(Action::unpackType(p2InitialPlacement.second))));
+    logger.log("Player 2 id of initial settlement: ", std::to_string(static_cast<int>(Action::unpackArg1(p2InitialPlacement.second))));
     this->boardState.applyAction(p2InitialPlacement.second);
     this->boardState.applyAction(Action::packType(Action::getEmptyAction(), ActionType::EndTurn));
 
     logger.log_players(this->boardState);
     auto p2SecondInitialPlacement = player2.get2InitialPlacement();
-    logger.log("Player 2 second initial placement: ", std::to_string(static_cast<int>(Action::unpackType(p2SecondInitialPlacement.second))));
+    logger.log("Player 2 id of second initial settlement: ", std::to_string(static_cast<int>(Action::unpackArg1(p2SecondInitialPlacement.second))));
     this->boardState.applyAction(p2SecondInitialPlacement.second);
     this->boardState.applyAction(Action::packType(Action::getEmptyAction(), ActionType::EndTurn));
 
     logger.log_players(this->boardState);
     auto p1SecondInitialPlacement = player1.get2InitialPlacement();
-    logger.log("Player 1 second initial placement: ", std::to_string(static_cast<int>(Action::unpackType(p1SecondInitialPlacement.second))));
+    logger.log("Player 1 id of second initial settlement: ", std::to_string(static_cast<int>(Action::unpackArg1(p1SecondInitialPlacement.second))));
     this->boardState.applyAction(p1SecondInitialPlacement.second);
     this->boardState.applyAction(Action::packType(Action::getEmptyAction(), ActionType::EndTurn));
 }
@@ -45,7 +45,7 @@ bool Game::processDevPhase(IPlayer& currentPlayer) {
     if (Action::unpackType(devAction) == ActionType::NoAction) {
         return false;
     }
-    logger.log("Dev action played: ", std::to_string(static_cast<int>(Action::unpackType(devAction))));
+    logger.log("Dev action played: ", actionTypeName(Action::unpackType(devAction)));
     this->boardState.applyAction(devAction);
     return true;
 }
@@ -81,7 +81,7 @@ void Game::discardResourcesForSeven(PlayerId currentPlayerId) {
 void Game::handleRobberPhase(IPlayer& currentPlayer, PlayerId currentPlayerId) {
     Logger logger;
     auto moveRobberAction = currentPlayer.getMoveRobber();
-    logger.log("Robber moved: ", std::to_string(static_cast<int>(Action::unpackType(moveRobberAction))));
+    logger.log("Robber moved: ", actionTypeName(Action::unpackType(moveRobberAction)));
     this->boardState.applyAction(moveRobberAction);
 
     HexId robberPos = this->boardState.robberPosition;
@@ -107,7 +107,7 @@ void Game::processPlayerTurn(IPlayer& currentPlayer) {
 
         logger.log("NEW ACTION:");
         logger.log_players(this->boardState);
-        logger.log("Turn action played: ", std::to_string(static_cast<int>(Action::unpackType(action))));
+        logger.log("Turn action played: ", actionTypeName(Action::unpackType(action)));
         logger.log_players(this->boardState);
         logger.log("");
 

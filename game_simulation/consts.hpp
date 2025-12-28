@@ -93,6 +93,30 @@ enum class ActionType : uint8_t {
     Place2InitialStructures = 17 // Arg1: NodeId to place settlement on, Arg2: EdgeId to place road on
 };
 
+inline const char* actionTypeName(ActionType type) {
+    switch (type) {
+    case ActionType::NoAction: return "NoAction";
+    case ActionType::RollDice: return "RollDice";
+    case ActionType::EndTurn: return "EndTurn";
+    case ActionType::MoveRobber: return "MoveRobber";
+    case ActionType::StealResource: return "StealResource";
+    case ActionType::DiscardResources: return "DiscardResources";
+    case ActionType::BuildRoad: return "BuildRoad";
+    case ActionType::BuildSettlement: return "BuildSettlement";
+    case ActionType::BuildCity: return "BuildCity";
+    case ActionType::BuyDevCard: return "BuyDevCard";
+    case ActionType::PlayDevCardKnight: return "PlayDevCardKnight";
+    case ActionType::PlayDevCardRoadBuilding: return "PlayDevCardRoadBuilding";
+    case ActionType::PlayDevCardYearOfPlenty: return "PlayDevCardYearOfPlenty";
+    case ActionType::PlayDevCardMonopoly: return "PlayDevCardMonopoly";
+    case ActionType::TradeBank: return "TradeBank";
+    case ActionType::ReceiveResources: return "ReceiveResources";
+    case ActionType::PlaceInitialStructures: return "PlaceInitialStructures";
+    case ActionType::Place2InitialStructures: return "Place2InitialStructures";
+    }
+    return "UnknownAction";
+}
+
 enum class PortType : uint8_t {
     ThreeForOne = 0,
     BrickPort = 1,

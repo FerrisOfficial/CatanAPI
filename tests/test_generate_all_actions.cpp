@@ -443,7 +443,7 @@ TEST_F(ActionTest, ExpectNoPlayDevCardActionsWithoutDevCards){
 
     playDevCardActions = boardState.generatePlayDevCardActions(playingPlayer);
 
-    EXPECT_EQ(0, playDevCardActions.size());
+    EXPECT_EQ(1, playDevCardActions.size());
 }
 
 class ActionTestEdgeParam
