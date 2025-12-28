@@ -654,6 +654,7 @@ std::vector<Action::PackedAction> BoardState::generatePlayDevCardActions(PlayerI
     playDevCardActions.insert(playDevCardActions.end(), roadBuildingActions.begin(), roadBuildingActions.end());
     playDevCardActions.insert(playDevCardActions.end(), yearOfPlentyActions.begin(), yearOfPlentyActions.end());
     playDevCardActions.insert(playDevCardActions.end(), monopolyActions.begin(), monopolyActions.end());
+    playDevCardActions.push_back(buildAction(ActionType::NoAction, playerId));
 
     return playDevCardActions;
 }
