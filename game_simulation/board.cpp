@@ -1,15 +1,20 @@
 #include "board.hpp"
 #include "actions.hpp"
 #include "utils/randomDevice.hpp"
+#include "utils/logger.hpp"
 #include "consts.hpp"
 #include "packedBank.hpp"
-#include "display/display.hpp"
+
 
 namespace Board {
 
 void handlePlaceInitialSettlement(BoardState& boardState, NodeId nodeId, PlayerId playerId) {
     boardState.nodes[nodeId] = Node::packStructure(boardState.nodes[nodeId], StructureType::Settlement);
     boardState.nodes[nodeId] = Node::packOwner(boardState.nodes[nodeId], playerId);
+
+    Logger logger;
+    logger.log("VP:", std::to_string(static_cast<int>(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<uint8_t>(playerId)]))), "->");
+
     // add victory point to player
     boardState.packedPlayers[static_cast<uint8_t>(playerId)] =
         Player::packVictoryPoints(
@@ -17,6 +22,9 @@ void handlePlaceInitialSettlement(BoardState& boardState, NodeId nodeId, PlayerI
             Player::unpackVictoryPoints(
                 boardState.packedPlayers[static_cast<uint8_t>(playerId)]) + 1
         );
+
+    logger.log(std::to_string(static_cast<int>(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<uint8_t>(playerId)]))));
+
     // remove one available settlement from player
     boardState.packedPlayers[static_cast<uint8_t>(playerId)] =
         Player::packAvailableStructures(
@@ -1032,8 +1040,7 @@ void BoardState::generateRandomBoard() {
         }
     }
 
-    Display display;
-    display.renderBoard(*this);
+
 }
 
 } // namespace Board

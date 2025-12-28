@@ -7,11 +7,12 @@
 struct IPlayer {
     Board::BoardState* boardState;
     IPlayer();
+    virtual ~IPlayer() = default;
 
-    std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement();
-    std::pair<Action::PackedAction, Action::PackedAction> get2InitialPlacement();
-    Action::PackedAction getDevAction();
-    Action::PackedAction getDiscardAction();
-    Action::PackedAction getMoveRobber();
-    Action::PackedAction getTurnAction();
+    virtual std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement() = 0;
+    virtual std::pair<Action::PackedAction, Action::PackedAction> get2InitialPlacement() = 0;
+    virtual Action::PackedAction getDevAction() = 0;
+    virtual Action::PackedAction getDiscardAction() = 0;
+    virtual Action::PackedAction getMoveRobber() = 0;
+    virtual Action::PackedAction getTurnAction() = 0;
 };

@@ -666,7 +666,8 @@ std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId)
     legalActions.insert(legalActions.end(), playDevCardRoadBuildingActions.begin(), playDevCardRoadBuildingActions.end());
     legalActions.insert(legalActions.end(), playDevCardYearOfPlentyActions.begin(), playDevCardYearOfPlentyActions.end());
     legalActions.insert(legalActions.end(), playDevCardMonopolyActions.begin(), playDevCardMonopolyActions.end());
-    
+    legalActions.push_back(buildAction(ActionType::EndTurn, playerId));
+
     return legalActions;
 }
 

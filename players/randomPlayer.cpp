@@ -1,46 +1,40 @@
-#include "player.hpp"
+#include "randomPlayer.hpp"
 #include "game_simulation/board.hpp"
 #include "utils/randomDevice.hpp"
+#include "utils/logger.hpp"
 
-struct RandomPlayer : public IPlayer {
-    RandomPlayer() : IPlayer() {}
+std::pair<Action::PackedAction, Action::PackedAction> RandomPlayer::getInitialPlacement() {
+    auto actions = boardState->generatePlaceInitialStructures(boardState->currentPlayer);
+    logger.log("Generated ", std::to_string(actions.size()), " initial placement actions.");
+    if (actions.empty()) logger.error("No initial placement actions available!");
+    int idx = RandomDevice::uniform_u32_range(0, static_cast<uint32_t>(actions.size()) - 1);
+    return {actions[idx], actions[idx]};
+}
 
-    std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement() override {
-        auto allActions = Board::getAllInitialPlacementActions();
-        int index = RandomDevice::getRandomInt(0, static_cast<int>(allActions.size()) - 1);
-        return allActions[index];
-    }
+std::pair<Action::PackedAction, Action::PackedAction> RandomPlayer::get2InitialPlacement() {
+    auto actions = boardState->generatePlace2InitialStructures(boardState->currentPlayer);
+    if (actions.empty()) logger.error("No 2nd initial placement actions available!");
+    int idx = RandomDevice::uniform_u32_range(0, static_cast<uint32_t>(actions.size()) - 1);
+    return {actions[idx], actions[idx]};
+}
 
-    std::pair<Action::PackedAction, Action::PackedAction> get2InitialPlacement() override {
-        auto allActions = Board::getAll2InitialPlacementActions();
-        int index = RandomDevice::getRandomInt(0, static_cast<int>(allActions.size()) - 1);
-        return allActions[index];
-    }
+Action::PackedAction RandomPlayer::getDevAction() {
+    auto action = Action::getEmptyAction();
+    action = Action::packType(action, ActionType::NoAction);
+    return action;
+}
 
-    Action::PackedAction getDevAction() override {
-        auto allActions = Board::getAllDevCardActions();
-        if (allActions.empty()) {
-            return Action::PackedAction();
-        }
-        int index = RandomDevice::getRandomInt(0, static_cast<int>(allActions.size()) - 1);
-        return allActions[index];
-    }
+Action::PackedAction RandomPlayer::getDiscardAction() {
+    return Action::PackedAction();
+}
 
-    Action::PackedAction getDiscardAction() override {
-        auto allActions = Board::getAllDiscardActions();
-        int index = RandomDevice::getRandomInt(0, static_cast<int>(allActions.size()) - 1);
-        return allActions[index];
-    }
+Action::PackedAction RandomPlayer::getMoveRobber() {
+    return Action::PackedAction();
+}
 
-    Action::PackedAction getMoveRobber() override {
-        auto allActions = Board::getAllRobberMoveActions();
-        int index = RandomDevice::getRandomInt(0, static_cast<int>(allActions.size()) - 1);
-        return allActions[index];
-    }
-
-    Action::PackedAction getTurnAction() override {
-        auto allActions = Board::getAllTurnActions();
-        int index = RandomDevice::getRandomInt(0, static_cast<int>(allActions.size()) - 1);
-        return allActions[index];
-    }
-};
+Action::PackedAction RandomPlayer::getTurnAction() {
+    auto actions = boardState->getLegalActions(boardState->currentPlayer);
+    auto noAction = Action::getEmptyAction();
+    int idx = RandomDevice::uniform_u32_range(0, static_cast<uint32_t>(actions.size()) - 1);
+    return actions[idx];
+}
