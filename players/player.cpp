@@ -1,23 +1,17 @@
 #include "player.hpp"
 
+#include <utility>
+
 IPlayer::IPlayer() {
 boardState = nullptr;
 }
 
-Action::PackedAction IPlayer::getInitialSettlement() {
-return 0; // Base implementation - should be overridden
+std::pair<Action::PackedAction, Action::PackedAction> IPlayer::getInitialPlacement() {
+return std::make_pair(0, 0); // Base implementation - should be overridden
 }
 
-Action::PackedAction IPlayer::getInitialRoad() {
-return 0; // Base implementation - should be overridden
-}
-
-Action::PackedAction IPlayer::get2InitialSettlement() {
-return 0; // Base implementation - should be overridden
-}
-
-Action::PackedAction IPlayer::get2InitialRoad() {
-return 0; // Base implementation - should be overridden
+std::pair<Action::PackedAction, Action::PackedAction> IPlayer::get2InitialPlacement() {
+return std::make_pair(0, 0); // Base implementation - should be overridden
 }
 
 Action::PackedAction IPlayer::getDevAction(){

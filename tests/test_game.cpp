@@ -1,22 +1,20 @@
 #include <gtest/gtest.h>
 #include "../game_simulation/game.hpp"
 #include "../players/player.hpp"
-#include "../players/randomPlayer.cpp"
+#include "../players/randomPlayer.hpp"
 #include "../game_simulation/board.hpp"
 
-// Test IPlayer interface and basic functionality
-TEST(PlayerTest, IPlayerInitialization) {
-    IPlayer player;
-    
+// Test RandomPlayer as a concrete IPlayer implementation
+TEST(PlayerTest, RandomPlayerInitialization) {
+    RandomPlayer player;
     // Test that boardState pointer can be set
     player.boardState = nullptr;
     EXPECT_EQ(player.boardState, nullptr);
 }
 
-TEST(PlayerTest, IPlayerBoardStateAssignment) {
-    IPlayer player;
+TEST(PlayerTest, RandomPlayerBoardStateAssignment) {
+    RandomPlayer player;
     Board::BoardState testBoard;
-    
     player.boardState = &testBoard;
     EXPECT_NE(player.boardState, nullptr);
     EXPECT_EQ(player.boardState, &testBoard);

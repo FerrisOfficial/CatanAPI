@@ -147,28 +147,25 @@ constexpr Action::PackedAction tradeBank =
             static_cast<uint8_t>(Resource::Ore)),
         2); // 2:1 trade
 
-constexpr Action::PackedAction placeInitialSettlement =
-    Action::packArg1(
-        Action::packPlayerID(
-            Action::packType(0, ActionType::PlaceInitialSettlement),
-            PlayerId::Player0),
-        12);
+constexpr Action::PackedAction placeInitialStructures =
+    Action::packArg2(
+        Action::packArg1(
+            Action::packPlayerID(
+                Action::packType(0, ActionType::PlaceInitialStructures),
+                PlayerId::Player0),
+            30), // NodeId
+        50); // EdgeId
 
-constexpr Action::PackedAction place2InitialSettlement =
-    Action::packArg1(
-        Action::packPlayerID(
-            Action::packType(0, ActionType::Place2InitialSettlement),
-            PlayerId::Player0),
-        22);
+constexpr Action::PackedAction place2InitialStructures =
+    Action::packArg2(
+        Action::packArg1(
+            Action::packPlayerID(
+                Action::packType(0, ActionType::Place2InitialStructures),
+                PlayerId::Player0),
+            22), // NodeId
+        29); // EdgeId
 
-constexpr Action::PackedAction placeInitialRoad =
-    Action::packArg1(
-        Action::packPlayerID(
-            Action::packType(0, ActionType::PlaceInitialRoad),
-            PlayerId::Player0),
-        15);
-
-constexpr std::array<Action::PackedAction, 18> allActions = {
+constexpr std::array<Action::PackedAction, 17> allActions = {
     endTurn,
     rollDice,
     moveRobber,
@@ -184,9 +181,8 @@ constexpr std::array<Action::PackedAction, 18> allActions = {
     playDevCardMonopoly,
     receiveResources,
     tradeBank,
-    placeInitialSettlement,
-    place2InitialSettlement,
-    placeInitialRoad
+    placeInitialStructures,
+    place2InitialStructures
 };
 
 

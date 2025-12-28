@@ -1,36 +1,109 @@
 #include "board.hpp"
 #include "actions.hpp"
-#include "randomDevice.hpp"
+#include "utils/randomDevice.hpp"
+#include "utils/logger.hpp"
 #include "consts.hpp"
 #include "packedBank.hpp"
-#include "display/display.hpp"
+
 
 namespace Board {
 
-void BoardState::handlePlaceInitialSettlement(Action::PackedAction action, PlayerId playerId) {
-    auto nodeId = Action::unpackArg1(action);
-    nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::Settlement);
-    nodes[nodeId] = Node::packOwner(nodes[nodeId], playerId);
+void handlePlaceInitialSettlement(BoardState& boardState, NodeId nodeId, PlayerId playerId) {
+    boardState.nodes[nodeId] = Node::packStructure(boardState.nodes[nodeId], StructureType::Settlement);
+    boardState.nodes[nodeId] = Node::packOwner(boardState.nodes[nodeId], playerId);
+
+    Logger logger;
+    logger.log("VP:", std::to_string(static_cast<int>(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<uint8_t>(playerId)]))), "->");
+
     // add victory point to player
-    packedPlayers[static_cast<uint8_t>(playerId)] =
+    boardState.packedPlayers[static_cast<uint8_t>(playerId)] =
         Player::packVictoryPoints(
-            packedPlayers[static_cast<uint8_t>(playerId)],
+            boardState.packedPlayers[static_cast<uint8_t>(playerId)],
             Player::unpackVictoryPoints(
-                packedPlayers[static_cast<uint8_t>(playerId)]) + 1
+                boardState.packedPlayers[static_cast<uint8_t>(playerId)]) + 1
         );
+
+    logger.log(std::to_string(static_cast<int>(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<uint8_t>(playerId)]))));
+
     // remove one available settlement from player
-    packedPlayers[static_cast<uint8_t>(playerId)] =
+    boardState.packedPlayers[static_cast<uint8_t>(playerId)] =
         Player::packAvailableStructures(
-            packedPlayers[static_cast<uint8_t>(playerId)],
+            boardState.packedPlayers[static_cast<uint8_t>(playerId)],
             StructureType::Settlement,
             Player::unpackAvailableStructures(
-                packedPlayers[static_cast<uint8_t>(playerId)],
+                boardState.packedPlayers[static_cast<uint8_t>(playerId)],
                 StructureType::Settlement) - 1
         );
 }
 
-void BoardState::handleUndoPlaceInitialSettlement(Action::PackedAction action, PlayerId playerId) {
+void handlePlaceInitialRoad(BoardState& boardState, EdgeId edgeId, PlayerId playerId) {
+    boardState.edges[edgeId] = Edge::packHasRoad(boardState.edges[edgeId], true);
+    boardState.edges[edgeId] = Edge::packOwner(boardState.edges[edgeId], playerId);
+
+    // remove one available road from player
+    boardState.packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packAvailableStructures(
+            boardState.packedPlayers[static_cast<uint8_t>(playerId)],
+            StructureType::Road,
+            Player::unpackAvailableStructures(
+                boardState.packedPlayers[static_cast<uint8_t>(playerId)],
+                StructureType::Road) - 1
+        );
+}
+
+void handlePlace2InitialSettlement(BoardState& boardState, NodeId nodeId, PlayerId playerId) {
+    boardState.nodes[nodeId] = Node::packStructure(boardState.nodes[nodeId], StructureType::Settlement);
+    boardState.nodes[nodeId] = Node::packOwner(boardState.nodes[nodeId], playerId);
+    // add resources to player for 2nd settlement
+    for (int i = 0; i < 3; ++i) {
+        auto hexId = Node::unpackAdjacentHex(boardState.nodes[nodeId], i);
+        auto res = Hex::unpackResource(boardState.hexes[hexId]);
+        if (res != Resource::NoResource) {
+            Player::changeResourceQuantity(boardState.packedPlayers[static_cast<uint8_t>(playerId)], res, 1);
+            Bank::changeResourceQuantity(boardState.packedBank, res, -1);
+
+            boardState.hexes[hexId] = Hex::packPlayerValue(
+                boardState.hexes[hexId],
+                playerId,
+                Hex::unpackPlayerValue(boardState.hexes[hexId], playerId) + 1
+            );
+        }
+    }
+    boardState.packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packVictoryPoints(
+            boardState.packedPlayers[static_cast<uint8_t>(playerId)],
+            Player::unpackVictoryPoints(
+                boardState.packedPlayers[static_cast<uint8_t>(playerId)]) + 1
+        );
+    boardState.packedPlayers[static_cast<uint8_t>(playerId)] =
+        Player::packAvailableStructures(
+            boardState.packedPlayers[static_cast<uint8_t>(playerId)],
+            StructureType::Settlement,
+            Player::unpackAvailableStructures(
+                boardState.packedPlayers[static_cast<uint8_t>(playerId)],
+                StructureType::Settlement) - 1
+        );
+}
+
+void BoardState::handlePlaceInitialStructures(Action::PackedAction action, PlayerId playerId) {
     auto nodeId = Action::unpackArg1(action);
+    auto edgeId = Action::unpackArg2(action);
+
+    handlePlaceInitialSettlement(
+        *this,
+        nodeId,
+        playerId
+    );
+
+    handlePlaceInitialRoad(
+        *this,
+        edgeId,
+        playerId
+    );
+}
+
+void BoardState::handleUndoPlaceInitialSettlement(Action::PackedAction action, PlayerId playerId) {
+    NodeId nodeId = Action::unpackArg1(action);
     nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::NoStructure);
     nodes[nodeId] = Node::packOwner(nodes[nodeId], PlayerId::NoPlayer);
     // remove victory point from player
@@ -49,41 +122,30 @@ void BoardState::handleUndoPlaceInitialSettlement(Action::PackedAction action, P
                 packedPlayers[static_cast<uint8_t>(playerId)],
                 StructureType::Settlement) + 1
         );
+    
+    EdgeId edgeId = Action::unpackArg2(action);
 }
 
+void BoardState::handlePlace2InitialStructures(Action::PackedAction action, PlayerId playerId) {
+    NodeId nodeId = Action::unpackArg1(action);
+    EdgeId edgeId = Action::unpackArg2(action);
 
-void BoardState::handlePlace2InitialSettlement(Action::PackedAction action, PlayerId playerId) {
-    auto nodeId = Action::unpackArg1(action);
-    nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::Settlement);
-    nodes[nodeId] = Node::packOwner(nodes[nodeId], playerId);
-    // add resources to player for 2nd settlement
-    for (int i = 0; i < 3; ++i) {
-        auto hexId = Node::unpackAdjacentHex(nodes[nodeId], i);
-        auto res = Hex::unpackResource(hexes[hexId]);
-        if (res != Resource::NoResource) {
-            Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], res, 1);
-            Bank::changeResourceQuantity(BoardState::packedBank, res, -1);
+    handlePlace2InitialSettlement(*this, nodeId, playerId);
+    handlePlaceInitialRoad(*this, edgeId, playerId);
+}
 
-            hexes[hexId] = Hex::packPlayerValue(
-                hexes[hexId],
-                playerId,
-                Hex::unpackPlayerValue(hexes[hexId], playerId) + 1
-            );
-        }
-    }
-    packedPlayers[static_cast<uint8_t>(playerId)] =
-        Player::packVictoryPoints(
-            packedPlayers[static_cast<uint8_t>(playerId)],
-            Player::unpackVictoryPoints(
-                packedPlayers[static_cast<uint8_t>(playerId)]) + 1
-        );
-    packedPlayers[static_cast<uint8_t>(playerId)] =
+void handleUndoPlaceInitialRoad(BoardState& boardState, EdgeId edgeId, PlayerId playerId) {
+    boardState.edges[edgeId] = Edge::packHasRoad(boardState.edges[edgeId], false);
+    boardState.edges[edgeId] = Edge::packOwner(boardState.edges[edgeId], PlayerId::NoPlayer);
+
+    // add one available road to player
+    boardState.packedPlayers[static_cast<uint8_t>(playerId)] =
         Player::packAvailableStructures(
-            packedPlayers[static_cast<uint8_t>(playerId)],
-            StructureType::Settlement,
+            boardState.packedPlayers[static_cast<uint8_t>(playerId)],
+            StructureType::Road,
             Player::unpackAvailableStructures(
-                packedPlayers[static_cast<uint8_t>(playerId)],
-                StructureType::Settlement) - 1
+                boardState.packedPlayers[static_cast<uint8_t>(playerId)],
+                StructureType::Road) + 1
         );
 }
 
@@ -97,7 +159,7 @@ void BoardState::handleUndoPlace2InitialSettlement(Action::PackedAction action, 
         auto res = Hex::unpackResource(hexes[hexId]);
         if (res != Resource::NoResource) {
             Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], res, -1);
-            Bank::changeResourceQuantity(BoardState::packedBank, res, 1);
+            Bank::changeResourceQuantity(packedBank, res, 1);
 
             hexes[hexId] = Hex::packPlayerValue(
                 hexes[hexId],
@@ -120,38 +182,9 @@ void BoardState::handleUndoPlace2InitialSettlement(Action::PackedAction action, 
                 packedPlayers[static_cast<uint8_t>(playerId)],
                 StructureType::Settlement) + 1
         );
-}
 
-void BoardState::handlePlaceInitialRoad(Action::PackedAction action, PlayerId playerId) {
-    auto edgeId = Action::unpackArg1(action);
-    edges[edgeId] = Edge::packHasRoad(edges[edgeId], true);
-    edges[edgeId] = Edge::packOwner(edges[edgeId], playerId);
-
-    // remove one available road from player
-    packedPlayers[static_cast<uint8_t>(playerId)] =
-        Player::packAvailableStructures(
-            packedPlayers[static_cast<uint8_t>(playerId)],
-            StructureType::Road,
-            Player::unpackAvailableStructures(
-                packedPlayers[static_cast<uint8_t>(playerId)],
-                StructureType::Road) - 1
-        );
-}
-
-void BoardState::handleUndoPlaceInitialRoad(Action::PackedAction action, PlayerId playerId) {
-    auto edgeId = Action::unpackArg1(action);
-    edges[edgeId] = Edge::packHasRoad(edges[edgeId], false);
-    edges[edgeId] = Edge::packOwner(edges[edgeId], PlayerId::NoPlayer);
-
-    // add one available road to player
-    packedPlayers[static_cast<uint8_t>(playerId)] =
-        Player::packAvailableStructures(
-            packedPlayers[static_cast<uint8_t>(playerId)],
-            StructureType::Road,
-            Player::unpackAvailableStructures(
-                packedPlayers[static_cast<uint8_t>(playerId)],
-                StructureType::Road) + 1
-        );
+    EdgeId edgeId = Action::unpackArg2(action);
+    handleUndoPlaceInitialRoad(*this, edgeId, playerId);
 }
 
 Action::PackedAction BoardState::handleEndTurn() {
@@ -178,6 +211,13 @@ Action::PackedAction BoardState::handleRollDice(Action::PackedAction action) {
 
         auto &p0 = packedPlayers[static_cast<uint8_t>(PlayerId::Player0)];
         auto &p1 = packedPlayers[static_cast<uint8_t>(PlayerId::Player1)];
+
+        auto bankResBefore = Bank::unpackResource(BoardState::packedBank, res);
+
+        if (bankResBefore < Hex::unpackPlayerValue(hexes[h], PlayerId::Player0) + Hex::unpackPlayerValue(hexes[h], PlayerId::Player1)) {
+            // Not enough resources in bank to fulfill the production
+            continue;
+            }
 
         Player::changeResourceQuantity(p0, res,
             Hex::unpackPlayerValue(hexes[h], PlayerId::Player0));
@@ -855,15 +895,6 @@ void BoardState::applyAction(Action::PackedAction action) {
     auto playerId = Action::unpackPlayerID(action);
 
     switch (type) {
-    case ActionType::PlaceInitialSettlement:
-        handlePlaceInitialSettlement(action, playerId);
-        break;
-    case ActionType::Place2InitialSettlement:
-        handlePlace2InitialSettlement(action, playerId);
-        break;
-    case ActionType::PlaceInitialRoad:
-        handlePlaceInitialRoad(action, playerId);
-        break;
     case ActionType::EndTurn:
         action = handleEndTurn();
         break;
@@ -909,6 +940,12 @@ void BoardState::applyAction(Action::PackedAction action) {
     case ActionType::StealResource:
         handleStealResource(action, playerId);
         break;
+    case ActionType::PlaceInitialStructures:
+        handlePlaceInitialStructures(action, playerId);
+        break;
+    case ActionType::Place2InitialStructures:
+        handlePlace2InitialStructures(action, playerId);
+        break;
 
     default:
         break;
@@ -923,14 +960,11 @@ void BoardState::undoLastAction() {
     auto playerId = Action::unpackPlayerID(action);
 
     switch (type) {
-    case ActionType::PlaceInitialSettlement:
+    case ActionType::PlaceInitialStructures:
         handleUndoPlaceInitialSettlement(action, playerId);
         break;
-    case ActionType::Place2InitialSettlement:
+    case ActionType::Place2InitialStructures:
         handleUndoPlace2InitialSettlement(action, playerId);
-        break;
-    case ActionType::PlaceInitialRoad:
-        handleUndoPlaceInitialRoad(action, playerId);
         break;
     case ActionType::RollDice:
         handleUndoRollDice(action);
@@ -1006,8 +1040,7 @@ void BoardState::generateRandomBoard() {
         }
     }
 
-    Display display;
-    display.renderBoard(*this);
+
 }
 
 } // namespace Board

@@ -17,7 +17,7 @@ struct Game {
     PlayerId runGame();
     
     // Breakdown helpers
-    void processDevPhase(IPlayer& currentPlayer);
+    bool processDevPhase(IPlayer& currentPlayer);
     void applyDiceRoll(uint8_t diceNumber);
     void discardResourcesForSeven(PlayerId currentPlayerId);
     void handleRobberPhase(IPlayer& currentPlayer, PlayerId currentPlayerId);

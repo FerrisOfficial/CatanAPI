@@ -538,8 +538,110 @@ std::vector<Action::PackedAction> BoardState::generatePlayDevCardMonopolyActions
     return monopolyActions;
 }
 
-// Nie można zagrać tą kartą którą przed chwilą się kupiło (??)
-// można kupić dowolną liczbę kart, ale grać jedną
+std::vector<Action::PackedAction> BoardState::generatePlaceInitialStructures(PlayerId playerId) {
+    std::vector<Action::PackedAction> placeSettlementActions;
+    
+    for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
+        if (Node::unpackStructure(nodes[nodeId]) != StructureType::NoStructure) {
+            continue;
+        }
+
+        // Enforce distance rule: no adjacent settlements/cities
+        bool violatesDistanceRule = false;
+        for (int i = 0; i < 3 && !violatesDistanceRule; ++i) {
+            EdgeId edgeId = Node::unpackAdjacentEdge(nodes[nodeId], i);
+            if (edgeId == EdgeIdNone) {
+                continue;
+            }
+            Edge::PackedEdge e = edges[edgeId];
+            NodeId a = Edge::unpackAdjacentNode(e, 0);
+            NodeId b = Edge::unpackAdjacentNode(e, 1);
+            NodeId neighbor = (a == nodeId) ? b : a;
+            if (neighbor < NODE_COUNT) {
+                auto s = Node::unpackStructure(nodes[neighbor]);
+                if (s == StructureType::Settlement || s == StructureType::City) {
+                    violatesDistanceRule = true;
+                }
+            }
+        }
+        if (violatesDistanceRule) {
+            continue;
+        }
+
+        EdgeId adjEdges[3] = {
+            Node::unpackAdjacentEdge(nodes[nodeId], 0),
+            Node::unpackAdjacentEdge(nodes[nodeId], 1),
+            Node::unpackAdjacentEdge(nodes[nodeId], 2)
+        };
+
+        // Generate actions for each available adjacent edge to pair with the settlement
+        for (EdgeId eId : adjEdges) {
+            if (eId != EdgeIdNone && !Edge::unpackHasRoad(edges[eId])) {
+                placeSettlementActions.push_back(buildAction(
+                    ActionType::PlaceInitialStructures,
+                    playerId,
+                    nodeId,
+                    eId
+                ));
+            }
+        }
+    }
+    
+    return placeSettlementActions;
+}
+
+std::vector<Action::PackedAction> BoardState::generatePlace2InitialStructures(PlayerId playerId) {
+    std::vector<Action::PackedAction> place2SettlementActions;
+    
+    for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
+        if (Node::unpackStructure(nodes[nodeId]) != StructureType::NoStructure) {
+            continue;
+        }
+
+        // Enforce distance rule: no adjacent settlements/cities
+        bool violatesDistanceRule = false;
+        for (int i = 0; i < 3 && !violatesDistanceRule; ++i) {
+            EdgeId edgeId = Node::unpackAdjacentEdge(nodes[nodeId], i);
+            if (edgeId == EdgeIdNone) {
+                continue;
+            }
+            Edge::PackedEdge e = edges[edgeId];
+            NodeId a = Edge::unpackAdjacentNode(e, 0);
+            NodeId b = Edge::unpackAdjacentNode(e, 1);
+            NodeId neighbor = (a == nodeId) ? b : a;
+            if (neighbor < NODE_COUNT) {
+                auto s = Node::unpackStructure(nodes[neighbor]);
+                if (s == StructureType::Settlement || s == StructureType::City) {
+                    violatesDistanceRule = true;
+                }
+            }
+        }
+        if (violatesDistanceRule) {
+            continue;
+        }
+
+        EdgeId adjEdges[3] = {
+            Node::unpackAdjacentEdge(nodes[nodeId], 0),
+            Node::unpackAdjacentEdge(nodes[nodeId], 1),
+            Node::unpackAdjacentEdge(nodes[nodeId], 2)
+        };
+
+        // Generate actions for each available adjacent edge to pair with the settlement
+        for (EdgeId eId : adjEdges) {
+            if (eId != EdgeIdNone && !Edge::unpackHasRoad(edges[eId])) {
+                place2SettlementActions.push_back(buildAction(
+                    ActionType::Place2InitialStructures,
+                    playerId,
+                    nodeId,
+                    eId
+                ));
+            }
+        }
+    }
+    
+    return place2SettlementActions;
+}
+
 std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId){
     std::vector<Action::PackedAction> legalActions;
     
@@ -564,7 +666,8 @@ std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId)
     legalActions.insert(legalActions.end(), playDevCardRoadBuildingActions.begin(), playDevCardRoadBuildingActions.end());
     legalActions.insert(legalActions.end(), playDevCardYearOfPlentyActions.begin(), playDevCardYearOfPlentyActions.end());
     legalActions.insert(legalActions.end(), playDevCardMonopolyActions.begin(), playDevCardMonopolyActions.end());
-    
+    legalActions.push_back(buildAction(ActionType::EndTurn, playerId));
+
     return legalActions;
 }
 
