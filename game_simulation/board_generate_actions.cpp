@@ -680,4 +680,19 @@ std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId)
     return legalActions;
 }
 
-} // namespace Board
+std::vector<Action::PackedAction> BoardState::generateMoveRobberActions(PlayerId playerId) {
+    std::vector<Action::PackedAction> moveRobberActions;
+
+    for (HexId hexId = 0; hexId < HEX_COUNT; ++hexId) {
+        if (hexId != robberPosition) {
+            moveRobberActions.push_back(buildAction(
+                ActionType::MoveRobber, playerId, hexId
+            ));
+        }
+    }
+
+    return moveRobberActions;
+
+} 
+
+}// namespace Board

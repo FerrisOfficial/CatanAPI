@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include "player.hpp"
 #include "consts.hpp"
+#include "randomPlayer.hpp"
+#include "game_simulation/actions.hpp"
 
 using namespace Player;
 
@@ -343,5 +345,43 @@ TEST_F(PlayerTest, IntegratedPurchaseScenario) {
     EXPECT_EQ(unpackDevCard(player, DevType::VictoryPoint), 1);
 }
 
+class RandomPlayerTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        player = makeNewPlayer();
+        boardState.generateRandomBoard();
+    }
 
+    PackedPlayer player;
+    Board::BoardState boardState;
+};
 
+TEST_F(RandomPlayerTest, DiscardResourcesRandomPlayer) {
+    RandomPlayer rp;
+    rp.boardState = &boardState;
+    boardState.currentPlayer = PlayerId::Player0;
+    boardState.packedPlayers[0] = player;
+    boardState.packedPlayers[0] = packResource(boardState.packedPlayers[0], Resource::Brick, 10);
+    auto discarded = rp.getDiscardAction();
+    
+    uint8_t totalDiscarded = 0;
+    for (Resource r : {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Grain, Resource::Ore}) {
+        totalDiscarded += Action::unpackResource(discarded, r);
+    }
+    
+    EXPECT_EQ(totalDiscarded, 5);
+    EXPECT_EQ(Action::unpackResource(discarded, Resource::Brick), 5);
+}
+
+TEST_F(RandomPlayerTest, MoveRobberRandomPlayer) {
+    RandomPlayer rp;
+    rp.boardState = &boardState;
+    boardState.currentPlayer = PlayerId::Player0;
+    boardState.robberPosition = 0;
+
+    auto moveRobberAction = rp.getMoveRobber();
+    HexId newRobberPos = Action::unpackArg1(moveRobberAction);
+
+    EXPECT_NE(newRobberPos, boardState.robberPosition);
+    EXPECT_LT(newRobberPos, HEX_COUNT);
+}

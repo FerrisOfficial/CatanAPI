@@ -426,10 +426,10 @@ INSTANTIATE_TEST_SUITE_P(
     GeneratePlayDevCardActionsTests,
     ActionTestDevCardParam,
     ::testing::Values(
-        std::make_tuple(DevType::Knight, 18),
-        std::make_tuple(DevType::RoadBuilding, 20),
-        std::make_tuple(DevType::YearOfPlenty, 25),
-        std::make_tuple(DevType::Monopoly, 5)
+        std::make_tuple(DevType::Knight, 19),
+        std::make_tuple(DevType::RoadBuilding, 21),
+        std::make_tuple(DevType::YearOfPlenty, 26),
+        std::make_tuple(DevType::Monopoly, 6)
     )
 );
 
@@ -848,5 +848,19 @@ TEST_F(ActionTest, ExpectGeneratePlace2InitialStructuresActions){
         EXPECT_EQ(ActionType::Place2InitialStructures, type);
         EXPECT_LT(Action::unpackArg1(action), NODE_COUNT);
         EXPECT_LT(Action::unpackArg2(action), EDGE_COUNT);
+    }
+}
+
+TEST_F(ActionTest, ExpectGenerateMoveRobberActions){
+    std::vector<Action::PackedAction> moveRobberActions;
+
+    moveRobberActions = boardState.generateMoveRobberActions(PlayerId::Player0);
+
+    EXPECT_EQ(moveRobberActions.size(), HEX_COUNT - 1); // Can't move to current position
+    for (const auto& action : moveRobberActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::MoveRobber, type);
+        EXPECT_LT(Action::unpackArg1(action), HEX_COUNT);
+        EXPECT_NE(boardState.robberPosition, Action::unpackArg1(action));
     }
 }

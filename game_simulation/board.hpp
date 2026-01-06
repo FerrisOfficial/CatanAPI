@@ -276,6 +276,7 @@ struct BoardState {
     std::vector<Action::PackedAction> generatePlayDevCardMonopolyActions(PlayerId playerId);
     std::vector<Action::PackedAction> generatePlaceInitialStructures(PlayerId playerId);
     std::vector<Action::PackedAction> generatePlace2InitialStructures(PlayerId playerId);
+    std::vector<Action::PackedAction> generateMoveRobberActions(PlayerId playerId);
 };
 
 constexpr BoardState::BoardState() noexcept {
