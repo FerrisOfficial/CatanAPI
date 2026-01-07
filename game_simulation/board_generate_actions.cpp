@@ -642,6 +642,23 @@ std::vector<Action::PackedAction> BoardState::generatePlace2InitialStructures(Pl
     return place2SettlementActions;
 }
 
+std::vector<Action::PackedAction> BoardState::generatePlayDevCardActions(PlayerId playerId) {
+    std::vector<Action::PackedAction> playDevCardActions;
+
+    auto knightActions = generatePlayDevCardKnightActions(playerId);
+    auto roadBuildingActions = generatePlayDevCardRoadBuildingActions(playerId);
+    auto yearOfPlentyActions = generatePlayDevCardYearOfPlentyActions(playerId);
+    auto monopolyActions = generatePlayDevCardMonopolyActions(playerId);
+
+    playDevCardActions.insert(playDevCardActions.end(), knightActions.begin(), knightActions.end());
+    playDevCardActions.insert(playDevCardActions.end(), roadBuildingActions.begin(), roadBuildingActions.end());
+    playDevCardActions.insert(playDevCardActions.end(), yearOfPlentyActions.begin(), yearOfPlentyActions.end());
+    playDevCardActions.insert(playDevCardActions.end(), monopolyActions.begin(), monopolyActions.end());
+    playDevCardActions.push_back(buildAction(ActionType::NoAction, playerId));
+
+    return playDevCardActions;
+}
+
 std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId){
     std::vector<Action::PackedAction> legalActions;
     
@@ -651,10 +668,6 @@ std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId)
     auto twoToOnePortTradeActions = generateTwoToOnePortTradeActions(playerId);
     auto threeToOnePortTradeActions = generateThreeToOnePortTradeActions(playerId);
     auto buyDevCardActions = generateBuyDevCardActions(playerId);
-    auto playDevCardKnightdActions = generatePlayDevCardKnightActions(playerId);
-    auto playDevCardRoadBuildingActions = generatePlayDevCardRoadBuildingActions(playerId);
-    auto playDevCardYearOfPlentyActions = generatePlayDevCardYearOfPlentyActions(playerId);
-    auto playDevCardMonopolyActions = generatePlayDevCardMonopolyActions(playerId);
     
     legalActions.insert(legalActions.end(), buildRoadActions.begin(), buildRoadActions.end());
     legalActions.insert(legalActions.end(), buildSettlementActions.begin(), buildSettlementActions.end());
@@ -662,13 +675,24 @@ std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId)
     legalActions.insert(legalActions.end(), twoToOnePortTradeActions.begin(), twoToOnePortTradeActions.end());
     legalActions.insert(legalActions.end(), threeToOnePortTradeActions.begin(), threeToOnePortTradeActions.end());
     legalActions.insert(legalActions.end(), buyDevCardActions.begin(), buyDevCardActions.end());
-    legalActions.insert(legalActions.end(), playDevCardKnightdActions.begin(), playDevCardKnightdActions.end());
-    legalActions.insert(legalActions.end(), playDevCardRoadBuildingActions.begin(), playDevCardRoadBuildingActions.end());
-    legalActions.insert(legalActions.end(), playDevCardYearOfPlentyActions.begin(), playDevCardYearOfPlentyActions.end());
-    legalActions.insert(legalActions.end(), playDevCardMonopolyActions.begin(), playDevCardMonopolyActions.end());
     legalActions.push_back(buildAction(ActionType::EndTurn, playerId));
 
     return legalActions;
 }
 
-} // namespace Board
+std::vector<Action::PackedAction> BoardState::generateMoveRobberActions(PlayerId playerId) {
+    std::vector<Action::PackedAction> moveRobberActions;
+
+    for (HexId hexId = 0; hexId < HEX_COUNT; ++hexId) {
+        if (hexId != robberPosition) {
+            moveRobberActions.push_back(buildAction(
+                ActionType::MoveRobber, playerId, hexId
+            ));
+        }
+    }
+
+    return moveRobberActions;
+
+} 
+
+}// namespace Board

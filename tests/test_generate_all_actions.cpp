@@ -392,6 +392,60 @@ TEST_F(ActionTest, ExpectPlayDevCardMonopolyActions){
     EXPECT_THAT(resultResources, ::testing::UnorderedElementsAreArray(expectedResources));
 }
 
+class ActionTestDevCardParam
+    : public ActionTest,
+      public ::testing::WithParamInterface<std::tuple<DevType, int>> { };
+
+TEST_P(ActionTestDevCardParam, ExpectGeneratePlayDevCardActions){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    PlayerId playingPlayer = PlayerId::Player0;
+    DevType devType = std::get<0>(GetParam());
+    int expectedActionCount = std::get<1>(GetParam());
+
+    boardState.packedPlayers[static_cast<size_t>(playingPlayer)] = Player::packDevCard(
+        boardState.packedPlayers[static_cast<size_t>(playingPlayer)],
+        devType,
+        1
+    );
+
+    if (devType == DevType::RoadBuilding) {
+        for (EdgeId edgeId = 0; edgeId < 6; ++edgeId) {
+            boardState.edges[edgeId] = Edge::packHasRoad(boardState.edges[edgeId], true);
+            boardState.edges[edgeId] = Edge::packOwner(boardState.edges[edgeId], playingPlayer);
+        }
+    }
+
+    std::vector<Action::PackedAction> playDevCardActions;
+    playDevCardActions = boardState.generatePlayDevCardActions(playingPlayer);
+    EXPECT_EQ(expectedActionCount, playDevCardActions.size());
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    GeneratePlayDevCardActionsTests,
+    ActionTestDevCardParam,
+    ::testing::Values(
+        std::make_tuple(DevType::Knight, 19),
+        std::make_tuple(DevType::RoadBuilding, 21),
+        std::make_tuple(DevType::YearOfPlenty, 26),
+        std::make_tuple(DevType::Monopoly, 6)
+    )
+);
+
+TEST_F(ActionTest, ExpectNoPlayDevCardActionsWithoutDevCards){
+    setBankResourcesTen();
+    setPlayersResourcesSeven();
+
+    PlayerId playingPlayer = PlayerId::Player0;
+
+    std::vector<Action::PackedAction> playDevCardActions;
+
+    playDevCardActions = boardState.generatePlayDevCardActions(playingPlayer);
+
+    EXPECT_EQ(1, playDevCardActions.size());
+}
+
 class ActionTestEdgeParam
     : public ActionTest,
       public ::testing::WithParamInterface<std::tuple<EdgeId, EdgeId, EdgeId, EdgeId, EdgeId>> { };
@@ -757,13 +811,6 @@ TEST_F(ActionTest, ExpectGenerateAllActions){
     boardState.nodes[woolPortNodeId] = Node::packStructure(boardState.nodes[woolPortNodeId], StructureType::Settlement);
     boardState.nodes[woolPortNodeId] = Node::packOwner(boardState.nodes[woolPortNodeId], currentPlayer);
 
-    // Give player a knight development card
-    boardState.packedPlayers[static_cast<size_t>(currentPlayer)] = Player::packDevCard(
-        boardState.packedPlayers[static_cast<size_t>(currentPlayer)],
-        DevType::Knight,
-        1
-    );
-
     std::vector<Action::PackedAction> allActions;
 
     allActions = boardState.getLegalActions(currentPlayer);
@@ -801,5 +848,19 @@ TEST_F(ActionTest, ExpectGeneratePlace2InitialStructuresActions){
         EXPECT_EQ(ActionType::Place2InitialStructures, type);
         EXPECT_LT(Action::unpackArg1(action), NODE_COUNT);
         EXPECT_LT(Action::unpackArg2(action), EDGE_COUNT);
+    }
+}
+
+TEST_F(ActionTest, ExpectGenerateMoveRobberActions){
+    std::vector<Action::PackedAction> moveRobberActions;
+
+    moveRobberActions = boardState.generateMoveRobberActions(PlayerId::Player0);
+
+    EXPECT_EQ(moveRobberActions.size(), HEX_COUNT - 1); // Can't move to current position
+    for (const auto& action : moveRobberActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::MoveRobber, type);
+        EXPECT_LT(Action::unpackArg1(action), HEX_COUNT);
+        EXPECT_NE(boardState.robberPosition, Action::unpackArg1(action));
     }
 }
