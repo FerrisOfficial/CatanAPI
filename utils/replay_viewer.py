@@ -290,6 +290,9 @@ class BoardRenderer:
         self.hex_corners: List[List[Tuple[float, float]]] = []
         self.node_pos: Dict[int, Tuple[float, float]] = {}
 
+        # Updated on each draw(); used by UI for quick sanity checks.
+        self.last_stats: Dict[str, int] = {}
+
     def _axial_to_pixel(self, q: int, r: int, cx: float, cy: float) -> Tuple[float, float]:
         # Pointy-top hex axial->pixel (renders r=-2..2 as horizontal rows: 3-4-5-4-3)
         x = self.size * (math.sqrt(3) * (q + r / 2.0))
@@ -326,9 +329,14 @@ class BoardRenderer:
             self.node_pos = {}
             return
 
-        # 1) Anchor nodes with >=2 adjacent hexes using corner intersection
+        # 1) Anchor nodes using corner intersection.
+        #    IMPORTANT: nodes with exactly 2 adjacent hexes usually produce TWO shared corners (they share an edge).
+        #    We must not pick an arbitrary one, otherwise geometry becomes inconsistent and some roads won't render.
         pos: Dict[int, Tuple[float, float]] = {}
         unresolved: List[int] = []
+
+        # Candidate corner positions for nodes that can't be uniquely anchored from intersections alone.
+        candidates_by_nid: Dict[int, List[Tuple[int, int]]] = {}
 
         corner_sets: List[set] = []
         for hid in range(len(self.hex_corners)):
@@ -347,11 +355,15 @@ class BoardRenderer:
                 inter = corner_sets[adj_ids[0]].copy()
                 for hid in adj_ids[1:]:
                     inter &= corner_sets[hid]
-                if inter:
-                    # pick arbitrary (stable order)
-                    x, y = sorted(inter)[0]
+
+                # For 3-hex nodes, we expect a single unique intersection.
+                if len(adj_ids) >= 3 and len(inter) == 1:
+                    (x, y) = next(iter(inter))
                     pos[nid] = (float(x), float(y))
                 else:
+                    # Ambiguous (commonly 2-hex nodes) or mismatch; resolve later using neighbor constraints.
+                    if inter:
+                        candidates_by_nid[nid] = sorted(inter)
                     unresolved.append(nid)
             else:
                 unresolved.append(nid)
@@ -375,14 +387,21 @@ class BoardRenderer:
             n = nodes[nid]
             if not isinstance(n, dict):
                 return False
-            adj_hexes = n.get("adjacent_hexes")
-            if not isinstance(adj_hexes, list):
-                return False
-            hex_ids = [a for a in adj_hexes if isinstance(a, int) and 0 <= a < len(self.hex_corners)]
-            if len(hex_ids) != 1:
-                return False
-            hid = hex_ids[0]
-            candidates = [self._rounded_point(p) for p in self.hex_corners[hid]]
+
+            # Candidate generation:
+            # - If we precomputed ambiguous intersection candidates, use those.
+            # - Otherwise (typical border nodes), snap to one of the single-hex corners.
+            if nid in candidates_by_nid:
+                candidates = candidates_by_nid[nid]
+            else:
+                adj_hexes = n.get("adjacent_hexes")
+                if not isinstance(adj_hexes, list):
+                    return False
+                hex_ids = [a for a in adj_hexes if isinstance(a, int) and 0 <= a < len(self.hex_corners)]
+                if len(hex_ids) != 1:
+                    return False
+                hid = hex_ids[0]
+                candidates = [self._rounded_point(p) for p in self.hex_corners[hid]]
 
             known_neighbors = [nb for nb in neighbors.get(nid, []) if nb in pos]
             if not known_neighbors:
@@ -493,35 +512,66 @@ class BoardRenderer:
         # Compute node positions from this state
         self._compute_node_positions(state)
 
+        nodes = state.get("nodes")
+        nodes_total = len(nodes) if isinstance(nodes, list) else 0
+        nodes_resolved = len(self.node_pos)
+
         # Draw edges (roads)
         edges = state.get("edges")
         if isinstance(edges, list):
+            roads_total = 0
+            roads_drawn = 0
+            roads_skipped_missing = 0
+            roads_skipped_too_long = 0
             for e in edges:
                 if not isinstance(e, dict):
                     continue
+                has_road = bool(e.get("has_road", False))
+                if has_road:
+                    roads_total += 1
                 adj = e.get("adjacent_nodes")
                 if not (isinstance(adj, list) and len(adj) == 2 and all(isinstance(x, int) for x in adj)):
                     continue
                 a, b = adj
                 if a not in self.node_pos or b not in self.node_pos:
+                    if has_road:
+                        roads_skipped_missing += 1
                     continue
                 ax, ay = self.node_pos[a]
                 bx, by = self.node_pos[b]
 
                 # Defensive: if geometry placement went wrong for a node, skip absurdly long segments.
                 if math.hypot(ax - bx, ay - by) > 3.0 * self.size:
+                    if has_road:
+                        roads_skipped_too_long += 1
                     continue
-
-                has_road = bool(e.get("has_road", False))
                 owner = int(e.get("owner", 2)) if isinstance(e.get("owner"), int) else 2
 
                 if has_road:
                     color = PLAYER_COLORS.get(owner, "#111")
                     self.canvas.create_line(ax, ay, bx, by, fill=color, width=6, capstyle=tk.ROUND)
+                    roads_drawn += 1
                 # Don't draw the full edge graph (it looks like random thin lines). Only render actual roads.
 
+            self.last_stats = {
+                "nodes_total": nodes_total,
+                "nodes_pos_resolved": nodes_resolved,
+                "roads_total": roads_total,
+                "roads_drawn": roads_drawn,
+                "roads_skipped_missing_node_pos": roads_skipped_missing,
+                "roads_skipped_too_long": roads_skipped_too_long,
+            }
+        else:
+            self.last_stats = {
+                "nodes_total": nodes_total,
+                "nodes_pos_resolved": nodes_resolved,
+                "roads_total": 0,
+                "roads_drawn": 0,
+                "roads_skipped_missing_node_pos": 0,
+                "roads_skipped_too_long": 0,
+            }
+
         # Draw nodes (settlements/cities)
-        nodes = state.get("nodes")
         if isinstance(nodes, list):
             for nid, n in enumerate(nodes):
                 if nid not in self.node_pos:
@@ -811,9 +861,22 @@ class App(tk.Tk):
         cp_name = {0: "Player0", 1: "Player1", 2: "NoPlayer"}.get(cp, "?")
         ev_count = len(self.log.frame_events[idx]) if idx < len(self.log.frame_events) else 0
         self.header.config(
-            text=f"{fr.label} | current_player={cp_name} | frames={len(self.log.frames)} | events={ev_count}"
+            text=(
+                f"{fr.label} | current_player={cp_name} | frames={len(self.log.frames)} | events={ev_count}"
+            )
         )
         self.renderer.draw(fr)
+
+        stats = getattr(self.renderer, "last_stats", {}) or {}
+        roads_total = int(stats.get("roads_total", 0))
+        roads_drawn = int(stats.get("roads_drawn", 0))
+        nodes_total = int(stats.get("nodes_total", 0))
+        nodes_resolved = int(stats.get("nodes_pos_resolved", 0))
+        if roads_total or nodes_total:
+            missing = int(stats.get("roads_skipped_missing_node_pos", 0))
+            too_long = int(stats.get("roads_skipped_too_long", 0))
+            diag = f" | roads={roads_drawn}/{roads_total} (skip_missing={missing}, skip_long={too_long}) | nodes={nodes_resolved}/{nodes_total}"
+            self.header.config(text=self.header.cget("text") + diag)
 
         # Player resources panels
         self._render_players_panel(self.players_start_text, fr.state)
