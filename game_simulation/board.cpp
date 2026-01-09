@@ -1031,6 +1031,23 @@ void BoardState::generateRandomBoard() {
         std::swap(numberDistribution[i], numberDistribution[j]);
         std::swap(resourceDistribution[i], resourceDistribution[j]);
     }
+
+    // Enforce: the desert (NoResource) always has number 7.
+    // This guarantees 7 doesn't appear on any non-desert hex.
+    size_t desertIdx = HEX_COUNT;
+    size_t sevenIdx = HEX_COUNT;
+    for (size_t i = 0; i < HEX_COUNT; ++i) {
+        if (resourceDistribution[i] == Resource::NoResource) {
+            desertIdx = i;
+        }
+        if (numberDistribution[i] == 7) {
+            sevenIdx = i;
+        }
+    }
+    if (desertIdx < HEX_COUNT && sevenIdx < HEX_COUNT && desertIdx != sevenIdx) {
+        std::swap(numberDistribution[desertIdx], numberDistribution[sevenIdx]);
+    }
+
     for (HexId h = 0; h < HEX_COUNT; ++h) {
         hexes[h] = Hex::packResource(hexes[h], resourceDistribution[h]);
         hexes[h] = Hex::packCatanNumber(hexes[h], numberDistribution[h]);
@@ -1039,8 +1056,6 @@ void BoardState::generateRandomBoard() {
             robberPosition = h;
         }
     }
-
-
 }
 
 } // namespace Board
