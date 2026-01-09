@@ -130,6 +130,14 @@ constexpr EdgeId unpackAdjacentEdge(PackedNode n, uint8_t edgeIndex) {
     return (n >> shift) & 0x7F;
 }
 
+inline std::vector<EdgeId> getAdjacentEdges(PackedNode n) {
+    return {
+        unpackAdjacentEdge(n, 0),
+        unpackAdjacentEdge(n, 1),
+        unpackAdjacentEdge(n, 2)
+    };
+}
+
 // Convenience function to create a new node
 constexpr PackedNode makeNode(HexId hex1, HexId hex2, HexId hex3,
                             EdgeId edge1, EdgeId edge2, EdgeId edge3,

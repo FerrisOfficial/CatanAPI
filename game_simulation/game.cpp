@@ -150,7 +150,7 @@ PlayerId Game::runGame() {
 
     Logger logger;
     
-    while (vpP0 < 15 && vpP1 < 15 && actualTurn < 150) 
+    while (vpP0 < 15 && vpP1 < 15 && actualTurn < 250) 
     {
         logger.log_players(this->boardState);
         this->turnLoop();
