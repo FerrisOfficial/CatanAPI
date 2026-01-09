@@ -138,6 +138,9 @@ class ReplayLog:
                 return f"{prefix}{ts_s}turn_end (turn={t}, next_player={cp})"
 
             if ev == "dice":
+                dice = obj.get("dice")
+                if isinstance(dice, int):
+                    return f"{prefix}{ts_s}dice: {dice}"
                 d1 = obj.get("d1")
                 d2 = obj.get("d2")
                 total = obj.get("sum")
