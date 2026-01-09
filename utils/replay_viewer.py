@@ -7,6 +7,10 @@ Reads a Dumper-generated `logs/game_*.jsonl` file and renders a simple board.
 
 Usage:
   python utils/replay_viewer.py logs/game_20260109_150148_309.jsonl
+    python utils/replay_viewer.py -lr
+
+Flags:
+    -lr / --last-replay   Automatically open the newest *.jsonl under logs/ (or build/logs/) and auto-play it.
 
 If no path is provided, a file picker opens.
 
@@ -17,10 +21,12 @@ Notes:
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import os
 import sys
+from pathlib import Path
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -553,7 +559,7 @@ class BoardRenderer:
 
 
 class App(tk.Tk):
-    def __init__(self, log: ReplayLog):
+    def __init__(self, log: ReplayLog, *, autoplay: bool = False, autoplay_ms: int = 250):
         super().__init__()
         self.title(f"Catan Replay Viewer - {os.path.basename(log.path)}")
         self.geometry("1100x850")
@@ -616,8 +622,15 @@ class App(tk.Tk):
 
         self.renderer = BoardRenderer(self.canvas)
 
+        self._autoplay_enabled = bool(autoplay)
+        self._autoplay_ms = int(autoplay_ms)
+        self._autoplay_running = False
+        self._autoplay_tick_scheduled = False
+        self._autoplay_internal_scale_change = False
+
         self.bind("<Left>", lambda _e: self._step(-1))
         self.bind("<Right>", lambda _e: self._step(1))
+        self.bind("<space>", lambda _e: self._toggle_autoplay())
         self.bind("<Configure>", lambda _e: self._redraw())
 
         if not self.log.frames:
@@ -625,6 +638,49 @@ class App(tk.Tk):
         else:
             self.scale.set(0)
             self._redraw()
+            if self._autoplay_enabled:
+                self._start_autoplay()
+
+    def _toggle_autoplay(self) -> None:
+        if self._autoplay_running:
+            self._stop_autoplay()
+        else:
+            self._start_autoplay()
+
+    def _start_autoplay(self) -> None:
+        if not self.log.frames:
+            return
+        self._autoplay_running = True
+        self._schedule_autoplay_tick()
+
+    def _stop_autoplay(self) -> None:
+        self._autoplay_running = False
+        # Note: we don't cancel scheduled callbacks; the tick checks _autoplay_running.
+
+    def _schedule_autoplay_tick(self) -> None:
+        if self._autoplay_tick_scheduled:
+            return
+        self._autoplay_tick_scheduled = True
+        self.after(self._autoplay_ms, self._autoplay_tick)
+
+    def _autoplay_tick(self) -> None:
+        self._autoplay_tick_scheduled = False
+        if not self._autoplay_running or not self.log.frames:
+            return
+
+        cur = int(self.scale.get())
+        if cur >= len(self.log.frames) - 1:
+            self._stop_autoplay()
+            return
+
+        self._autoplay_internal_scale_change = True
+        try:
+            self.scale.set(cur + 1)
+        finally:
+            self._autoplay_internal_scale_change = False
+
+        self._redraw()
+        self._schedule_autoplay_tick()
 
     def _render_players_panel(self, text_widget: tk.Text, state: Optional[Dict[str, Any]]) -> None:
         # Avoid destroying/creating many Tk widgets on every redraw (can crash Tk on Windows).
@@ -801,12 +857,17 @@ class App(tk.Tk):
     def _step(self, delta: int) -> None:
         if not self.log.frames:
             return
+        # Manual navigation pauses autoplay.
+        self._stop_autoplay()
         cur = int(self.scale.get())
         nxt = max(0, min(len(self.log.frames) - 1, cur + delta))
         self.scale.set(nxt)
         self._redraw()
 
     def _on_scale(self, _value: str) -> None:
+        # If user drags the slider, pause autoplay. (Internal tick sets a guard.)
+        if not self._autoplay_internal_scale_change:
+            self._stop_autoplay()
         self._redraw()
 
     def _redraw(self) -> None:
@@ -867,8 +928,42 @@ def _pick_file() -> Optional[str]:
     return path or None
 
 
+def _find_last_replay() -> Optional[str]:
+    """Find the newest JSONL replay log in common locations."""
+    repo_root = Path(__file__).resolve().parent.parent
+    candidates: List[Path] = []
+
+    for folder in (repo_root / "logs", repo_root / "build" / "logs"):
+        if folder.is_dir():
+            candidates.extend([p for p in folder.glob("*.jsonl") if p.is_file()])
+
+    if not candidates:
+        return None
+
+    newest = max(candidates, key=lambda p: p.stat().st_mtime)
+    return str(newest)
+
+
 def main(argv: List[str]) -> int:
-    path = argv[1] if len(argv) > 1 else None
+    parser = argparse.ArgumentParser(description="CatanAPI replay log viewer (JSONL)")
+    parser.add_argument("path", nargs="?", help="Path to a Dumper JSONL log")
+    parser.add_argument(
+        "-lr",
+        "--last-replay",
+        action="store_true",
+        help="Open newest *.jsonl from logs/ (or build/logs/) and auto-play it",
+    )
+    args = parser.parse_args(argv[1:])
+
+    path: Optional[str] = args.path
+    autoplay = False
+    if args.last_replay:
+        autoplay = True
+        path = _find_last_replay()
+        if not path:
+            print("No replay logs found under logs/ or build/logs/.")
+            return 2
+
     if not path:
         path = _pick_file()
     if not path:
@@ -876,7 +971,7 @@ def main(argv: List[str]) -> int:
         return 2
 
     log = ReplayLog(path)
-    app = App(log)
+    app = App(log, autoplay=autoplay)
     app.mainloop()
     return 0
 
