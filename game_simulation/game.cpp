@@ -1,6 +1,7 @@
 #include "game.hpp"
 #include "utils/randomDevice.hpp"
-#include "utils/logger.hpp"
+
+#include "utils/dumper.hpp"
 
 Game::Game(IPlayer& p1, IPlayer& p2)
     : player1(p1)
@@ -10,54 +11,47 @@ Game::Game(IPlayer& p1, IPlayer& p2)
     this->player2.boardState = &boardState;
 }
 
+void Game::applyActionLogged(Action::PackedAction action, const char* phase) {
+    this->boardState.applyAction(action);
+    if (this->dumper) {
+        this->dumper->recordActionApplied(action, this->boardState, phase ? phase : "");
+    }
+}
+
 void Game::initialPhase() {
-    Logger logger;
-
-    logger.log_players(this->boardState);
     auto p1InitialPlacement = player1.getInitialPlacement();
-    logger.log("Player 1 id of initial settlement: ", std::to_string(static_cast<int>(Action::unpackArg1(p1InitialPlacement.second))));
-    this->boardState.applyAction(p1InitialPlacement.second);
-    this->boardState.applyAction(Action::packType(Action::getEmptyAction(), ActionType::EndTurn));
+    applyActionLogged(p1InitialPlacement.second, "initialPhase");
+    applyActionLogged(Action::packType(Action::getEmptyAction(), ActionType::EndTurn), "initialPhase");
 
-
-    logger.log_players(this->boardState);
     auto p2InitialPlacement = player2.getInitialPlacement();
-    logger.log("Player 2 id of initial settlement: ", std::to_string(static_cast<int>(Action::unpackArg1(p2InitialPlacement.second))));
-    this->boardState.applyAction(p2InitialPlacement.second);
-    this->boardState.applyAction(Action::packType(Action::getEmptyAction(), ActionType::EndTurn));
+    applyActionLogged(p2InitialPlacement.second, "initialPhase");
+    applyActionLogged(Action::packType(Action::getEmptyAction(), ActionType::EndTurn), "initialPhase");
 
-    logger.log_players(this->boardState);
     auto p2SecondInitialPlacement = player2.get2InitialPlacement();
-    logger.log("Player 2 id of second initial settlement: ", std::to_string(static_cast<int>(Action::unpackArg1(p2SecondInitialPlacement.second))));
-    this->boardState.applyAction(p2SecondInitialPlacement.second);
-    this->boardState.applyAction(Action::packType(Action::getEmptyAction(), ActionType::EndTurn));
+    applyActionLogged(p2SecondInitialPlacement.second, "initialPhase");
+    applyActionLogged(Action::packType(Action::getEmptyAction(), ActionType::EndTurn), "initialPhase");
 
-    logger.log_players(this->boardState);
     auto p1SecondInitialPlacement = player1.get2InitialPlacement();
-    logger.log("Player 1 id of second initial settlement: ", std::to_string(static_cast<int>(Action::unpackArg1(p1SecondInitialPlacement.second))));
-    this->boardState.applyAction(p1SecondInitialPlacement.second);
-    this->boardState.applyAction(Action::packType(Action::getEmptyAction(), ActionType::EndTurn));
+    applyActionLogged(p1SecondInitialPlacement.second, "initialPhase");
+    applyActionLogged(Action::packType(Action::getEmptyAction(), ActionType::EndTurn), "initialPhase");
 }
 
 bool Game::processDevPhase(IPlayer& currentPlayer) {
-    Logger logger;
     auto devAction = currentPlayer.getDevAction();
     if (Action::unpackType(devAction) == ActionType::NoAction) {
         return false;
     }
-    logger.log("Dev action played: ", actionTypeName(Action::unpackType(devAction)));
-    this->boardState.applyAction(devAction);
+    applyActionLogged(devAction, "devPhase");
     return true;
 }
 
 void Game::applyDiceRoll(uint8_t diceNumber) {
     auto rollDiceAction = Action::packType(Action::getEmptyAction(), ActionType::RollDice);
     rollDiceAction = Action::packArg1(rollDiceAction, diceNumber);
-    this->boardState.applyAction(rollDiceAction);
+    applyActionLogged(rollDiceAction, "dice");
 }
 
 void Game::discardResourcesForSeven(PlayerId currentPlayerId) {
-    Logger logger;
     PlayerId enemyPlayerId = (currentPlayerId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
 
     auto currentPacked = this->boardState.packedPlayers[static_cast<uint8_t>(currentPlayerId)];
@@ -68,21 +62,17 @@ void Game::discardResourcesForSeven(PlayerId currentPlayerId) {
 
     if (totalResoucesCurrentPlayer > 9) {
         auto discardAction = this->player1.getDiscardAction();
-        logger.log("Player 1 discards resources: ", std::to_string(static_cast<int>(Action::unpackType(discardAction))));
-        this->boardState.applyAction(discardAction);
+        applyActionLogged(discardAction, "discardSeven");
     }
     if (totalResourcesEnemyPlayer > 9) {
         auto discardAction = this->player2.getDiscardAction();
-        logger.log("Player 2 discards resources: ", std::to_string(static_cast<int>(Action::unpackType(discardAction))));
-        this->boardState.applyAction(discardAction);
+        applyActionLogged(discardAction, "discardSeven");
     }
 }
 
 void Game::handleRobberPhase(IPlayer& currentPlayer, PlayerId currentPlayerId) {
-    Logger logger;
     auto moveRobberAction = currentPlayer.getMoveRobber();
-    logger.log("Robber moved: ", actionTypeName(Action::unpackType(moveRobberAction)));
-    this->boardState.applyAction(moveRobberAction);
+    applyActionLogged(moveRobberAction, "robber");
 
     HexId robberPos = this->boardState.robberPosition;
     Player::PackedPlayer enemyPlayer = (currentPlayerId == PlayerId::Player0) ? 
@@ -93,26 +83,15 @@ void Game::handleRobberPhase(IPlayer& currentPlayer, PlayerId currentPlayerId) {
 
     if (enemyPlayerValue && Player::unpackVictoryPoints(enemyPlayer) >= 3 && Player::totalResources(enemyPlayer) > 0) {
         auto stealResourceAction = Action::packType(Action::getEmptyAction(), ActionType::StealResource);
-        logger.log("Resource stolen: ", std::to_string(static_cast<int>(Action::unpackType(stealResourceAction))));
-        this->boardState.applyAction(stealResourceAction);
+        applyActionLogged(stealResourceAction, "robber");
     }
 }
 
 void Game::processPlayerTurn(IPlayer& currentPlayer) {
-    Logger logger;
-
     auto action = Action::getEmptyAction();
     do {
         action = currentPlayer.getTurnAction();
-
-        logger.log("NEW ACTION:");
-        logger.log_players(this->boardState);
-        logger.log("Turn action played: ", actionTypeName(Action::unpackType(action)));
-        logger.log_players(this->boardState);
-        logger.log("");
-
-
-        this->boardState.applyAction(action);
+        applyActionLogged(action, "turn");
     } while (Action::unpackType(action) != ActionType::EndTurn);
 }
 
@@ -120,12 +99,17 @@ void Game::turnLoop() {
     PlayerId currentPlayerId = this->boardState.currentPlayer;
     IPlayer& currentPlayer = (currentPlayerId == PlayerId::Player0) ? player1 : player2;
 
+    if (this->dumper) {
+        this->dumper->recordTurnStart(this->boardState);
+    }
+
     bool didUseDev = processDevPhase(currentPlayer);
 
     auto rolledDiceNumber = RandomDevice::rollDices();
 
-    Logger logger;
-    logger.log("Dice rolled: ", std::to_string(rolledDiceNumber));
+    if (this->dumper) {
+        this->dumper->recordDiceRoll(static_cast<uint8_t>(rolledDiceNumber), this->boardState);
+    }
 
     if (rolledDiceNumber != 7) {
         applyDiceRoll(rolledDiceNumber);
@@ -138,21 +122,25 @@ void Game::turnLoop() {
         processDevPhase(currentPlayer);
 
     processPlayerTurn(currentPlayer);
+
+    if (this->dumper) {
+        this->dumper->recordTurnEnd(this->boardState);
+    }
 }
 
 PlayerId Game::runGame() {
+    this->dumper = std::make_unique<Dumper>("logs");
+
     this->boardState.generateRandomBoard();
+    this->dumper->recordInitialState(this->boardState);
     this->initialPhase();
     
     auto actualTurn = this->boardState.currentTurn;
     auto vpP0 = Player::unpackVictoryPoints(this->boardState.packedPlayers[0]);
     auto vpP1 = Player::unpackVictoryPoints(this->boardState.packedPlayers[1]);
-
-    Logger logger;
     
     while (vpP0 < 15 && vpP1 < 15 && actualTurn < 250) 
     {
-        logger.log_players(this->boardState);
         this->turnLoop();
         vpP0 = Player::unpackVictoryPoints(this->boardState.packedPlayers[0]);
         vpP1 = Player::unpackVictoryPoints(this->boardState.packedPlayers[1]);
@@ -167,18 +155,21 @@ PlayerId Game::runGame() {
         }
         if (Player::unpackLongestRoadFlag(this->boardState.packedPlayers[1])) {
             vpP1 += 2;
-    }
+        }
         actualTurn = this->boardState.currentTurn;
     }
 
     if (vpP0 >= 15) 
     {
+        if (this->dumper) this->dumper->recordGameEnd(PlayerId::Player0, this->boardState);
         return PlayerId::Player0;
     } 
     if (vpP1 >= 15) 
     {
+        if (this->dumper) this->dumper->recordGameEnd(PlayerId::Player1, this->boardState);
         return PlayerId::Player1;
     } 
-        
+
+    if (this->dumper) this->dumper->recordGameEnd(PlayerId::NoPlayer, this->boardState);
     return PlayerId::NoPlayer;
 }

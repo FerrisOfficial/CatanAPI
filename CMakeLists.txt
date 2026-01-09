@@ -29,11 +29,6 @@ include_directories(
 
 
 # ----------------------------
-# Logging option
-# ----------------------------
-option(LOGGING "Enable logging to logs/log.txt" OFF)
-
-# ----------------------------
 # 🧱 Source files
 # ----------------------------
 set(GAME_SIM_SRC
@@ -42,6 +37,7 @@ set(GAME_SIM_SRC
   game_simulation/game.cpp
   game_simulation/board.cpp
   game_simulation/board_generate_actions.cpp
+  utils/dumper.cpp
 )
 
 # ----------------------------
@@ -55,10 +51,6 @@ target_include_directories(game_simulation PUBLIC
   ${CMAKE_SOURCE_DIR}/players
   ${CMAKE_SOURCE_DIR}
 )
-
-if(LOGGING)
-  target_compile_definitions(game_simulation PUBLIC LOGGER)
-endif()
 
 # ----------------------------
 # 🧪 Enable testing

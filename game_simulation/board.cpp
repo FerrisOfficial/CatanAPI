@@ -1,7 +1,6 @@
 #include "board.hpp"
 #include "actions.hpp"
 #include "utils/randomDevice.hpp"
-#include "utils/logger.hpp"
 #include "consts.hpp"
 #include "packedBank.hpp"
 
@@ -12,9 +11,6 @@ void handlePlaceInitialSettlement(BoardState& boardState, NodeId nodeId, PlayerI
     boardState.nodes[nodeId] = Node::packStructure(boardState.nodes[nodeId], StructureType::Settlement);
     boardState.nodes[nodeId] = Node::packOwner(boardState.nodes[nodeId], playerId);
 
-    Logger logger;
-    logger.log("VP:", std::to_string(static_cast<int>(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<uint8_t>(playerId)]))), "->");
-
     // add victory point to player
     boardState.packedPlayers[static_cast<uint8_t>(playerId)] =
         Player::packVictoryPoints(
@@ -22,8 +18,6 @@ void handlePlaceInitialSettlement(BoardState& boardState, NodeId nodeId, PlayerI
             Player::unpackVictoryPoints(
                 boardState.packedPlayers[static_cast<uint8_t>(playerId)]) + 1
         );
-
-    logger.log(std::to_string(static_cast<int>(Player::unpackVictoryPoints(boardState.packedPlayers[static_cast<uint8_t>(playerId)]))));
 
     // remove one available settlement from player
     boardState.packedPlayers[static_cast<uint8_t>(playerId)] =
@@ -57,6 +51,9 @@ void handlePlace2InitialSettlement(BoardState& boardState, NodeId nodeId, Player
     // add resources to player for 2nd settlement
     for (int i = 0; i < 3; ++i) {
         auto hexId = Node::unpackAdjacentHex(boardState.nodes[nodeId], i);
+        if (hexId == HexIdNone || hexId >= HEX_COUNT) {
+            continue;
+        }
         auto res = Hex::unpackResource(boardState.hexes[hexId]);
         if (res != Resource::NoResource) {
             Player::changeResourceQuantity(boardState.packedPlayers[static_cast<uint8_t>(playerId)], res, 1);
@@ -156,6 +153,9 @@ void BoardState::handleUndoPlace2InitialSettlement(Action::PackedAction action, 
     // remove resources from player for 2nd settlement
     for (int i = 0; i < 3; ++i) {
         auto hexId = Node::unpackAdjacentHex(nodes[nodeId], i);
+        if (hexId == HexIdNone || hexId >= HEX_COUNT) {
+            continue;
+        }
         auto res = Hex::unpackResource(hexes[hexId]);
         if (res != Resource::NoResource) {
             Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], res, -1);
