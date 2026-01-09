@@ -1,7 +1,7 @@
 #include "game_simulation/board.hpp"
 #include "greedyPlayer.hpp"
-#include "utils/logger.hpp"
 #include <algorithm>
+#include <iostream>
 #include <unordered_map>
 
 constexpr uint8_t pipWeight[13] = {0,0,1,2,3,4,5,0,5,4,3,2,1};
@@ -11,12 +11,13 @@ uint8_t pipNodeScore(NodeId nodeId, Board::BoardState* board, Resource fValuable
     bool hasWood=false, hasBrick=false, hasWheat=false, hasOre=false, hasSheep=false;
 
     HexId adjHex[3] = {
-        Board::Node::unpackAdjacentHex(nodeId, 0),
-        Board::Node::unpackAdjacentHex(nodeId, 1),
-        Board::Node::unpackAdjacentHex(nodeId, 2)
+        Board::Node::unpackAdjacentHex(board->nodes[nodeId], 0),
+        Board::Node::unpackAdjacentHex(board->nodes[nodeId], 1),
+        Board::Node::unpackAdjacentHex(board->nodes[nodeId], 2)
     };
     
     for (HexId h : adjHex) {
+        if (h == HexIdNone) continue;
         Board::Hex::PackedHex hex = board->hexes[h];
         Resource resource = Board::Hex::unpackResource(hex);
         uint8_t number = Board::Hex::unpackCatanNumber(hex);
@@ -33,9 +34,8 @@ uint8_t pipNodeScore(NodeId nodeId, Board::BoardState* board, Resource fValuable
     }
     uint8_t score = base;
     uint8_t distinct = (hasWood + hasBrick + hasWheat + hasOre + hasSheep);
-    if (distinct == 3) score += 4;
+    if (distinct == 3) score += 5;
     else if (distinct == 2) score += 1;
-    else if (distinct == 1) score -= 2;
 
     bool hasFValuableResource = false;
     bool hasSValuableResource = false;
@@ -55,18 +55,59 @@ uint8_t pipNodeScore(NodeId nodeId, Board::BoardState* board, Resource fValuable
     if (hasFValuableResource && hasSValuableResource) score += 2;
     else if (hasFValuableResource || hasSValuableResource) score += 1;
 
-    if (base < 12) score -= 4;
+    if (base < 7) score -= 4;
     return score;
 }
 
+uint8_t pipEdgeScoreFromNode(NodeId startNodeId, EdgeId edgeId, Board::BoardState* board) {
+    uint8_t score1 = 1;
+    uint8_t score2 = 1;
+    NodeId nodeA = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 0);
+    NodeId nodeB = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 1);
+    NodeId neighbourNode = (nodeA == startNodeId) ? nodeB : nodeA;
+
+    // simulate buidling road to neighbourNode and all possible  roads from there
+    std::vector<EdgeId> adjEdges = Board::Node::getAdjacentEdges(board->nodes[neighbourNode]);
+    for (EdgeId adjEdgeId : adjEdges) {
+        if (adjEdgeId == edgeId) continue;
+        NodeId adjNodeA = Board::Edge::unpackAdjacentNode(board->edges[adjEdgeId], 0);
+        NodeId adjNodeB = Board::Edge::unpackAdjacentNode(board->edges[adjEdgeId], 1);
+        NodeId adjNeighbourNode = (adjNodeA == neighbourNode) ? adjNodeB : adjNodeA;
+        uint8_t edgeScore = pipNodeScore(adjNeighbourNode, board, Resource::Ore, Resource::Grain);
+        score1 = std::max(score1, edgeScore);
+    }
+
+    return score1;
+}
+
 uint8_t pipEdgeScore(EdgeId edgeId, Board::BoardState* board) {
-    uint8_t score1 = 0;
-    uint8_t score2 = 0;
+    uint8_t score1 = 1;
+    uint8_t score2 = 1;
     NodeId nodeA = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 0);
     NodeId nodeB = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 1);
 
-    score1 += pipNodeScore(nodeA, board, Resource::Brick, Resource::Lumber);
-    score2 += pipNodeScore(nodeB, board, Resource::Brick, Resource::Lumber);
+    // simulate buidling road to nodeA and all possible  roads from there
+    std::vector<EdgeId> adjEdgesA = Board::Node::getAdjacentEdges(board->nodes[nodeA]);
+    for (EdgeId adjEdgeId : adjEdgesA) {
+        if (adjEdgeId == edgeId) continue;
+        NodeId adjNodeA = Board::Edge::unpackAdjacentNode(board->edges[adjEdgeId], 0);
+        NodeId adjNodeB = Board::Edge::unpackAdjacentNode(board->edges[adjEdgeId], 1);
+        NodeId adjNeighbourNode = (adjNodeA == nodeA) ? adjNodeB : adjNodeA;
+        if (Board::Node::unpackStructure(board->nodes[adjNeighbourNode]) != StructureType::NoStructure) continue;
+        uint8_t edgeScore = pipNodeScore(adjNeighbourNode, board, Resource::Ore, Resource::Grain);
+        score1 = std::max(score1, edgeScore);
+    }
+
+    // simulate buidling road to nodeB and all possible  roads from there
+    std::vector<EdgeId> adjEdgesB = Board::Node::getAdjacentEdges(board->nodes[nodeB]);
+    for (EdgeId adjEdgeId : adjEdgesB) {
+        if (adjEdgeId == edgeId) continue;
+        NodeId adjNodeA = Board::Edge::unpackAdjacentNode(board->edges[adjEdgeId], 0);
+        NodeId adjNodeB = Board::Edge::unpackAdjacentNode(board->edges[adjEdgeId], 1);
+        NodeId adjNeighbourNode = (adjNodeA == nodeB) ? adjNodeB : adjNodeA;
+        uint8_t edgeScore = pipNodeScore(adjNeighbourNode, board, Resource::Ore, Resource::Grain);
+        score2 = std::max(score2, edgeScore);
+    }
 
     return std::max(score1, score2);
 }
@@ -80,7 +121,7 @@ uint8_t pipHexScore(HexId hexId, Board::BoardState* board) {
         board->packedPlayers[static_cast<uint8_t>(board->currentPlayer)],
         resource
     );
-    if (personalValue > 0) return 0;
+    if (personalValue > 0) return -1;
 
     uint8_t enemyValue = Player::unpackResource(
         board->packedPlayers[static_cast<uint8_t>(board->currentPlayer == PlayerId::Player0 ? PlayerId::Player1 : PlayerId::Player0)],
@@ -95,12 +136,13 @@ std::pair<Action::PackedAction, Action::PackedAction> GreedyPlayer::getInitialPl
 
     Action::PackedAction bestAction = actions[0];
     NodeId bestNodeId = 0;
-    uint8_t bestNodeScore = -1000;
-    uint8_t bestEdgeScore = -1000;
+    uint8_t bestNodeScore = 0;
+    uint8_t bestEdgeScore = 0;
 
     for (auto action : actions) {
         NodeId nodeId = Action::unpackArg1(action);
         uint8_t nodeScore = pipNodeScore(nodeId, boardState, Resource::Ore, Resource::Grain);
+        std::cout << "Node " << static_cast<int>(nodeId) << " has score " << static_cast<int>(nodeScore) << "\n";
         if (nodeScore > bestNodeScore) {
             bestNodeScore = nodeScore;
             bestAction = action;
@@ -111,7 +153,9 @@ std::pair<Action::PackedAction, Action::PackedAction> GreedyPlayer::getInitialPl
     std::vector<EdgeId> adjEdges = Board::Node::getAdjacentEdges(boardState->nodes[bestNodeId]);
 
     for (EdgeId edgeId : adjEdges) {
-        uint8_t edgeScore = pipEdgeScore(edgeId, boardState);
+        uint8_t edgeScore = pipEdgeScoreFromNode(bestNodeId, edgeId, boardState);
+        std::cout << "  Node : " << static_cast<int>(bestNodeId) << "\n";
+        std::cout << "  Edge " << static_cast<int>(edgeId) << " has score " << static_cast<int>(edgeScore) << "\n";
         if (edgeScore > bestEdgeScore) {
             bestEdgeScore = edgeScore;
             bestAction = Action::packArg2(bestAction, edgeId);
@@ -126,8 +170,8 @@ std::pair<Action::PackedAction, Action::PackedAction> GreedyPlayer::get2InitialP
 
     Action::PackedAction bestAction = actions[0];
     NodeId bestNodeId = 0;
-    uint8_t bestNodeScore = -1000;
-    uint8_t bestEdgeScore = -1000;
+    uint8_t bestNodeScore = 0;
+    uint8_t bestEdgeScore = 0;
 
     for (auto action : actions) {
         NodeId nodeId = Action::unpackArg1(action);
@@ -142,7 +186,7 @@ std::pair<Action::PackedAction, Action::PackedAction> GreedyPlayer::get2InitialP
     std::vector<EdgeId> adjEdges = Board::Node::getAdjacentEdges(boardState->nodes[bestNodeId]);
 
     for (EdgeId edgeId : adjEdges) {
-        uint8_t edgeScore = pipEdgeScore(edgeId, boardState);
+        uint8_t edgeScore = pipEdgeScoreFromNode(bestNodeId, edgeId, boardState);
         if (edgeScore > bestEdgeScore) {
             bestEdgeScore = edgeScore;
             bestAction = Action::packArg2(bestAction, edgeId);
@@ -211,7 +255,7 @@ Action::PackedAction GreedyPlayer::getDiscardAction() {
 Action::PackedAction GreedyPlayer::getMoveRobber() {
     auto actions = boardState->generateMoveRobberActions(boardState->currentPlayer);
     Action::PackedAction bestAction = actions[0];
-    uint8_t bestScore = -1000;
+    uint8_t bestScore = 0;
 
     for (auto action : actions) {
         HexId hexId = Action::unpackArg1(action);

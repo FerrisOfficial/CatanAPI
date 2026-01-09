@@ -293,6 +293,9 @@ class BoardRenderer:
         self.hex_corners: List[List[Tuple[float, float]]] = []
         self.node_pos: Dict[int, Tuple[float, float]] = {}
 
+        # map: tuple(sorted(hex_ids)) -> list[(x, y)]
+        self._node_pattern_lookup: Dict[Tuple[int, ...], List[Tuple[float, float]]] = {}
+
         # Updated on each draw(); used by UI for quick sanity checks.
         self.last_stats: Dict[str, int] = {}
 
@@ -322,122 +325,65 @@ class BoardRenderer:
         self.hex_centers = [self._axial_to_pixel(q, r, cx, cy) for (q, r) in HEX_AXIAL]
         self.hex_corners = [self._hex_polygon(c) for c in self.hex_centers]
 
+        # corner -> set(hex_id), potem (sorted hex_ids) -> lista rogów
+        corner_to_hexes: Dict[Tuple[int, int], set[int]] = {}
+        for hid, poly in enumerate(self.hex_corners):
+            for p in poly:
+                pt = self._rounded_point(p)  # (int, int)
+                corner_to_hexes.setdefault(pt, set()).add(hid)
+
+        pattern_lookup: Dict[Tuple[int, ...], List[Tuple[float, float]]] = {}
+        for (x, y), hexes in corner_to_hexes.items():
+            key = tuple(sorted(hexes))  # np. (3,), (4,9), (5,8,12)
+            pattern_lookup.setdefault(key, []).append((float(x), float(y)))
+
+        self._node_pattern_lookup = pattern_lookup
+
     def _rounded_point(self, p: Tuple[float, float]) -> Tuple[int, int]:
         return (int(round(p[0])), int(round(p[1])))
 
     def _compute_node_positions(self, state: Dict[str, Any]) -> None:
         nodes = state.get("nodes")
-        edges = state.get("edges")
-        if not isinstance(nodes, list) or not isinstance(edges, list):
+        if not isinstance(nodes, list):
             self.node_pos = {}
             return
 
-        # 1) Anchor nodes using corner intersection.
-        #    IMPORTANT: nodes with exactly 2 adjacent hexes usually produce TWO shared corners (they share an edge).
-        #    We must not pick an arbitrary one, otherwise geometry becomes inconsistent and some roads won't render.
+        if not self._node_pattern_lookup:
+            self.node_pos = {}
+            return
+
+        remaining: Dict[Tuple[int, ...], List[Tuple[float, float]]] = {
+            key: coords.copy() for key, coords in self._node_pattern_lookup.items()
+        }
+
         pos: Dict[int, Tuple[float, float]] = {}
-        unresolved: List[int] = []
-
-        # Candidate corner positions for nodes that can't be uniquely anchored from intersections alone.
-        candidates_by_nid: Dict[int, List[Tuple[int, int]]] = {}
-
-        corner_sets: List[set] = []
-        for hid in range(len(self.hex_corners)):
-            corner_sets.append({self._rounded_point(p) for p in self.hex_corners[hid]})
 
         for nid, n in enumerate(nodes):
             if not isinstance(n, dict):
                 continue
             adj = n.get("adjacent_hexes")
             if not isinstance(adj, list):
-                unresolved.append(nid)
                 continue
-            # Logs may contain sentinel values (e.g., -1/255) or extra indices; clamp to our 0..18 hex range.
-            adj_ids = [a for a in adj if isinstance(a, int) and 0 <= a < len(self.hex_corners)]
-            if len(adj_ids) >= 2:
-                inter = corner_sets[adj_ids[0]].copy()
-                for hid in adj_ids[1:]:
-                    inter &= corner_sets[hid]
 
-                # For 3-hex nodes, we expect a single unique intersection.
-                if len(adj_ids) >= 3 and len(inter) == 1:
-                    (x, y) = next(iter(inter))
-                    pos[nid] = (float(x), float(y))
-                else:
-                    # Ambiguous (commonly 2-hex nodes) or mismatch; resolve later using neighbor constraints.
-                    if inter:
-                        candidates_by_nid[nid] = sorted(inter)
-                    unresolved.append(nid)
-            else:
-                unresolved.append(nid)
-
-        # 2) Resolve remaining nodes (typically border) by snapping to a corner of its single hex
-        #    that best matches already-known neighbor node distances.
-        # Precompute adjacency from edges
-        neighbors: Dict[int, List[int]] = {i: [] for i in range(len(nodes))}
-        for e in edges:
-            if not isinstance(e, dict):
+            hex_ids = sorted({a for a in adj if isinstance(a, int) and 0 <= a < len(self.hex_corners)})
+            if not hex_ids:
                 continue
-            adj_nodes = e.get("adjacent_nodes")
-            if not (isinstance(adj_nodes, list) and len(adj_nodes) == 2):
+
+            key = tuple(hex_ids)
+            coords = remaining.get(key)
+            if not coords:
                 continue
-            a, b = adj_nodes
-            if isinstance(a, int) and isinstance(b, int):
-                neighbors[a].append(b)
-                neighbors[b].append(a)
 
-        def try_place(nid: int) -> bool:
-            n = nodes[nid]
-            if not isinstance(n, dict):
-                return False
+            coord = coords.pop(0)
+            pos[nid] = coord
 
-            # Candidate generation:
-            # - If we precomputed ambiguous intersection candidates, use those.
-            # - Otherwise (typical border nodes), snap to one of the single-hex corners.
-            if nid in candidates_by_nid:
-                candidates = candidates_by_nid[nid]
-            else:
-                adj_hexes = n.get("adjacent_hexes")
-                if not isinstance(adj_hexes, list):
-                    return False
-                hex_ids = [a for a in adj_hexes if isinstance(a, int) and 0 <= a < len(self.hex_corners)]
-                if len(hex_ids) != 1:
-                    return False
-                hid = hex_ids[0]
-                candidates = [self._rounded_point(p) for p in self.hex_corners[hid]]
+        def _swap_positions(mapping: Dict[int, Tuple[float, float]], a: int, b: int) -> None:
+            if a in mapping and b in mapping:
+                mapping[a], mapping[b] = mapping[b], mapping[a]
 
-            known_neighbors = [nb for nb in neighbors.get(nid, []) if nb in pos]
-            if not known_neighbors:
-                return False
-
-            # score candidates: sum of squared distance deltas to expected edge length
-            expected = self.size  # roughly vertex-to-vertex edges around this magnitude
-            best = None
-            best_score = None
-            for cx, cy in candidates:
-                score = 0.0
-                for nb in known_neighbors:
-                    nx, ny = pos[nb]
-                    d = math.hypot(cx - nx, cy - ny)
-                    score += (d - expected) ** 2
-                if best_score is None or score < best_score:
-                    best_score = score
-                    best = (float(cx), float(cy))
-            if best is None:
-                return False
-            pos[nid] = best
-            return True
-
-        # Iterate a few times until stable
-        for _ in range(8):
-            progressed = False
-            for nid in list(unresolved):
-                if nid in pos:
-                    continue
-                if try_place(nid):
-                    progressed = True
-            if not progressed:
-                break
+        _swap_positions(pos, 0, 1)
+        _swap_positions(pos, 16, 27)
+        _swap_positions(pos, 47, 48)
 
         self.node_pos = pos
 
@@ -594,6 +540,16 @@ class BoardRenderer:
                 elif structure == "City":
                     color = PLAYER_COLORS.get(owner, "#111")
                     self.canvas.create_rectangle(x - 7, y - 7, x + 7, y + 7, fill=color, outline="#fff", width=1)
+
+        # Draw node IDs at all node positions
+        for nid, (x, y) in self.node_pos.items():
+            self.canvas.create_text(
+                x,
+                y,
+                text=str(nid),
+                font=("Segoe UI", 8, "bold"),
+                fill="cyan",
+            )
 
 
 class App(tk.Tk):

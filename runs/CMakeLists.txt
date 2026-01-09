@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 project(runs)
 
-add_executable(run run.cpp)
+add_executable(run 
+    run.cpp
+    ${CMAKE_SOURCE_DIR}/players/player.cpp
+    ${CMAKE_SOURCE_DIR}/players/randomPlayer.cpp
+    ${CMAKE_SOURCE_DIR}/players/greedyPlayer.cpp
+)
 
 target_include_directories(run PRIVATE
     ${CMAKE_SOURCE_DIR}

@@ -832,6 +832,23 @@ TEST_F(ActionTest, ExpectGeneratePlaceInitialStructuresActions){
     }
 }
 
+TEST_F(ActionTest, ExpectGeneratePlaceInitialStructuresActionsSecondPlayer){
+    std::vector<Action::PackedAction> placeInitialStructuresActions;
+    NodeId firstPlayerSettlementNodeId = 23;
+    boardState.nodes[firstPlayerSettlementNodeId] = Node::packStructure(boardState.nodes[firstPlayerSettlementNodeId], StructureType::Settlement);
+    boardState.nodes[firstPlayerSettlementNodeId] = Node::packOwner(boardState.nodes[firstPlayerSettlementNodeId], PlayerId::Player0);
+
+    placeInitialStructuresActions = boardState.generatePlaceInitialStructures(PlayerId::Player1);
+
+    EXPECT_EQ(placeInitialStructuresActions.size(), 135);
+    for (const auto& action : placeInitialStructuresActions) {
+        ActionType type = Action::unpackType(action);
+        EXPECT_EQ(ActionType::PlaceInitialStructures, type);
+        EXPECT_LT(Action::unpackArg1(action), NODE_COUNT);
+        EXPECT_LT(Action::unpackArg2(action), EDGE_COUNT);
+    }
+}
+
 TEST_F(ActionTest, ExpectGeneratePlace2InitialStructuresActions){
     std::vector<Action::PackedAction> placeInitialStructuresActions;
 

@@ -1,5 +1,6 @@
 #include "game_simulation/game.hpp"
 #include "players/randomPlayer.hpp"
+#include "players/greedyPlayer.hpp"
 
 #include <iostream>
 #include <memory>
@@ -12,6 +13,9 @@ std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
     if (flag == "rp") {
         return std::make_unique<RandomPlayer>();
     }
+    if (flag == "gp") {
+        return std::make_unique<GreedyPlayer>();
+    }
 
     return nullptr;
 }
@@ -19,7 +23,8 @@ std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
 void print_usage(const char* exe) {
     std::cerr << "Usage: " << exe << " <player0_flag> <player1_flag>\n"
               << "  Currently supported flags:\n"
-              << "    rp  RandomPlayer\n";
+              << "    rp  RandomPlayer\n"
+              << "    gp  GreedyPlayer\n";
 }
 } // namespace
 
