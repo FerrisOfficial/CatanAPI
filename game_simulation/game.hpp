@@ -8,6 +8,9 @@
 
 #include <cstdint>
 
+#include <array>
+#include <string>
+
 #include <memory>
 
 struct Game {
@@ -15,9 +18,12 @@ struct Game {
     IPlayer& player1;
     IPlayer& player2;
 
+    std::array<std::string, 2> playerDisplayNames{ {"Player0", "Player1"} };
+
     std::unique_ptr<Dumper> dumper;
 
     Game(IPlayer& player1, IPlayer& player2);
+    void setPlayerDisplayNames(std::string player0Name, std::string player1Name);
     void initialPhase();
     void turnLoop();
     PlayerId runGame();

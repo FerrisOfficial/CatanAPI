@@ -1,6 +1,8 @@
 #include "game.hpp"
 #include "utils/randomDevice.hpp"
 
+#include <algorithm>
+
 #include "utils/dumper.hpp"
 
 Game::Game(IPlayer& p1, IPlayer& p2)
@@ -9,6 +11,15 @@ Game::Game(IPlayer& p1, IPlayer& p2)
 {
     this->player1.boardState = &boardState;
     this->player2.boardState = &boardState;
+}
+
+void Game::setPlayerDisplayNames(std::string player0Name, std::string player1Name) {
+    if (!player0Name.empty()) {
+        playerDisplayNames[0] = std::move(player0Name);
+    }
+    if (!player1Name.empty()) {
+        playerDisplayNames[1] = std::move(player1Name);
+    }
 }
 
 void Game::applyActionLogged(Action::PackedAction action, const char* phase) {
@@ -52,21 +63,58 @@ void Game::applyDiceRoll(uint8_t diceNumber) {
 }
 
 void Game::discardResourcesForSeven(PlayerId currentPlayerId) {
-    PlayerId enemyPlayerId = (currentPlayerId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+    (void)currentPlayerId;
 
-    auto currentPacked = this->boardState.packedPlayers[static_cast<uint8_t>(currentPlayerId)];
-    auto enemyPlayerPacked = this->boardState.packedPlayers[static_cast<uint8_t>(enemyPlayerId)];
+    auto buildDiscardAction = [&](PlayerId discardingPlayerId) {
+        const auto packed = this->boardState.packedPlayers[static_cast<uint8_t>(discardingPlayerId)];
+        const uint8_t totalResources = Player::totalResources(packed);
+        if (totalResources <= 7) {
+            return Action::getEmptyAction();
+        }
 
-    uint8_t totalResoucesCurrentPlayer = Player::totalResources(currentPacked);
-    uint8_t totalResourcesEnemyPlayer = Player::totalResources(enemyPlayerPacked);
+        const uint8_t toDiscard = totalResources / 2;
 
-    if (totalResoucesCurrentPlayer > 9) {
-        auto discardAction = this->player1.getDiscardAction();
-        applyActionLogged(discardAction, "discardSeven");
-    }
-    if (totalResourcesEnemyPlayer > 9) {
-        auto discardAction = this->player2.getDiscardAction();
-        applyActionLogged(discardAction, "discardSeven");
+        const PlayerId savedCurrentPlayer = this->boardState.currentPlayer;
+        this->boardState.currentPlayer = discardingPlayerId;
+        IPlayer& discardingPlayer = (discardingPlayerId == PlayerId::Player0) ? this->player1 : this->player2;
+        const auto proposed = discardingPlayer.getDiscardAction();
+        this->boardState.currentPlayer = savedCurrentPlayer;
+
+        Action::PackedAction action = Action::getEmptyAction();
+        uint8_t discarded = 0;
+
+        for (Resource r : {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Grain, Resource::Ore}) {
+            const uint8_t want = Action::unpackResource(proposed, r);
+            const uint8_t have = Player::unpackResource(packed, r);
+            const uint8_t give = std::min<uint8_t>(std::min<uint8_t>(want, have), static_cast<uint8_t>(toDiscard - discarded));
+            action = Action::packResource(action, r, give);
+            discarded = static_cast<uint8_t>(discarded + give);
+        }
+
+        if (discarded < toDiscard) {
+            for (Resource r : {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Grain, Resource::Ore}) {
+                const uint8_t have = Player::unpackResource(packed, r);
+                const uint8_t current = Action::unpackResource(action, r);
+                const uint8_t available = static_cast<uint8_t>(have - current);
+                const uint8_t add = std::min<uint8_t>(available, static_cast<uint8_t>(toDiscard - discarded));
+                action = Action::packResource(action, r, static_cast<uint8_t>(current + add));
+                discarded = static_cast<uint8_t>(discarded + add);
+                if (discarded >= toDiscard) {
+                    break;
+                }
+            }
+        }
+
+        action = Action::packType(action, ActionType::DiscardResources);
+        action = Action::packPlayerID(action, discardingPlayerId);
+        return action;
+    };
+
+    for (PlayerId discardingPlayerId : {PlayerId::Player0, PlayerId::Player1}) {
+        auto discardAction = buildDiscardAction(discardingPlayerId);
+        if (Action::unpackType(discardAction) == ActionType::DiscardResources) {
+            applyActionLogged(discardAction, "discardSeven");
+        }
     }
 }
 
@@ -131,6 +179,9 @@ void Game::turnLoop() {
 PlayerId Game::runGame() {
     this->dumper = std::make_unique<Dumper>("logs");
 
+    this->dumper->setPlayerNames(playerDisplayNames[0], playerDisplayNames[1]);
+    this->dumper->recordPlayersInfo();
+
     this->boardState.generateRandomBoard();
     this->dumper->recordInitialState(this->boardState);
     this->initialPhase();
@@ -139,7 +190,7 @@ PlayerId Game::runGame() {
     auto vpP0 = Player::unpackVictoryPoints(this->boardState.packedPlayers[0]);
     auto vpP1 = Player::unpackVictoryPoints(this->boardState.packedPlayers[1]);
     
-    while (vpP0 < 15 && vpP1 < 15 && actualTurn < 250) 
+    while (vpP0 < 15 && vpP1 < 15 && actualTurn < 1000) 
     {
         this->turnLoop();
         vpP0 = Player::unpackVictoryPoints(this->boardState.packedPlayers[0]);

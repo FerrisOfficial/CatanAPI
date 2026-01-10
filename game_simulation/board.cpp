@@ -11,6 +11,23 @@ void handlePlaceInitialSettlement(BoardState& boardState, NodeId nodeId, PlayerI
     boardState.nodes[nodeId] = Node::packStructure(boardState.nodes[nodeId], StructureType::Settlement);
     boardState.nodes[nodeId] = Node::packOwner(boardState.nodes[nodeId], playerId);
 
+    // Update per-hex production counters for this settlement.
+    // (Unlike the 2nd initial settlement, we do NOT grant immediate starting resources.)
+    for (int i = 0; i < 3; ++i) {
+        auto hexId = Node::unpackAdjacentHex(boardState.nodes[nodeId], i);
+        if (hexId == HexIdNone || hexId >= HEX_COUNT) {
+            continue;
+        }
+        auto res = Hex::unpackResource(boardState.hexes[hexId]);
+        if (res != Resource::NoResource) {
+            boardState.hexes[hexId] = Hex::packPlayerValue(
+                boardState.hexes[hexId],
+                playerId,
+                Hex::unpackPlayerValue(boardState.hexes[hexId], playerId) + 1
+            );
+        }
+    }
+
     // add victory point to player
     boardState.packedPlayers[static_cast<uint8_t>(playerId)] =
         Player::packVictoryPoints(
@@ -44,6 +61,8 @@ void handlePlaceInitialRoad(BoardState& boardState, EdgeId edgeId, PlayerId play
                 StructureType::Road) - 1
         );
 }
+
+    void handleUndoPlaceInitialRoad(BoardState& boardState, EdgeId edgeId, PlayerId playerId);
 
 void handlePlace2InitialSettlement(BoardState& boardState, NodeId nodeId, PlayerId playerId) {
     boardState.nodes[nodeId] = Node::packStructure(boardState.nodes[nodeId], StructureType::Settlement);
@@ -101,6 +120,23 @@ void BoardState::handlePlaceInitialStructures(Action::PackedAction action, Playe
 
 void BoardState::handleUndoPlaceInitialSettlement(Action::PackedAction action, PlayerId playerId) {
     NodeId nodeId = Action::unpackArg1(action);
+
+    // Revert per-hex production counters for this settlement.
+    for (int i = 0; i < 3; ++i) {
+        auto hexId = Node::unpackAdjacentHex(nodes[nodeId], i);
+        if (hexId == HexIdNone || hexId >= HEX_COUNT) {
+            continue;
+        }
+        auto res = Hex::unpackResource(hexes[hexId]);
+        if (res != Resource::NoResource) {
+            hexes[hexId] = Hex::packPlayerValue(
+                hexes[hexId],
+                playerId,
+                Hex::unpackPlayerValue(hexes[hexId], playerId) - 1
+            );
+        }
+    }
+
     nodes[nodeId] = Node::packStructure(nodes[nodeId], StructureType::NoStructure);
     nodes[nodeId] = Node::packOwner(nodes[nodeId], PlayerId::NoPlayer);
     // remove victory point from player
@@ -121,6 +157,7 @@ void BoardState::handleUndoPlaceInitialSettlement(Action::PackedAction action, P
         );
     
     EdgeId edgeId = Action::unpackArg2(action);
+    handleUndoPlaceInitialRoad(*this, edgeId, playerId);
 }
 
 void BoardState::handlePlace2InitialStructures(Action::PackedAction action, PlayerId playerId) {

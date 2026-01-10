@@ -6,6 +6,7 @@ add_executable(run
     ${CMAKE_SOURCE_DIR}/players/player.cpp
     ${CMAKE_SOURCE_DIR}/players/randomPlayer.cpp
     ${CMAKE_SOURCE_DIR}/players/greedyPlayer.cpp
+    ${CMAKE_SOURCE_DIR}/players/settlePrioGreedyPlayer.cpp
 )
 
 target_include_directories(run PRIVATE

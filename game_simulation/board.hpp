@@ -223,7 +223,7 @@ struct BoardState {
     Bank::PackedBank packedBank = Bank::makeNewBank();
 
     PlayerId currentPlayer = PlayerId::Player1;
-    uint8_t currentTurn = 0;
+    uint16_t currentTurn = 0;
 
     Action::PackedAction actionQueue[512] = {};
     uint16_t actionQueueSize = 0;

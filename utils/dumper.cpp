@@ -81,6 +81,15 @@ std::string jsonArrayFromSpan(const T* data, size_t count) {
 
 } // namespace
 
+std::string Dumper::playerNameForId(PlayerId p) const {
+    switch (p) {
+        case PlayerId::Player0: return playerNames_[0];
+        case PlayerId::Player1: return playerNames_[1];
+        case PlayerId::NoPlayer: return "NoPlayer";
+    }
+    return "UnknownPlayer";
+}
+
 Dumper::Dumper(std::filesystem::path logsDir) {
     std::error_code ec;
     std::filesystem::create_directories(logsDir, ec);
@@ -106,6 +115,26 @@ Dumper::~Dumper() {
 
 const std::string& Dumper::filePath() const {
     return outPath_;
+}
+
+void Dumper::setPlayerNames(std::string player0Name, std::string player1Name) {
+    if (!player0Name.empty()) {
+        playerNames_[0] = std::move(player0Name);
+    }
+    if (!player1Name.empty()) {
+        playerNames_[1] = std::move(player1Name);
+    }
+}
+
+void Dumper::recordPlayersInfo() {
+    std::ostringstream oss;
+    oss << "{\"seq\":" << nextSeq()
+        << ",\"event\":\"players\",\"timestamp\":\"" << escapeJson(nowIso8601Local())
+        << "\",\"players\":["
+        << "{\"id\":0,\"name\":\"" << escapeJson(playerNames_[0]) << "\"},"
+        << "{\"id\":1,\"name\":\"" << escapeJson(playerNames_[1]) << "\"}"
+        << "]}";
+    writeJsonLine(oss.str());
 }
 
 void Dumper::recordStart() {
@@ -269,13 +298,13 @@ std::string Dumper::actionToJson(Action::PackedAction action) {
     return oss.str();
 }
 
-std::string Dumper::stateToJson(const Board::BoardState& state) {
+std::string Dumper::stateToJson(const Board::BoardState& state) const {
     std::ostringstream oss;
 
     oss << '{'
         << "\"robber\":" << static_cast<unsigned>(state.robberPosition)
         << ",\"current_player\":" << static_cast<unsigned>(state.currentPlayer)
-        << ",\"current_player_name\":\"" << escapeJson(playerIdName(state.currentPlayer)) << "\""
+        << ",\"current_player_name\":\"" << escapeJson(playerNameForId(state.currentPlayer)) << "\""
         << ",\"turn\":" << static_cast<unsigned>(state.currentTurn)
 
         << ",\"packed_players\":["
@@ -288,7 +317,7 @@ std::string Dumper::stateToJson(const Board::BoardState& state) {
         const auto p = state.packedPlayers[i];
         oss << '{'
             << "\"id\":" << i
-            << ",\"name\":\"" << escapeJson(i == 0 ? "Player0" : "Player1") << "\""
+            << ",\"name\":\"" << escapeJson(i == 0 ? playerNames_[0] : playerNames_[1]) << "\""
             << ",\"packed\":" << static_cast<unsigned long long>(p)
             << ",\"victory_points\":" << static_cast<unsigned>(Player::unpackVictoryPoints(p))
             << ",\"used_knights\":" << static_cast<unsigned>(Player::unpackUsedKnights(p))

@@ -390,6 +390,7 @@ class BoardRenderer:
         _swap_positions(pos, 0, 1)
         _swap_positions(pos, 16, 27)
         _swap_positions(pos, 47, 48)
+        _swap_positions(pos, 52, 53)
 
         self.node_pos = pos
 
@@ -559,7 +560,7 @@ class BoardRenderer:
 
 
 class App(tk.Tk):
-    def __init__(self, log: ReplayLog, *, autoplay: bool = False, autoplay_ms: int = 250):
+    def __init__(self, log: ReplayLog, *, autoplay: bool = False, autoplay_ms: int = 1000):
         super().__init__()
         self.title(f"Catan Replay Viewer - {os.path.basename(log.path)}")
         self.geometry("1100x850")
@@ -576,33 +577,57 @@ class App(tk.Tk):
         body.columnconfigure(1, weight=1)
         body.rowconfigure(0, weight=1)
 
-        self.canvas = tk.Canvas(body, bg="#f7fafc", highlightthickness=0)
-        self.canvas.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        # Left panel: player names above the board.
+        board_panel = tk.Frame(body)
+        board_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        board_panel.columnconfigure(0, weight=1)
+        board_panel.rowconfigure(1, weight=1)
+
+        self.players_bar = tk.Frame(board_panel)
+        self.players_bar.grid(row=0, column=0, sticky="ew", pady=(0, 6))
+        self.players_bar.columnconfigure(0, weight=0)
+        tk.Label(self.players_bar, text="Players:", anchor="w", font=("Segoe UI", 10, "bold")).grid(
+            row=0, column=0, sticky="w"
+        )
+
+        # Up to 4 players (Catan). Keep widgets stable; only update text each redraw.
+        self._player_name_labels: List[tk.Label] = []
+        for pid in range(4):
+            lbl = tk.Label(self.players_bar, text="", anchor="w", font=("Segoe UI", 10, "bold"))
+            lbl.grid(row=0, column=pid + 1, sticky="w", padx=(10, 0))
+            self._player_name_labels.append(lbl)
+
+        self.canvas = tk.Canvas(board_panel, bg="#f7fafc", highlightthickness=0)
+        self.canvas.grid(row=1, column=0, sticky="nsew")
 
         # Right-side panel (resources + event log)
         log_frame = tk.Frame(body)
         log_frame.grid(row=0, column=1, sticky="nsew")
-        log_frame.rowconfigure(3, weight=1)
+        # Give the turn log a bit more space than before.
+        log_frame.rowconfigure(0, weight=2)
+        log_frame.rowconfigure(1, weight=2)
+        log_frame.rowconfigure(2, weight=0)
+        log_frame.rowconfigure(3, weight=3)
         log_frame.columnconfigure(0, weight=1)
 
         players_start = tk.LabelFrame(log_frame, text="Players (start)")
-        players_start.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        players_start.grid(row=0, column=0, columnspan=2, sticky="nsew", pady=(0, 8))
         players_start.columnconfigure(0, weight=1)
-        self.players_start_text = tk.Text(players_start, height=8, wrap=tk.NONE, font=("Consolas", 9))
-        self.players_start_text.pack(fill=tk.X, padx=6, pady=6)
+        self.players_start_text = tk.Text(players_start, height=6, wrap=tk.NONE, font=("Consolas", 9))
+        self.players_start_text.pack(fill=tk.BOTH, expand=True, padx=6, pady=6)
         self.players_start_text.configure(state=tk.DISABLED)
 
         players_end = tk.LabelFrame(log_frame, text="Players (end)")
-        players_end.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+        players_end.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(0, 10))
         players_end.columnconfigure(0, weight=1)
-        self.players_end_text = tk.Text(players_end, height=8, wrap=tk.NONE, font=("Consolas", 9))
-        self.players_end_text.pack(fill=tk.X, padx=6, pady=6)
+        self.players_end_text = tk.Text(players_end, height=6, wrap=tk.NONE, font=("Consolas", 9))
+        self.players_end_text.pack(fill=tk.BOTH, expand=True, padx=6, pady=6)
         self.players_end_text.configure(state=tk.DISABLED)
 
         tk.Label(log_frame, text="Turn log", anchor="w", font=("Segoe UI", 10, "bold")).grid(
             row=2, column=0, sticky="ew", pady=(0, 6)
         )
-        self.log_text = tk.Text(log_frame, wrap=tk.WORD, height=7, font=("Consolas", 8))
+        self.log_text = tk.Text(log_frame, wrap=tk.WORD, height=6, font=("Consolas", 8))
         self.log_text.grid(row=3, column=0, sticky="nsew")
         sb = tk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.log_text.yview)
         sb.grid(row=3, column=1, sticky="ns")
@@ -640,6 +665,26 @@ class App(tk.Tk):
             self._redraw()
             if self._autoplay_enabled:
                 self._start_autoplay()
+
+    def _update_players_bar(self, state: Optional[Dict[str, Any]]) -> None:
+        names: Dict[int, str] = {}
+        if isinstance(state, dict):
+            players = state.get("players")
+            if isinstance(players, list):
+                for p in players:
+                    if not isinstance(p, dict):
+                        continue
+                    pid = p.get("id")
+                    if not isinstance(pid, int):
+                        continue
+                    nm = p.get("name") if isinstance(p.get("name"), str) else f"Player{pid}"
+                    names[pid] = nm
+
+        for pid, lbl in enumerate(self._player_name_labels):
+            if pid in names:
+                lbl.config(text=names[pid], fg=PLAYER_COLORS.get(pid, "#111"))
+            else:
+                lbl.config(text="")
 
     def _toggle_autoplay(self) -> None:
         if self._autoplay_running:
@@ -686,6 +731,7 @@ class App(tk.Tk):
         # Avoid destroying/creating many Tk widgets on every redraw (can crash Tk on Windows).
         lines: List[str] = []
         dev_section_lines: List[str] = []
+        awards_section_lines: List[str] = []
         player_row_lines: List[Tuple[int, int]] = []  # (1-based line_no in final text, pid)
 
         # Column widths for a stable monospace table.
@@ -753,6 +799,10 @@ class App(tk.Tk):
                 lines.append(fmt_row("Player", "VP", "Brick", "Lumber", "Wool", "Grain", "Ore", "Total"))
 
                 dev_section_lines.append("Dev Cards")
+
+                # Collect award-related info while iterating.
+                award_rows: List[Tuple[int, str, int, bool, int, bool]] = []
+                # (pid, name, used_knights, largest_army_flag, longest_road_len, longest_road_flag)
                 for p in players:
                     if not isinstance(p, dict):
                         continue
@@ -761,6 +811,15 @@ class App(tk.Tk):
                     name = p.get("name") if isinstance(p.get("name"), str) else f"Player{pid_i}"
                     vp = p.get("victory_points")
                     vp_i = int(vp) if isinstance(vp, int) else 0
+
+                    used_knights = p.get("used_knights")
+                    used_knights_i = int(used_knights) if isinstance(used_knights, int) else 0
+                    la_flag = bool(p.get("largest_army_flag", False))
+                    lr_len = p.get("longest_road_length")
+                    lr_len_i = int(lr_len) if isinstance(lr_len, int) else 0
+                    lr_flag = bool(p.get("longest_road_flag", False))
+                    award_rows.append((pid_i, name, used_knights_i, la_flag, lr_len_i, lr_flag))
+
                     res = p.get("resources") if isinstance(p.get("resources"), dict) else {}
                     b = int(res.get("brick", 0)) if isinstance(res.get("brick"), int) else 0
                     l = int(res.get("lumber", 0)) if isinstance(res.get("lumber"), int) else 0
@@ -789,10 +848,43 @@ class App(tk.Tk):
                     # Record the line number (1-based) where this player's row was appended.
                     player_row_lines.append((len(lines), pid_i))
 
+                # Build award section (largest army / longest road / used knights / current LR length)
+                if award_rows:
+                    longest_road_current = max((r[4] for r in award_rows), default=0)
+                    lr_holders = [r[1] for r in award_rows if r[5]]
+                    la_holders = [r[1] for r in award_rows if r[3]]
+
+                    awards_section_lines.append("Awards")
+                    if lr_holders:
+                        awards_section_lines.append(
+                            f"Current Longest Road: len={longest_road_current} holder={', '.join(lr_holders)}"
+                        )
+                    else:
+                        awards_section_lines.append(
+                            f"Current Longest Road: len={longest_road_current} holder=None"
+                        )
+
+                    if la_holders:
+                        awards_section_lines.append(
+                            f"Largest Army holder={', '.join(la_holders)}"
+                        )
+                    else:
+                        awards_section_lines.append("Largest Army holder=None")
+
+                    for pid_i, name, used_k, la, lr_len_i, lr in award_rows:
+                        awards_section_lines.append(
+                            f"{name}: used_knights={used_k} | largest_army={'yes' if la else 'no'} | "
+                            f"longest_road_len={lr_len_i} | longest_road={'yes' if lr else 'no'}"
+                        )
+
                 # Add a blank line + separate dev cards section.
                 if dev_section_lines:
                     lines.append("")
                     lines.extend(dev_section_lines)
+
+                if awards_section_lines:
+                    lines.append("")
+                    lines.extend(awards_section_lines)
 
         text_widget.configure(state=tk.NORMAL)
         text_widget.delete("1.0", tk.END)
@@ -885,6 +977,8 @@ class App(tk.Tk):
                 f"{fr.label} | current_player={cp_name} | frames={len(self.log.frames)} | events={ev_count}"
             )
         )
+
+        self._update_players_bar(fr.state)
         self.renderer.draw(fr)
 
         stats = getattr(self.renderer, "last_stats", {}) or {}

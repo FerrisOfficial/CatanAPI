@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -20,6 +21,9 @@ public:
 
     const std::string& filePath() const;
 
+    void setPlayerNames(std::string player0Name, std::string player1Name);
+    void recordPlayersInfo();
+
     void recordStart();
     void recordTurnStart(const Board::BoardState& state);
     void recordTurnEnd(const Board::BoardState& state);
@@ -33,12 +37,15 @@ private:
     std::string outPath_;
     uint64_t seq_ = 0;
 
+    std::array<std::string, 2> playerNames_{ {"Player0", "Player1"} };
+
     static std::string escapeJson(std::string_view s);
     static std::string nowIso8601Local();
     static std::string timestampForFilenameLocal();
 
     static std::string actionToJson(Action::PackedAction action);
-    static std::string stateToJson(const Board::BoardState& state);
+    std::string stateToJson(const Board::BoardState& state) const;
+    std::string playerNameForId(PlayerId p) const;
 
     uint64_t nextSeq();
     void writeJsonLine(const std::string& jsonLine);
