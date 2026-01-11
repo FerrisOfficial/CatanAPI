@@ -612,7 +612,7 @@ Action::PackedAction BoardState::handlePlayDevCardKnight(Action::PackedAction ac
     );
 
     uint8_t usedKnights = Player::unpackUsedKnights(p);
-    if ((usedKnights >= 3) && (Player::unpackUsedKnights(static_cast<uint8_t>(enemyPlayerId)) < usedKnights) && !(Player::unpackLargestArmyFlag(p))) {
+    if ((usedKnights >= 3) && (Player::unpackUsedKnights(packedPlayers[static_cast<uint8_t>(enemyPlayerId)]) < usedKnights) && !(Player::unpackLargestArmyFlag(p))) {
         packedPlayers[static_cast<uint8_t>(playerId)] =
             Player::packLargestArmyFlag(
                 packedPlayers[static_cast<uint8_t>(playerId)],
@@ -654,7 +654,7 @@ void BoardState::handleUndoPlayDevCardKnight(Action::PackedAction action, Player
                 packedPlayers[static_cast<uint8_t>(playerId)],
                 false
             );
-        if (Player::unpackUsedKnights(static_cast<uint8_t>(enemyPlayerId)) >= 3) {
+        if (Player::unpackUsedKnights(packedPlayers[static_cast<uint8_t>(enemyPlayerId)]) >= 3) {
             packedPlayers[static_cast<uint8_t>(enemyPlayerId)] =
                 Player::packLargestArmyFlag(
                     packedPlayers[static_cast<uint8_t>(enemyPlayerId)],
@@ -988,11 +988,12 @@ void BoardState::applyAction(Action::PackedAction action) {
         break;
     }
 
-    actionQueue[actionQueueSize++] = action;
+    actionQueue.push_back(action);
 }
 
 void BoardState::undoLastAction() {
-    Action::PackedAction action = actionQueue[--actionQueueSize];
+    Action::PackedAction action = actionQueue.back();
+    actionQueue.pop_back();
     auto type = Action::unpackType(action);
     auto playerId = Action::unpackPlayerID(action);
 

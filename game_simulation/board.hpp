@@ -225,10 +225,9 @@ struct BoardState {
     PlayerId currentPlayer = PlayerId::Player1;
     uint16_t currentTurn = 0;
 
-    Action::PackedAction actionQueue[512] = {};
-    uint16_t actionQueueSize = 0;
+    std::vector<Action::PackedAction> actionQueue;
 
-    constexpr BoardState() noexcept;
+    BoardState() noexcept;
     void generateRandomBoard();
     void applyAction(Action::PackedAction action);
     void undoLastAction();
@@ -287,7 +286,8 @@ struct BoardState {
     std::vector<Action::PackedAction> generateMoveRobberActions(PlayerId playerId);
 };
 
-constexpr BoardState::BoardState() noexcept {
+inline BoardState::BoardState() noexcept {
+    actionQueue.reserve(16 * 1024);
     nodes[0]  = Node::makeNode(HexIdNone, 0, HexIdNone,  0, 6, EdgeIdNone);
     nodes[0] = Node::packPortType(nodes[0], PortType::NoPort);
     nodes[1]  = Node::makeNode(HexIdNone, HexIdNone, 0,  0, 1, EdgeIdNone);

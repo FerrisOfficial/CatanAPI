@@ -5,6 +5,20 @@ project(CatanAPI)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ----------------------------
+# 🧰 Diagnostics (optional)
+# ----------------------------
+option(ENABLE_ASAN "Enable AddressSanitizer (-fsanitize=address)" OFF)
+
+if (ENABLE_ASAN)
+  if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
+    add_link_options(-fsanitize=address)
+  else()
+    message(WARNING "ENABLE_ASAN is ON but compiler '${CMAKE_CXX_COMPILER_ID}' may not support -fsanitize=address")
+  endif()
+endif()
+
 include(FetchContent)
 
 # ----------------------------

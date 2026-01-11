@@ -229,10 +229,10 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_F(UndoLastActionTest, ActionQueueShrinksAfterUndo) {
     for (auto a : allActions) {
-        uint16_t beforeSize = boardState.actionQueueSize;
+        size_t beforeSize = boardState.actionQueue.size();
         boardState.applyAction(a);
-        EXPECT_EQ(boardState.actionQueueSize, beforeSize + 1);
+        EXPECT_EQ(boardState.actionQueue.size(), beforeSize + 1);
         boardState.undoLastAction();
-        EXPECT_EQ(boardState.actionQueueSize, beforeSize);
+        EXPECT_EQ(boardState.actionQueue.size(), beforeSize);
     }
 }

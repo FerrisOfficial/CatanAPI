@@ -13,6 +13,10 @@ Game::Game(IPlayer& p1, IPlayer& p2)
     this->player2.boardState = &boardState;
 }
 
+void Game::setDumpEnabled(bool enabled) {
+    this->dumpEnabled = enabled;
+}
+
 void Game::setPlayerDisplayNames(std::string player0Name, std::string player1Name) {
     if (!player0Name.empty()) {
         playerDisplayNames[0] = std::move(player0Name);
@@ -30,21 +34,36 @@ void Game::applyActionLogged(Action::PackedAction action, const char* phase) {
 }
 
 void Game::initialPhase() {
-    auto p1InitialPlacement = player1.getInitialPlacement();
-    applyActionLogged(p1InitialPlacement.second, "initialPhase");
-    applyActionLogged(Action::packType(Action::getEmptyAction(), ActionType::EndTurn), "initialPhase");
+    auto& p0 = player1;
+    auto& p1 = player2;
 
-    auto p2InitialPlacement = player2.getInitialPlacement();
-    applyActionLogged(p2InitialPlacement.second, "initialPhase");
-    applyActionLogged(Action::packType(Action::getEmptyAction(), ActionType::EndTurn), "initialPhase");
+    // Ensure deterministic setup order.
+    this->boardState.currentPlayer = PlayerId::Player0;
+    this->boardState.currentTurn = 0;
 
-    auto p2SecondInitialPlacement = player2.get2InitialPlacement();
-    applyActionLogged(p2SecondInitialPlacement.second, "initialPhase");
-    applyActionLogged(Action::packType(Action::getEmptyAction(), ActionType::EndTurn), "initialPhase");
+    // Standard Catan "snake" setup order (2 players): P0, P1, P1, P0.
+    // We keep driving the flow by boardState.currentPlayer, but skip an EndTurn
+    // between the two P1 placements.
+    auto doPlacement = [&](bool secondPlacement, bool endTurnAfter) {
+        const PlayerId currentId = this->boardState.currentPlayer;
+        IPlayer& currentPlayer = (currentId == PlayerId::Player0) ? p0 : p1;
+        auto placement = secondPlacement ? currentPlayer.get2InitialPlacement() : currentPlayer.getInitialPlacement();
+        applyActionLogged(placement.second, "initialPhase");
+        if (endTurnAfter) {
+            auto endTurn = Action::packType(Action::getEmptyAction(), ActionType::EndTurn);
+            endTurn = Action::packPlayerID(endTurn, currentId);
+            applyActionLogged(endTurn, "initialPhase");
+        }
+    };
 
-    auto p1SecondInitialPlacement = player1.get2InitialPlacement();
-    applyActionLogged(p1SecondInitialPlacement.second, "initialPhase");
-    applyActionLogged(Action::packType(Action::getEmptyAction(), ActionType::EndTurn), "initialPhase");
+    doPlacement(false, true);  // P0
+    doPlacement(false, false); // P1 (keep turn for snake)
+    doPlacement(true, true);   // P1
+    doPlacement(true, false);  // P0
+
+    // Start main gameplay from Player0, and don't count setup as turns.
+    this->boardState.currentPlayer = PlayerId::Player0;
+    this->boardState.currentTurn = 0;
 }
 
 bool Game::processDevPhase(IPlayer& currentPlayer) {
@@ -58,6 +77,7 @@ bool Game::processDevPhase(IPlayer& currentPlayer) {
 
 void Game::applyDiceRoll(uint8_t diceNumber) {
     auto rollDiceAction = Action::packType(Action::getEmptyAction(), ActionType::RollDice);
+    rollDiceAction = Action::packPlayerID(rollDiceAction, this->boardState.currentPlayer);
     rollDiceAction = Action::packArg1(rollDiceAction, diceNumber);
     applyActionLogged(rollDiceAction, "dice");
 }
@@ -68,7 +88,7 @@ void Game::discardResourcesForSeven(PlayerId currentPlayerId) {
     auto buildDiscardAction = [&](PlayerId discardingPlayerId) {
         const auto packed = this->boardState.packedPlayers[static_cast<uint8_t>(discardingPlayerId)];
         const uint8_t totalResources = Player::totalResources(packed);
-        if (totalResources <= 7) {
+        if (totalResources <= 9) {
             return Action::getEmptyAction();
         }
 
@@ -131,6 +151,7 @@ void Game::handleRobberPhase(IPlayer& currentPlayer, PlayerId currentPlayerId) {
 
     if (enemyPlayerValue && Player::unpackVictoryPoints(enemyPlayer) >= 3 && Player::totalResources(enemyPlayer) > 0) {
         auto stealResourceAction = Action::packType(Action::getEmptyAction(), ActionType::StealResource);
+        stealResourceAction = Action::packPlayerID(stealResourceAction, currentPlayerId);
         applyActionLogged(stealResourceAction, "robber");
     }
 }
@@ -177,13 +198,18 @@ void Game::turnLoop() {
 }
 
 PlayerId Game::runGame() {
-    this->dumper = std::make_unique<Dumper>("logs");
-
-    this->dumper->setPlayerNames(playerDisplayNames[0], playerDisplayNames[1]);
-    this->dumper->recordPlayersInfo();
+    if (this->dumpEnabled) {
+        this->dumper = std::make_unique<Dumper>("logs");
+        this->dumper->setPlayerNames(playerDisplayNames[0], playerDisplayNames[1]);
+        this->dumper->recordPlayersInfo();
+    } else {
+        this->dumper.reset();
+    }
 
     this->boardState.generateRandomBoard();
-    this->dumper->recordInitialState(this->boardState);
+    if (this->dumper) {
+        this->dumper->recordInitialState(this->boardState);
+    }
     this->initialPhase();
     
     auto actualTurn = this->boardState.currentTurn;
