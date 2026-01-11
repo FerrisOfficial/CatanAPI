@@ -291,7 +291,7 @@ class ReplayLog:
 class BoardRenderer:
     def __init__(self, canvas: tk.Canvas):
         self.canvas = canvas
-        self.size = 45  # hex radius in pixels
+        self.size = 50  # hex radius in pixels
         self.margin = 30
 
         # computed each draw based on canvas size
@@ -347,6 +347,125 @@ class BoardRenderer:
 
     def _rounded_point(self, p: Tuple[float, float]) -> Tuple[int, int]:
         return (int(round(p[0])), int(round(p[1])))
+
+    def _draw_ports(self) -> None:
+        """Draw ports (beige rectangles) with connecting lines to nodes."""
+        # Define ports: (node1, node2, resource_name or None for 3:1)
+        ports = [
+            (15, 25, "Brick"),
+            (36, 46, "Lumber"),
+            (7, 8, "Wool"),
+            (49, 50, "Grain"),
+            (38, 39, "Ore"),
+            (2, 3, None),  # 3:1
+            (5, 6, None),  # 3:1
+            (16, 27, None),  # 3:1
+            (52, 53, None),  # 3:1
+        ]
+
+        port_color = "#f5deb3"  # beige
+        port_width = 70
+        port_height = 40
+        port_distance = 60  # distance from nodes to port center
+
+        for n1, n2, resource in ports:
+            if n1 not in self.node_pos or n2 not in self.node_pos:
+                continue
+
+            # Calculate midpoint between the two nodes
+            x1, y1 = self.node_pos[n1]
+            x2, y2 = self.node_pos[n2]
+            mid_x = (x1 + x2) / 2
+            mid_y = (y1 + y2) / 2
+
+            # Calculate direction away from board center
+            w = max(1, int(self.canvas.winfo_width()))
+            h = max(1, int(self.canvas.winfo_height()))
+            center_x = w / 2.0
+            center_y = h / 2.0
+
+            # Vector from board center to midpoint
+            dx = mid_x - center_x
+            dy = mid_y - center_y
+            dist = math.sqrt(dx * dx + dy * dy)
+            if dist < 1:
+                dist = 1
+
+            # Normalize and extend outward
+            dx /= dist
+            dy /= dist
+
+            # Port position
+            port_x = mid_x + dx * port_distance
+            port_y = mid_y + dy * port_distance
+
+            node_offset = 5 
+            
+            # Calculate direction from node1 to port
+            dx1 = port_x - x1
+            dy1 = port_y - y1
+            dist1 = math.sqrt(dx1 * dx1 + dy1 * dy1)
+            if dist1 > 0:
+                dx1 /= dist1
+                dy1 /= dist1
+                start_x1 = x1 + dx1 * node_offset
+                start_y1 = y1 + dy1 * node_offset
+            else:
+                start_x1, start_y1 = x1, y1
+            
+            # Calculate direction from node2 to port
+            dx2 = port_x - x2
+            dy2 = port_y - y2
+            dist2 = math.sqrt(dx2 * dx2 + dy2 * dy2)
+            if dist2 > 0:
+                dx2 /= dist2
+                dy2 /= dist2
+                start_x2 = x2 + dx2 * node_offset
+                start_y2 = y2 + dy2 * node_offset
+            else:
+                start_x2, start_y2 = x2, y2
+            
+            self.canvas.create_line(
+                start_x1, start_y1, port_x, port_y,
+                fill=port_color, width=3
+            )
+            self.canvas.create_line(
+                start_x2, start_y2, port_x, port_y,
+                fill=port_color, width=3
+            )
+
+            # Draw port rectangle
+            rect_x1 = port_x - port_width / 2
+            rect_y1 = port_y - port_height / 2
+            rect_x2 = port_x + port_width / 2
+            rect_y2 = port_y + port_height / 2
+
+            self.canvas.create_rectangle(
+                rect_x1, rect_y1, rect_x2, rect_y2,
+                fill=port_color, outline="#8b7355", width=2
+            )
+
+            # Draw text
+            if resource:
+                self.canvas.create_text(
+                    port_x, port_y - 8,
+                    text=resource,
+                    font=("Segoe UI", 9, "bold"),
+                    fill="#333"
+                )
+                self.canvas.create_text(
+                    port_x, port_y + 8,
+                    text="2 : 1",
+                    font=("Segoe UI", 9, "bold"),
+                    fill="#333"
+                )
+            else:
+                self.canvas.create_text(
+                    port_x, port_y,
+                    text="3 : 1",
+                    font=("Segoe UI", 10, "bold"),
+                    fill="#333"
+                )
 
     def _compute_node_positions(self, state: Dict[str, Any]) -> None:
         nodes = state.get("nodes")
@@ -558,12 +677,15 @@ class BoardRenderer:
                 fill="cyan",
             )
 
+        # Draw ports
+        self._draw_ports()
+
 
 class App(tk.Tk):
     def __init__(self, log: ReplayLog, *, autoplay: bool = False, autoplay_ms: int = 1000):
         super().__init__()
         self.title(f"Catan Replay Viewer - {os.path.basename(log.path)}")
-        self.geometry("1100x850")
+        self.geometry("1300x850")
 
         self.log = log
 
@@ -573,7 +695,7 @@ class App(tk.Tk):
         body = tk.Frame(self)
         body.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        body.columnconfigure(0, weight=3)
+        body.columnconfigure(0, weight=4)
         body.columnconfigure(1, weight=1)
         body.rowconfigure(0, weight=1)
 
