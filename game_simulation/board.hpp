@@ -286,6 +286,32 @@ struct BoardState {
     std::vector<Action::PackedAction> generateMoveRobberActions(PlayerId playerId);
 };
 
+inline bool operator==(const BoardState& lhs, const BoardState& rhs) noexcept {
+    if (lhs.robberPosition != rhs.robberPosition) return false;
+    if (lhs.currentPlayer != rhs.currentPlayer) return false;
+    if (lhs.currentTurn != rhs.currentTurn) return false;
+
+    for (int i = 0; i < HEX_COUNT; ++i) {
+        if (lhs.hexes[i] != rhs.hexes[i]) return false;
+    }
+    for (int i = 0; i < NODE_COUNT; ++i) {
+        if (lhs.nodes[i] != rhs.nodes[i]) return false;
+    }
+    for (int i = 0; i < EDGE_COUNT; ++i) {
+        if (lhs.edges[i] != rhs.edges[i]) return false;
+    }
+
+    if (lhs.packedPlayers[0] != rhs.packedPlayers[0]) return false;
+    if (lhs.packedPlayers[1] != rhs.packedPlayers[1]) return false;
+    if (lhs.packedBank != rhs.packedBank) return false;
+
+    return lhs.actionQueue == rhs.actionQueue;
+}
+
+inline bool operator!=(const BoardState& lhs, const BoardState& rhs) noexcept {
+    return !(lhs == rhs);
+}
+
 inline BoardState::BoardState() noexcept {
     actionQueue.reserve(16 * 1024);
     nodes[0]  = Node::makeNode(HexIdNone, 0, HexIdNone,  0, 6, EdgeIdNone);

@@ -3,6 +3,8 @@
 #include <array>
 #include <algorithm>
 #include <limits>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace {
@@ -201,7 +203,7 @@ int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId e
     const NodeId n0 = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 0);
     const NodeId n1 = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 1);
 
-    const auto score_node = [&](NodeId n) {
+    const auto score_node = [&](NodeId n) { 
         if (n >= NODE_COUNT) return;
         const auto node = board->nodes[n];
         const auto owner = Board::Node::unpackOwner(node);
@@ -423,7 +425,6 @@ Action::PackedAction It5Player::getTurnAction() {
 
     auto consider = [&](Action::PackedAction a, int extraBonus = 0) {
         if (!is_safe_to_simulate(a)) return;
-
         boardState->applyAction(a);
         int s = evaluate_position(boardState, selfId) + extraBonus;
 

@@ -443,14 +443,22 @@ void BoardState::handleUndoBuildRoad(Action::PackedAction action, PlayerId playe
     packedBank = Bank::buyableTransaction(packedBank, BuyableType::Road, DevType::NoDev, false);
     Player::refund(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Road);
 
-    uint8_t longestRoad = computeLongestRoad(*this, playerId);
-    packedPlayers[static_cast<uint8_t>(playerId)] =
-        Player::packLongestRoadLength(
-            packedPlayers[static_cast<uint8_t>(playerId)],
-            longestRoad
-        );
+    // Restore derived "longest road" fields exactly as they were before apply.
+    // (Tie behavior depends on history, so recomputing here is not reversible.)
+    {
+        uint8_t p0Meta = Action::unpackArg2(action);
+        uint8_t p1Meta = Action::unpackArg3(action);
 
-    updateLongestRoadAwards(*this, playerId, longestRoad);
+        uint8_t p0Len = p0Meta & 0xF;
+        bool p0Flag = (p0Meta & 0x10) != 0;
+        uint8_t p1Len = p1Meta & 0xF;
+        bool p1Flag = (p1Meta & 0x10) != 0;
+
+        packedPlayers[0] = Player::packLongestRoadLength(packedPlayers[0], p0Len);
+        packedPlayers[0] = Player::packLongestRoadFlag(packedPlayers[0], p0Flag);
+        packedPlayers[1] = Player::packLongestRoadLength(packedPlayers[1], p1Len);
+        packedPlayers[1] = Player::packLongestRoadFlag(packedPlayers[1], p1Flag);
+    }
 }    
 
 void BoardState::handleBuildSettlement(Action::PackedAction action, PlayerId playerId) {
@@ -506,7 +514,21 @@ void BoardState::handleUndoBuildSettlement(Action::PackedAction action, PlayerId
     packedBank = Bank::buyableTransaction(packedBank, BuyableType::Settlement, DevType::NoDev, false);
     Player::refund(packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Settlement);
 
-    updateLongestRoadAwards(*this, playerId);
+    // Restore derived "longest road" fields exactly as they were before apply.
+    {
+        uint8_t p0Meta = Action::unpackArg2(action);
+        uint8_t p1Meta = Action::unpackArg3(action);
+
+        uint8_t p0Len = p0Meta & 0xF;
+        bool p0Flag = (p0Meta & 0x10) != 0;
+        uint8_t p1Len = p1Meta & 0xF;
+        bool p1Flag = (p1Meta & 0x10) != 0;
+
+        packedPlayers[0] = Player::packLongestRoadLength(packedPlayers[0], p0Len);
+        packedPlayers[0] = Player::packLongestRoadFlag(packedPlayers[0], p0Flag);
+        packedPlayers[1] = Player::packLongestRoadLength(packedPlayers[1], p1Len);
+        packedPlayers[1] = Player::packLongestRoadFlag(packedPlayers[1], p1Flag);
+    }
 }
 
 void BoardState::handleBuildCity(Action::PackedAction action, PlayerId playerId) {
@@ -945,9 +967,29 @@ void BoardState::applyAction(Action::PackedAction action) {
         handleDiscardResources(action, playerId);
         break;
     case ActionType::BuildRoad:
+        // BuildRoad can affect derived "longest road" fields for both players.
+        // Store the pre-action values so undo can restore them exactly.
+        {
+            uint8_t p0Meta = (Player::unpackLongestRoadLength(packedPlayers[0]) & 0xF)
+                | (static_cast<uint8_t>(Player::unpackLongestRoadFlag(packedPlayers[0])) << 4);
+            uint8_t p1Meta = (Player::unpackLongestRoadLength(packedPlayers[1]) & 0xF)
+                | (static_cast<uint8_t>(Player::unpackLongestRoadFlag(packedPlayers[1])) << 4);
+            action = Action::packArg2(action, p0Meta);
+            action = Action::packArg3(action, p1Meta);
+        }
         handleBuildRoad(action, playerId);
         break;
     case ActionType::BuildSettlement:
+        // BuildSettlement can affect derived "longest road" fields (settlements can block roads).
+        // Store the pre-action values so undo can restore them exactly.
+        {
+            uint8_t p0Meta = (Player::unpackLongestRoadLength(packedPlayers[0]) & 0xF)
+                | (static_cast<uint8_t>(Player::unpackLongestRoadFlag(packedPlayers[0])) << 4);
+            uint8_t p1Meta = (Player::unpackLongestRoadLength(packedPlayers[1]) & 0xF)
+                | (static_cast<uint8_t>(Player::unpackLongestRoadFlag(packedPlayers[1])) << 4);
+            action = Action::packArg2(action, p0Meta);
+            action = Action::packArg3(action, p1Meta);
+        }
         handleBuildSettlement(action, playerId);
         break;
     case ActionType::BuildCity:
@@ -998,6 +1040,9 @@ void BoardState::undoLastAction() {
     auto playerId = Action::unpackPlayerID(action);
 
     switch (type) {
+    case ActionType::EndTurn:
+        handleUndoEndTurn();
+        break;
     case ActionType::PlaceInitialStructures:
         handleUndoPlaceInitialSettlement(action, playerId);
         break;

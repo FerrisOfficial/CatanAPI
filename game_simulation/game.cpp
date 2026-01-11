@@ -2,8 +2,82 @@
 #include "utils/randomDevice.hpp"
 
 #include <algorithm>
+#include <sstream>
+#include <stdexcept>
 
 #include "utils/dumper.hpp"
+
+namespace {
+
+std::string_view playerName(const Game& game, const IPlayer& player) {
+    if (&player == &game.player1) return game.playerDisplayNames[0];
+    if (&player == &game.player2) return game.playerDisplayNames[1];
+    return "<unknown player>";
+}
+
+template <class Func>
+auto callPlayerGuarded(const Game& game, Board::BoardState& board, IPlayer& player, const char* methodName, Func&& func)
+    -> decltype(func())
+{
+    Board::BoardState before = board;
+    auto result = func();
+    if (!(before == board)) {
+        std::ostringstream details;
+        if (before.robberPosition != board.robberPosition) {
+            details << "robberPosition " << unsigned(before.robberPosition) << " -> " << unsigned(board.robberPosition);
+        } else if (before.currentPlayer != board.currentPlayer) {
+            details << "currentPlayer " << static_cast<int>(before.currentPlayer)
+                    << " -> " << static_cast<int>(board.currentPlayer);
+        } else if (before.currentTurn != board.currentTurn) {
+            details << "currentTurn " << before.currentTurn << " -> " << board.currentTurn;
+        } else if (before.packedPlayers[0] != board.packedPlayers[0]) {
+            details << "packedPlayers[0] changed";
+        } else if (before.packedPlayers[1] != board.packedPlayers[1]) {
+            details << "packedPlayers[1] changed";
+        } else if (before.packedBank != board.packedBank) {
+            details << "packedBank changed";
+        } else if (before.actionQueue != board.actionQueue) {
+            details << "actionQueue changed (size " << before.actionQueue.size() << " -> " << board.actionQueue.size() << ")";
+            const size_t n = std::min(before.actionQueue.size(), board.actionQueue.size());
+            for (size_t i = 0; i < n; ++i) {
+                if (before.actionQueue[i] != board.actionQueue[i]) {
+                    details << ", first diff at [" << i << "]";
+                    break;
+                }
+            }
+        } else {
+            for (int i = 0; i < HEX_COUNT; ++i) {
+                if (before.hexes[i] != board.hexes[i]) {
+                    details << "hexes[" << i << "] changed";
+                    break;
+                }
+            }
+            if (details.str().empty()) {
+                for (int i = 0; i < NODE_COUNT; ++i) {
+                    if (before.nodes[i] != board.nodes[i]) {
+                        details << "nodes[" << i << "] changed";
+                        break;
+                    }
+                }
+            }
+            if (details.str().empty()) {
+                for (int i = 0; i < EDGE_COUNT; ++i) {
+                    if (before.edges[i] != board.edges[i]) {
+                        details << "edges[" << i << "] changed";
+                        break;
+                    }
+                }
+            }
+        }
+        throw std::runtime_error(
+            std::string("Player '") + std::string(playerName(game, player)) + "' mutated board during " + methodName +
+                (details.str().empty() ? "" : (std::string(" (first diff: ") + details.str() + ")"))
+        );
+    }
+    return result;
+}
+
+}
 
 Game::Game(IPlayer& p1, IPlayer& p2)
     : player1(p1)
@@ -47,7 +121,9 @@ void Game::initialPhase() {
     auto doPlacement = [&](bool secondPlacement, bool endTurnAfter) {
         const PlayerId currentId = this->boardState.currentPlayer;
         IPlayer& currentPlayer = (currentId == PlayerId::Player0) ? p0 : p1;
-        auto placement = secondPlacement ? currentPlayer.get2InitialPlacement() : currentPlayer.getInitialPlacement();
+        auto placement = secondPlacement
+            ? callPlayerGuarded(*this, this->boardState, currentPlayer, "get2InitialPlacement()", [&] { return currentPlayer.get2InitialPlacement(); })
+            : callPlayerGuarded(*this, this->boardState, currentPlayer, "getInitialPlacement()", [&] { return currentPlayer.getInitialPlacement(); });
         applyActionLogged(placement.second, "initialPhase");
         if (endTurnAfter) {
             auto endTurn = Action::packType(Action::getEmptyAction(), ActionType::EndTurn);
@@ -67,7 +143,7 @@ void Game::initialPhase() {
 }
 
 bool Game::processDevPhase(IPlayer& currentPlayer) {
-    auto devAction = currentPlayer.getDevAction();
+    auto devAction = callPlayerGuarded(*this, this->boardState, currentPlayer, "getDevAction()", [&] { return currentPlayer.getDevAction(); });
     if (Action::unpackType(devAction) == ActionType::NoAction) {
         return false;
     }
@@ -97,7 +173,7 @@ void Game::discardResourcesForSeven(PlayerId currentPlayerId) {
         const PlayerId savedCurrentPlayer = this->boardState.currentPlayer;
         this->boardState.currentPlayer = discardingPlayerId;
         IPlayer& discardingPlayer = (discardingPlayerId == PlayerId::Player0) ? this->player1 : this->player2;
-        const auto proposed = discardingPlayer.getDiscardAction();
+        const auto proposed = callPlayerGuarded(*this, this->boardState, discardingPlayer, "getDiscardAction()", [&] { return discardingPlayer.getDiscardAction(); });
         this->boardState.currentPlayer = savedCurrentPlayer;
 
         Action::PackedAction action = Action::getEmptyAction();
@@ -139,7 +215,7 @@ void Game::discardResourcesForSeven(PlayerId currentPlayerId) {
 }
 
 void Game::handleRobberPhase(IPlayer& currentPlayer, PlayerId currentPlayerId) {
-    auto moveRobberAction = currentPlayer.getMoveRobber();
+    auto moveRobberAction = callPlayerGuarded(*this, this->boardState, currentPlayer, "getMoveRobber()", [&] { return currentPlayer.getMoveRobber(); });
     applyActionLogged(moveRobberAction, "robber");
 
     HexId robberPos = this->boardState.robberPosition;
@@ -159,7 +235,7 @@ void Game::handleRobberPhase(IPlayer& currentPlayer, PlayerId currentPlayerId) {
 void Game::processPlayerTurn(IPlayer& currentPlayer) {
     auto action = Action::getEmptyAction();
     do {
-        action = currentPlayer.getTurnAction();
+        action = callPlayerGuarded(*this, this->boardState, currentPlayer, "getTurnAction()", [&] { return currentPlayer.getTurnAction(); });
         applyActionLogged(action, "turn");
     } while (Action::unpackType(action) != ActionType::EndTurn);
 }

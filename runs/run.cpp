@@ -1,6 +1,5 @@
 #include "game_simulation/game.hpp"
 #include "players/randomPlayer.hpp"
-#include "players/greedyPlayer.hpp"
 #include "players/it1Player.hpp"
 #include "players/it2Player.hpp"
 #include "players/it3Player.hpp"
@@ -12,6 +11,7 @@
 #include <iomanip>
 #include <memory>
 #include <string>
+#include <exception>
 #include <chrono>
 #include <sstream>
 #include <vector>
@@ -22,9 +22,6 @@ std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
     // - rp : RandomPlayer
     if (flag == "rp") {
         return std::make_unique<RandomPlayer>();
-    }
-    if (flag == "gp") {
-        return std::make_unique<GreedyPlayer>();
     }
     if (flag == "it1") {
         return std::make_unique<It1Player>();
@@ -50,7 +47,6 @@ std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
 
 std::string display_name_from_flag(const std::string& flag) {
     if (flag == "rp") return "RandomPlayer";
-    if (flag == "gp") return "GreedyPlayer";
     if (flag == "it1") return "It1Player";
     if (flag == "it2") return "It2Player";
     if (flag == "it3") return "It3Player";
@@ -65,11 +61,12 @@ void print_usage(const char* exe) {
         << "Usage: " << exe << " [options] <player0_flag> <player1_flag>\n"
         << "\nOptions:\n"
         << "  -n, --games <N>     Number of games to run (default: 1)\n"
+    << "      --switch        Alternate seats each game (swap players every 2nd game)\n"
+    << "      --swap          Alias for --switch\n"
         << "      --no-dump       Disable JSONL dumper logs\n"
         << "  -h, --help          Show this help\n"
         << "\nPlayers:\n"
         << "  rp  RandomPlayer\n"
-        << "  gp  GreedyPlayer\n"
         << "  it1 It1Player\n"
         << "  it2 It2Player\n"
         << "  it3 It3Player\n"
@@ -81,6 +78,7 @@ void print_usage(const char* exe) {
 struct Options {
     size_t games = 1;
     bool dump = true;
+    bool switchSeats = false;
 };
 
 bool starts_with(const std::string& s, const char* prefix) {
@@ -116,6 +114,9 @@ std::string format_hhmmss(std::chrono::seconds secs) {
 
 void print_progress(size_t done, size_t total,
                     size_t winsP0, size_t winsP1, size_t winsNP,
+                    size_t winsBotA, size_t winsBotB,
+                    bool switchSeats,
+                    const std::string& botAName, const std::string& botBName,
                     unsigned long long totalTurns, unsigned maxTurns,
                     std::chrono::steady_clock::time_point start) {
     using namespace std::chrono;
@@ -133,10 +134,19 @@ void print_progress(size_t done, size_t total,
 
     // Keep this line compact to reduce wrapping in narrow terminals.
     std::ostringstream oss;
-    oss << "[" << std::setw(5) << done << "/" << total << "] "
-        << "P0=" << winsP0 << "(" << std::fixed << std::setprecision(1) << pct(winsP0) << "%) "
-        << "P1=" << winsP1 << "(" << std::fixed << std::setprecision(1) << pct(winsP1) << "%) "
-        << "NP=" << winsNP << "(" << std::fixed << std::setprecision(1) << pct(winsNP) << "%) "
+    oss << "[" << std::setw(5) << done << "/" << total << "] ";
+
+    if (switchSeats) {
+        // When seats alternate, report wins by bot flag order (positional args).
+        oss << botAName << "=" << winsBotA << "(" << std::fixed << std::setprecision(1) << pct(winsBotA) << "%) "
+            << botBName << "=" << winsBotB << "(" << std::fixed << std::setprecision(1) << pct(winsBotB) << "%) ";
+    } else {
+        // Without switching seats, seat wins correspond to bot wins.
+        oss << "P0=" << winsP0 << "(" << std::fixed << std::setprecision(1) << pct(winsP0) << "%) "
+            << "P1=" << winsP1 << "(" << std::fixed << std::setprecision(1) << pct(winsP1) << "%) ";
+    }
+
+    oss << "NP=" << winsNP << "(" << std::fixed << std::setprecision(1) << pct(winsNP) << "%) "
         << "avgT=" << std::fixed << std::setprecision(1) << avgTurns << " "
         << "maxT=" << maxTurns << " "
         << std::fixed << std::setprecision(1) << gps << "g/s "
@@ -158,6 +168,10 @@ int main(int argc, char** argv) {
         }
         if (arg == "--no-dump") {
             opt.dump = false;
+            continue;
+        }
+        if (arg == "--switch" || arg == "--swap") {
+            opt.switchSeats = true;
             continue;
         }
         if (arg == "--dump") {
@@ -219,11 +233,16 @@ int main(int argc, char** argv) {
                   << "Use --no-dump for batch runs.\n";
     }
     std::cout << "Running " << opt.games << " game(s): " << p0_name << " vs " << p1_name
-              << " | dump=" << (opt.dump ? "on" : "off") << "\n";
+              << " | dump=" << (opt.dump ? "on" : "off")
+              << " | switchSeats=" << (opt.switchSeats ? "on" : "off") << "\n";
 
     size_t winsP0 = 0;
     size_t winsP1 = 0;
     size_t winsNP = 0;
+
+    // Wins tracked by bot flag order (positional args), independent of seat.
+    size_t winsBotA = 0; // p0_flag bot
+    size_t winsBotB = 0; // p1_flag bot
     unsigned long long totalTurns = 0;
     unsigned maxTurns = 0;
 
@@ -234,28 +253,68 @@ int main(int argc, char** argv) {
     unsigned lastTurns = 0;
 
     for (size_t gameIndex = 1; gameIndex <= opt.games; ++gameIndex) {
-        auto player0 = make_player_from_flag(p0_flag);
-        auto player1 = make_player_from_flag(p1_flag);
+        try {
+            const bool swapped = opt.switchSeats && ((gameIndex % 2) == 0);
 
-        Game game(*player0, *player1);
-        game.setPlayerDisplayNames(p0_name, p1_name);
-        game.setDumpEnabled(opt.dump);
+            const std::string seat0_flag = swapped ? p1_flag : p0_flag;
+            const std::string seat1_flag = swapped ? p0_flag : p1_flag;
+            const std::string seat0_name = swapped ? p1_name : p0_name;
+            const std::string seat1_name = swapped ? p0_name : p1_name;
 
-        const auto winner = game.runGame();
-        lastWinner = winner;
-        lastTurns = static_cast<unsigned>(game.boardState.currentTurn);
+            auto player0 = make_player_from_flag(seat0_flag);
+            auto player1 = make_player_from_flag(seat1_flag);
 
-        switch (winner) {
-            case PlayerId::Player0: ++winsP0; break;
-            case PlayerId::Player1: ++winsP1; break;
-            case PlayerId::NoPlayer: ++winsNP; break;
+            Game game(*player0, *player1);
+            game.setPlayerDisplayNames(seat0_name, seat1_name);
+            game.setDumpEnabled(opt.dump);
+
+            const auto winner = game.runGame();
+            lastWinner = winner;
+            lastTurns = static_cast<unsigned>(game.boardState.currentTurn);
+
+            switch (winner) {
+                case PlayerId::Player0: ++winsP0; break;
+                case PlayerId::Player1: ++winsP1; break;
+                case PlayerId::NoPlayer: ++winsNP; break;
+            }
+
+            // Map seat winner back to the original bot ordering.
+            if (winner == PlayerId::NoPlayer) {
+                // nothing
+            } else {
+                const bool seat0Won = (winner == PlayerId::Player0);
+                const std::string& winningFlag = seat0Won ? seat0_flag : seat1_flag;
+                if (winningFlag == p0_flag) ++winsBotA;
+                else if (winningFlag == p1_flag) ++winsBotB;
+            }
+
+        } catch (const std::exception& e) {
+            std::cerr << "Game " << gameIndex << " failed: " << e.what() << "\n";
+            return 1;
+        } catch (...) {
+            std::cerr << "Game " << gameIndex << " failed: unknown exception\n";
+            return 1;
         }
 
         totalTurns += lastTurns;
         maxTurns = std::max(maxTurns, lastTurns);
 
         if (gameIndex == 1 || gameIndex == opt.games || (gameIndex % progressEvery) == 0) {
-            print_progress(gameIndex, opt.games, winsP0, winsP1, winsNP, totalTurns, maxTurns, start);
+            print_progress(
+                gameIndex,
+                opt.games,
+                winsP0,
+                winsP1,
+                winsNP,
+                winsBotA,
+                winsBotB,
+                opt.switchSeats,
+                p0_flag,
+                p1_flag,
+                totalTurns,
+                maxTurns,
+                start
+            );
         }
     }
 
@@ -277,6 +336,13 @@ int main(int argc, char** argv) {
               << ", maxTurns=" << maxTurns
               << ", elapsed=" << std::fixed << std::setprecision(2) << elapsed.count() << "s"
               << ", speed=" << std::fixed << std::setprecision(1) << gps << " g/s\n";
+
+    if (opt.switchSeats) {
+        std::cout << "ByBot: "
+                  << p0_flag << "=" << winsBotA << ", "
+                  << p1_flag << "=" << winsBotB << ", "
+                  << "NP=" << winsNP << "\n";
+    }
 
     // Preserve the original single-value output for scripts.
     std::cout << "winner=" << winner_name << "\n";

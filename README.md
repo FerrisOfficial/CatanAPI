@@ -20,7 +20,6 @@ Options:
 
 Currently supported flags:
 - `rp` = RandomPlayer
-- `gp` = GreedyPlayer
 - `it1` = It1Player
 - `it2` = It2Player
 - `it3` = It3Player
