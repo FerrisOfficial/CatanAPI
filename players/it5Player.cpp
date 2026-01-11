@@ -1,4 +1,5 @@
 #include "it5Player.hpp"
+#include "playerHelpers.hpp"
 
 #include <array>
 #include <algorithm>
@@ -8,6 +9,8 @@
 #include <vector>
 
 namespace {
+
+using PlayerHelpers::effective_vp;
 
 std::array<uint8_t, 5> unpack_resources(Player::PackedPlayer p) {
     return {
@@ -36,14 +39,6 @@ uint16_t deficit(const std::array<uint8_t, 5>& have, const std::array<uint8_t, 5
         if (have[i] < need[i]) d = static_cast<uint16_t>(d + (need[i] - have[i]));
     }
     return d;
-}
-
-int effective_vp(const Board::BoardState* board, PlayerId pid) {
-    const auto p = board->packedPlayers[static_cast<uint8_t>(pid)];
-    int vp = static_cast<int>(Player::unpackVictoryPoints(p));
-    if (Player::unpackLargestArmyFlag(p)) vp += 2;
-    if (Player::unpackLongestRoadFlag(p)) vp += 2;
-    return vp;
 }
 
 int priority_index(BuyableType b) {

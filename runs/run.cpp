@@ -5,7 +5,7 @@
 #include "players/it3Player.hpp"
 #include "players/it4Player.hpp"
 #include "players/it5Player.hpp"
-#include "players/it6Player.hpp"
+#include "players/alphaBetaPlayer.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -38,8 +38,8 @@ std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
     if (flag == "it5") {
         return std::make_unique<It5Player>();
     }
-    if (flag == "it6") {
-        return std::make_unique<It6Player>();
+    if (flag == "ab") {
+        return std::make_unique<alphaBetaPlayer>();
     }
 
     return nullptr;
