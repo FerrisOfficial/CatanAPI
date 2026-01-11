@@ -130,6 +130,14 @@ constexpr EdgeId unpackAdjacentEdge(PackedNode n, uint8_t edgeIndex) {
     return (n >> shift) & 0x7F;
 }
 
+inline std::vector<EdgeId> getAdjacentEdges(PackedNode n) {
+    return {
+        unpackAdjacentEdge(n, 0),
+        unpackAdjacentEdge(n, 1),
+        unpackAdjacentEdge(n, 2)
+    };
+}
+
 // Convenience function to create a new node
 constexpr PackedNode makeNode(HexId hex1, HexId hex2, HexId hex3,
                             EdgeId edge1, EdgeId edge2, EdgeId edge3,
@@ -215,12 +223,11 @@ struct BoardState {
     Bank::PackedBank packedBank = Bank::makeNewBank();
 
     PlayerId currentPlayer = PlayerId::Player1;
-    uint8_t currentTurn = 0;
+    uint16_t currentTurn = 0;
 
-    Action::PackedAction actionQueue[512] = {};
-    uint16_t actionQueueSize = 0;
+    std::vector<Action::PackedAction> actionQueue;
 
-    constexpr BoardState() noexcept;
+    BoardState() noexcept;
     void generateRandomBoard();
     void applyAction(Action::PackedAction action);
     void undoLastAction();
@@ -279,7 +286,34 @@ struct BoardState {
     std::vector<Action::PackedAction> generateMoveRobberActions(PlayerId playerId);
 };
 
-constexpr BoardState::BoardState() noexcept {
+inline bool operator==(const BoardState& lhs, const BoardState& rhs) noexcept {
+    if (lhs.robberPosition != rhs.robberPosition) return false;
+    if (lhs.currentPlayer != rhs.currentPlayer) return false;
+    if (lhs.currentTurn != rhs.currentTurn) return false;
+
+    for (int i = 0; i < HEX_COUNT; ++i) {
+        if (lhs.hexes[i] != rhs.hexes[i]) return false;
+    }
+    for (int i = 0; i < NODE_COUNT; ++i) {
+        if (lhs.nodes[i] != rhs.nodes[i]) return false;
+    }
+    for (int i = 0; i < EDGE_COUNT; ++i) {
+        if (lhs.edges[i] != rhs.edges[i]) return false;
+    }
+
+    if (lhs.packedPlayers[0] != rhs.packedPlayers[0]) return false;
+    if (lhs.packedPlayers[1] != rhs.packedPlayers[1]) return false;
+    if (lhs.packedBank != rhs.packedBank) return false;
+
+    return lhs.actionQueue == rhs.actionQueue;
+}
+
+inline bool operator!=(const BoardState& lhs, const BoardState& rhs) noexcept {
+    return !(lhs == rhs);
+}
+
+inline BoardState::BoardState() noexcept {
+    actionQueue.reserve(16 * 1024);
     nodes[0]  = Node::makeNode(HexIdNone, 0, HexIdNone,  0, 6, EdgeIdNone);
     nodes[0] = Node::packPortType(nodes[0], PortType::NoPort);
     nodes[1]  = Node::makeNode(HexIdNone, HexIdNone, 0,  0, 1, EdgeIdNone);

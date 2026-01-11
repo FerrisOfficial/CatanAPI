@@ -192,7 +192,7 @@ TEST_F(ApplyActionTest, ExpectTurnRotationOnEndTurn) {
     endTurnAction = Action::packType(endTurnAction, ActionType::EndTurn);
 
     PlayerId startingPlayer = boardState.currentPlayer;
-    uint8_t startingTurn = boardState.currentTurn;
+    uint16_t startingTurn = boardState.currentTurn;
 
     boardState.applyAction(endTurnAction);
 

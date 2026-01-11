@@ -664,6 +664,7 @@ std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId)
     
     auto buildRoadActions = generateBuildRoadActions(playerId);
     auto buildSettlementActions = generateBuildSettlementActions(playerId);
+    auto buildCityActions = generateBuildCityActions(playerId);
     auto bankTradeActions = generateBankTradeActions(playerId);
     auto twoToOnePortTradeActions = generateTwoToOnePortTradeActions(playerId);
     auto threeToOnePortTradeActions = generateThreeToOnePortTradeActions(playerId);
@@ -671,6 +672,7 @@ std::vector<Action::PackedAction> BoardState::getLegalActions(PlayerId playerId)
     
     legalActions.insert(legalActions.end(), buildRoadActions.begin(), buildRoadActions.end());
     legalActions.insert(legalActions.end(), buildSettlementActions.begin(), buildSettlementActions.end());
+    legalActions.insert(legalActions.end(), buildCityActions.begin(), buildCityActions.end());
     legalActions.insert(legalActions.end(), bankTradeActions.begin(), bankTradeActions.end());
     legalActions.insert(legalActions.end(), twoToOnePortTradeActions.begin(), twoToOnePortTradeActions.end());
     legalActions.insert(legalActions.end(), threeToOnePortTradeActions.begin(), threeToOnePortTradeActions.end());

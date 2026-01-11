@@ -75,15 +75,18 @@ constexpr PackedPlayer packDevCard(PackedPlayer p, DevType d, uint8_t value) {
         case DevType::Monopoly:     p &= ~(0x3ULL << 33); p |= uint64_t(value & 0x3) << 33; break;  // 2 bits
         case DevType::VictoryPoint: {
             uint8_t old = unpackDevCard(p, DevType::VictoryPoint);
-            uint8_t newCount = old + 1;
+            uint8_t newCount = value & 0x7;
 
             // zapisz nową liczbę kart
             p &= ~(0x7ULL << 35);
-            p |= uint64_t(value & 0x7) << 35;
+            p |= uint64_t(newCount) << 35;
 
-            // dodaj różnicę do VP gracza
-            uint8_t vp = unpackVictoryPoints(p);
-            p = packVictoryPoints(p, vp + newCount);
+            // dostosuj VP tylko o różnicę (nowa - stara)
+            int delta = int(newCount) - int(old);
+            int vp = int(unpackVictoryPoints(p));
+            int newVp = vp + delta;
+            if (newVp < 0) newVp = 0;
+            p = packVictoryPoints(p, static_cast<uint8_t>(newVp));
             break;
         }    
     }

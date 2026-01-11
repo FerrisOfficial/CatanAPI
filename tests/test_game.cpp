@@ -79,7 +79,7 @@ TEST(GameTest, GameBoardStateIsValid) {
     EXPECT_EQ(player1.boardState->robberPosition, 0);
     EXPECT_EQ(player1.boardState->currentPlayer, PlayerId::Player1);
     EXPECT_EQ(player1.boardState->currentTurn, 0);
-    EXPECT_EQ(player1.boardState->actionQueueSize, 0);
+    EXPECT_EQ(player1.boardState->actionQueue.size(), 0u);
 }
 
 TEST(GameTest, GameBoardHasCorrectNodeCount) {

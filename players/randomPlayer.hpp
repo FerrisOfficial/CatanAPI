@@ -2,7 +2,6 @@
 #include "player.hpp"
 #include "game_simulation/board.hpp"
 #include "utils/randomDevice.hpp"
-#include "utils/logger.hpp"
 
 struct RandomPlayer : public IPlayer {
     RandomPlayer() : IPlayer() {}
@@ -13,6 +12,4 @@ struct RandomPlayer : public IPlayer {
     Action::PackedAction getDiscardAction() override;
     Action::PackedAction getMoveRobber() override;
     Action::PackedAction getTurnAction() override;
-
-    Logger logger;
 };
