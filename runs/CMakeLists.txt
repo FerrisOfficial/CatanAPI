@@ -5,7 +5,6 @@ add_executable(run
     run.cpp
     ${CMAKE_SOURCE_DIR}/players/player.cpp
     ${CMAKE_SOURCE_DIR}/players/randomPlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/greedyPlayer.cpp
     ${CMAKE_SOURCE_DIR}/players/it1Player.cpp
     ${CMAKE_SOURCE_DIR}/players/it2Player.cpp
     ${CMAKE_SOURCE_DIR}/players/it3Player.cpp
