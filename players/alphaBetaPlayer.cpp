@@ -10,391 +10,376 @@ namespace {
 
 using PlayerHelpers::dice_pips;
 using PlayerHelpers::effective_vp;
+using PlayerHelpers::unpack_resources;
+using PlayerHelpers::hand_count;
+using PlayerHelpers::cost_for;
+using PlayerHelpers::deficit;
+using PlayerHelpers::production_score_for_player;
+using PlayerHelpers::settlement_potential_score;
+using PlayerHelpers::is_deterministic_action;
 
-constexpr int kMaxDepth = 5; // simple lookahead (ply-based)
+constexpr int kMaxDepth = 3;
 
-bool node_distance_rule_ok(const Board::BoardState& board, NodeId nodeId) {
-	const auto node = board.nodes[nodeId];
-	if (Board::Node::unpackStructure(node) != StructureType::NoStructure) return false;
-
-	for (uint8_t i = 0; i < 3; ++i) {
-		const EdgeId edgeId = Board::Node::unpackAdjacentEdge(node, i);
-		if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) continue;
-
-		const auto edge = board.edges[edgeId];
-		for (uint8_t j = 0; j < 2; ++j) {
-			const NodeId adj = Board::Edge::unpackAdjacentNode(edge, j);
-			if (adj == nodeId || adj >= NODE_COUNT) continue;
-			const auto adjNode = board.nodes[adj];
-			if (Board::Node::unpackStructure(adjNode) != StructureType::NoStructure) return false;
-		}
-	}
-	return true;
-}
-
-bool node_adjacent_to_own_road(const Board::BoardState& board, PlayerId pid, NodeId nodeId) {
-	const auto node = board.nodes[nodeId];
-	for (uint8_t i = 0; i < 3; ++i) {
-		const EdgeId edgeId = Board::Node::unpackAdjacentEdge(node, i);
-		if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) continue;
-		const auto edge = board.edges[edgeId];
-		if (Board::Edge::unpackHasRoad(edge) && Board::Edge::unpackOwner(edge) == pid) {
-			return true;
-		}
-	}
-	return false;
-}
-
-struct ProdStats {
-	int pipScore = 0;
-	std::array<bool, 5> hasResource {false, false, false, false, false};
+enum class GamePhase {
+    Early,   // Max VP < 5
+    Mid,     // Max VP 5-7
+    Late     // Max VP >= 8
 };
 
-ProdStats production_stats(const Board::BoardState& board, PlayerId pid) {
-	ProdStats ps;
-
-	for (NodeId nid = 0; nid < NODE_COUNT; ++nid) {
-		const auto node = board.nodes[nid];
-		if (Board::Node::unpackOwner(node) != pid) continue;
-
-		const auto structure = Board::Node::unpackStructure(node);
-		if (structure == StructureType::NoStructure) continue;
-
-		const int mult = (structure == StructureType::City) ? 2 : 1;
-
-		for (uint8_t i = 0; i < 3; ++i) {
-			const HexId hid = Board::Node::unpackAdjacentHex(node, i);
-			if (hid == HexIdNone || hid >= HEX_COUNT) continue;
-			const auto hex = board.hexes[hid];
-			const Resource r = Board::Hex::unpackResource(hex);
-			if (r == Resource::NoResource || static_cast<uint8_t>(r) >= 5) continue;
-
-			const uint8_t pips = dice_pips(Board::Hex::unpackCatanNumber(hex));
-			ps.pipScore += static_cast<int>(pips) * mult;
-			ps.hasResource[static_cast<size_t>(r)] = true;
-		}
-	}
-
-	return ps;
-}
-
-int expansion_potential(const Board::BoardState& board, PlayerId pid) {
-	int potential = 0;
-	for (NodeId nid = 0; nid < NODE_COUNT; ++nid) {
-		if (!node_distance_rule_ok(board, nid)) continue;
-		if (!node_adjacent_to_own_road(board, pid, nid)) continue;
-		++potential;
-	}
-	return potential;
-}
-
-bool is_endgame(const Board::BoardState& board) {
-    int vp0 = effective_vp(board, PlayerId::Player0);
-    int vp1 = effective_vp(board, PlayerId::Player1);
-    int maxVp = std::max(vp0, vp1);
-
-    return maxVp >= 7;
-}
-
-struct EvalWeights {
-    int wVp;
-    int wPip;
-    int wDiv;
-    int wExp;
-};
-
-constexpr EvalWeights kMidGameWeights  { 3000, 120, 220, 80 };
-constexpr EvalWeights kEndGameWeights  { 5000, 120, 200, 70 };
-
-int evaluate_player(const Board::BoardState& board, PlayerId pid, const EvalWeights& w) {
-    const int vp = effective_vp(board, pid);
-    const auto prod = production_stats(board, pid);
-
-    int diversity = 0;
-    for (bool h : prod.hasResource) diversity += h ? 1 : 0;
-
-    const int expansion = expansion_potential(board, pid);
-
-    return vp           * w.wVp
-         + prod.pipScore* w.wPip
-         + diversity    * w.wDiv
-         + expansion    * w.wExp;
-}
-
-int evaluate_state(const Board::BoardState& board, PlayerId root) {
-    const PlayerId opp = (root == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
-
-    const EvalWeights& W = is_endgame(board) ? kEndGameWeights : kMidGameWeights;
-
-    return evaluate_player(board, root, W) - evaluate_player(board, opp, W);
-}
-
-bool is_deterministic(ActionType t) {
-	switch (t) {
-		case ActionType::BuildCity:
-		case ActionType::BuildSettlement:
-		case ActionType::BuildRoad:
-		case ActionType::TradeBank:
-		case ActionType::EndTurn:
-			return true;
-		default:
-			return false;
-	}
-}
-
-int alphabeta(Board::BoardState state, int depth, int alpha, int beta, PlayerId root) {
-	if (depth == 0) return evaluate_state(state, root);
-
-	auto actions = state.getLegalActions(state.currentPlayer);
-	std::vector<Action::PackedAction> filtered;
-	filtered.reserve(actions.size());
-	for (auto a : actions) {
-		if (is_deterministic(Action::unpackType(a))) filtered.push_back(a);
-	}
-	if (filtered.empty()) filtered = std::move(actions); // fall back if nothing deterministic
-
-	if (filtered.empty()) return evaluate_state(state, root);
-
-	const bool maximizing = (state.currentPlayer == root);
-	int best = maximizing ? std::numeric_limits<int>::min() : std::numeric_limits<int>::max();
-
-	for (const auto a : filtered) {
-		state.applyAction(a);
-
-		const int score = alphabeta(state, depth - 1, alpha, beta, root);
-
-		state.undoLastAction();
-
-		if (maximizing) {
-			best = std::max(best, score);
-			alpha = std::max(alpha, score);
-		} else {
-			best = std::min(best, score);
-			beta = std::min(beta, score);
-		}
-
-		if (beta <= alpha) break; // prune
-	}
-
-	return best;
-}
-
-} // namespace
-
-namespace {
-int scoreCityAction(const Board::BoardState& board, PlayerId pid, Action::PackedAction a) {
-    NodeId nodeId = Action::unpackArg1(a);
-
-    // policz, ile pipów daje upgrade tej osady do miasta
-    const auto node = board.nodes[nodeId];
-    int addPips = 0;
-    for (uint8_t i = 0; i < 3; ++i) {
-        HexId hid = Board::Node::unpackAdjacentHex(node, i);
-        if (hid == HexIdNone || hid >= HEX_COUNT) continue;
-        const auto hex = board.hexes[hid];
-        uint8_t pips = dice_pips(Board::Hex::unpackCatanNumber(hex));
-        addPips += pips; // miasto = +1x produkcji z każdego hexa
+GamePhase determine_game_phase(const Board::BoardState* board) {
+    int maxVP = 0;
+    for (int i = 0; i < 2; ++i) {
+        const int vp = effective_vp(board, static_cast<PlayerId>(i));
+        if (vp > maxVP) maxVP = vp;
     }
-
-    return 10000 + addPips * 100; 
+    
+    if (maxVP >= 8) return GamePhase::Late;
+    if (maxVP >= 5) return GamePhase::Mid;
+    return GamePhase::Early;
 }
 
-int scoreSettlementAction(const Board::BoardState& board, PlayerId pid, Action::PackedAction a) {
-    NodeId nodeId = Action::unpackArg1(a);
+int evaluate_position(const Board::BoardState* board, PlayerId selfId) {
+    const PlayerId enemyId = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
 
-    const auto node = board.nodes[nodeId];
+    const auto selfPacked = board->packedPlayers[static_cast<uint8_t>(selfId)];
+    const auto enemyPacked = board->packedPlayers[static_cast<uint8_t>(enemyId)];
 
-    int pipScore = 0;
-    std::array<bool, 5> hasRes{false, false, false, false, false};
-
-    for (uint8_t i = 0; i < 3; ++i) {
-        HexId hid = Board::Node::unpackAdjacentHex(node, i);
-        if (hid == HexIdNone || hid >= HEX_COUNT) continue;
-        const auto hex = board.hexes[hid];
-        Resource r = Board::Hex::unpackResource(hex);
-        if (r == Resource::NoResource || (size_t)r >= 5) continue;
-        uint8_t p = dice_pips(Board::Hex::unpackCatanNumber(hex));
-        pipScore += p;
-        hasRes[(size_t)r] = true;
+    const int selfVP = effective_vp(board, selfId);
+    const int enemyVP = effective_vp(board, enemyId);
+    
+    const GamePhase phase = determine_game_phase(board);
+    
+    // Phase-dependent VP weight: heavier in late game
+    int vpWeight = 50000;
+    if (phase == GamePhase::Late) {
+        vpWeight = 100000; // Drastically increase VP importance in endgame
+        if (selfVP >= 9) vpWeight = 200000;
+    } else if (phase == GamePhase::Mid) {
+        vpWeight = 65000;
     }
+    const int vpTerm = vpWeight * (selfVP - enemyVP);
 
-    int diversity = 0;
-    for (bool h : hasRes) diversity += h ? 1 : 0;
-
-    // prosty score lokalny
-    return 8000 + pipScore * 100 + diversity * 200;
-}
-
-int scoreRoadAction(const Board::BoardState& board, PlayerId pid, Action::PackedAction a) {
-    EdgeId eid = Action::unpackArg1(a);
-
-    auto edge = board.edges[eid];
-    NodeId n0 = Board::Edge::unpackAdjacentNode(edge, 0);
-    NodeId n1 = Board::Edge::unpackAdjacentNode(edge, 1);
-
-    int bestFutureVertexScore = 0;
-
-    auto evalNode = [&](NodeId nid){
-        if (nid >= NODE_COUNT) return;
-
-        // jeśli to od razu legalny spot na osadę
-        if (!node_distance_rule_ok(board, nid)) return;
-
-        // policz lokalne pipy i różnorodność dla tego node'a
-        const auto node = board.nodes[nid];
-        int pipScore = 0;
-        std::array<bool, 5> hasRes{false, false, false, false, false};
-
-        for (uint8_t i = 0; i < 3; ++i) {
-            HexId hid = Board::Node::unpackAdjacentHex(node, i);
-            if (hid == HexIdNone || hid >= HEX_COUNT) continue;
-            const auto hex = board.hexes[hid];
-            Resource r = Board::Hex::unpackResource(hex);
-            if (r == Resource::NoResource || (size_t)r >= 5) continue;
-            uint8_t p = dice_pips(Board::Hex::unpackCatanNumber(hex));
-            pipScore += p;
-            hasRes[(size_t)r] = true;
-        }
-
-        int diversity = 0;
-        for (bool h : hasRes) diversity += h ? 1 : 0;
-
-        int localScore = pipScore * 50 + diversity * 80;
-        bestFutureVertexScore = std::max(bestFutureVertexScore, localScore);
-    };
-
-    evalNode(n0);
-    evalNode(n1);
-
-    // jeśli droga nie prowadzi do niczego sensownego
-    if (bestFutureVertexScore == 0) {
-        return 0; // nisko, będzie wycięta przez TOP-K
+    // Phase-dependent production weight: less important in late game
+    int prodWeight = 35;
+    int potWeight = 12;
+    if (phase == GamePhase::Late) {
+        prodWeight = 15;
+        potWeight = 5;
+    } else if (phase == GamePhase::Early) {
+        prodWeight = 45;
+        potWeight = 18;
     }
+    
+    const int prodTerm = prodWeight * (production_score_for_player(board, selfId) - production_score_for_player(board, enemyId));
+    const int potTerm = potWeight * (settlement_potential_score(board, selfId) - settlement_potential_score(board, enemyId));
 
-    // generalny priorytet dróg niższy niż osad/miast
-    return 2000 + bestFutureVertexScore;
+    const auto selfHave = unpack_resources(selfPacked);
+    const auto enemyHave = unpack_resources(enemyPacked);
+    const int selfHand = static_cast<int>(hand_count(selfHave));
+    const int enemyHand = static_cast<int>(hand_count(enemyHave));
+
+    // Phase-dependent deficit penalties
+    int cityDefWeight = 2200;
+    int settleDefWeight = 1600;
+    int devDefWeight = 650;
+    
+    if (phase == GamePhase::Late) {
+        // In late game, prioritize immediate VP gains
+        cityDefWeight = 4500;
+        settleDefWeight = 3500;
+        devDefWeight = 1200;
+    } else if (phase == GamePhase::Early) {
+        settleDefWeight = 2000;
+        cityDefWeight = 1800;
+    }
+    
+    const int cityDef = static_cast<int>(deficit(selfHave, cost_for(BuyableType::City)));
+    const int settleDef = static_cast<int>(deficit(selfHave, cost_for(BuyableType::Settlement)));
+    const int devDef = static_cast<int>(deficit(selfHave, cost_for(BuyableType::DevCard)));
+    const int deficitTerm = -cityDefWeight * cityDef - settleDefWeight * settleDef - devDefWeight * devDef;
+
+    // Hand-size risk management
+    const int overLimit = std::max(0, selfHand - 9);
+    const int riskTerm = -180 * overLimit;
+
+    const int resTerm = 60 * (selfHand - enemyHand);
+
+    // Dev cards and longest road bonuses
+    int devWeight = 250;
+    int roadWeight = 200;
+    if (phase == GamePhase::Late) {
+        devWeight = 400;
+        roadWeight = 500;
+    }
+    
+    const int devTerm = devWeight * (static_cast<int>(Player::totalDevCards(selfPacked)) - static_cast<int>(Player::totalDevCards(enemyPacked)));
+    const int roadLenTerm = roadWeight * (static_cast<int>(Player::unpackLongestRoadLength(selfPacked)) - static_cast<int>(Player::unpackLongestRoadLength(enemyPacked)));
+
+    return vpTerm + prodTerm + potTerm + deficitTerm + riskTerm + resTerm + devTerm + roadLenTerm;
 }
 
-bool canBuildSettlement(const Board::BoardState& board, PlayerId playerId) {
-    const auto packed = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    if (Player::unpackResource(packed, Resource::Brick) < 1) return false;
-    if (Player::unpackResource(packed, Resource::Lumber) < 1) return false;
-    if (Player::unpackResource(packed, Resource::Wool) < 1) return false;
-    if (Player::unpackResource(packed, Resource::Grain) < 1) return false;
-
-    if (Player::unpackAvailableStructures(packed, StructureType::Settlement) < 1) return false;
-
-    return true;
-}
-
-bool canBuildCity(const Board::BoardState& board, PlayerId playerId) {
-    const auto packed = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    if (Player::unpackResource(packed, Resource::Grain) < 2) return false;
-    if (Player::unpackResource(packed, Resource::Ore) < 3) return false;
-
-    if (Player::unpackAvailableStructures(packed, StructureType::City) < 1) return false;
-
-    return true;
-}
-
-bool canBuildRoad(const Board::BoardState& board, PlayerId playerId) {
-    const auto packed = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    if (Player::unpackResource(packed, Resource::Brick) < 1) return false;
-    if (Player::unpackResource(packed, Resource::Lumber) < 1) return false;
-
-    if (Player::unpackAvailableStructures(packed, StructureType::Road) < 1) return false;
-
-    return true;
-}
-
-int scoreTradeAction(Board::BoardState& board, PlayerId pid, Action::PackedAction a) {
-    board.applyAction(a);
-
-    bool canSet = canBuildSettlement(board, pid);
-    bool canCity = canBuildCity(board, pid);
-    bool canRoad = canBuildRoad(board, pid);
-
-    board.undoLastAction();
-
-    if (canCity) return 9000;
-    if (canSet)  return 8500;
-    if (canRoad) return 4000;
-
-    return 100;
-}
-
-int heuristicActionScore(Board::BoardState& state, Action::PackedAction a) {
-    const auto type = Action::unpackType(a);
-    const PlayerId pid = state.currentPlayer;
-
+// Quick heuristic to prioritize actions (higher = better)
+int quick_action_score(Action::PackedAction action, const Board::BoardState* board, PlayerId selfId) {
+    const ActionType type = Action::unpackType(action);
+    
     switch (type) {
         case ActionType::BuildCity:
-            return scoreCityAction(state, pid, a);
-
+            return 10000;
         case ActionType::BuildSettlement:
-            return scoreSettlementAction(state, pid, a);
-
+            return 9000;
         case ActionType::BuildRoad:
-            return scoreRoadAction(state, pid, a);
-
-        case ActionType::TradeBank:
-            return scoreTradeAction(state, pid, a);
-
+            return 3000;
+        case ActionType::TradeBank: {
+            // Evaluate if trade helps us afford high-value purchases
+            const auto selfPacked = board->packedPlayers[static_cast<uint8_t>(selfId)];
+            const auto have = unpack_resources(selfPacked);
+            
+            // Check if trade gets us closer to city or settlement
+            const int cityDefBefore = static_cast<int>(deficit(have, cost_for(BuyableType::City)));
+            const int settleDefBefore = static_cast<int>(deficit(have, cost_for(BuyableType::Settlement)));
+            
+            // Simulate trade to see improvement (simplified check)
+            // Lower deficit after trade = higher score
+            return 2000 - (cityDefBefore + settleDefBefore) * 100;
+        }
         case ActionType::EndTurn:
-            return -100000;
-
-        default:
             return 0;
+        default:
+            return 1000;
     }
 }
 
+
+int alphaBeta(Board::BoardState* board, PlayerId selfId, int depth, int alpha, int beta, bool maximizing) {
+    if (depth == 0) {
+        return evaluate_position(board, selfId);
+    }
+
+    const PlayerId currentPlayer = board->currentPlayer;
+    const auto actions = board->getLegalActions(currentPlayer);
+
+    // If no actions or only EndTurn available, evaluate position
+    bool hasNonEndTurn = false;
+    for (const auto a : actions) {
+        if (Action::unpackType(a) != ActionType::EndTurn && is_deterministic_action(a)) {
+            hasNonEndTurn = true;
+            break;
+        }
+    }
+    if (!hasNonEndTurn) {
+        return evaluate_position(board, selfId);
+    }
+
+    // Order actions by heuristic for better pruning
+    std::vector<std::pair<int, Action::PackedAction>> scoredActions;
+    for (const auto a : actions) {
+        if (!is_deterministic_action(a)) continue;
+        scoredActions.push_back({quick_action_score(a, board, currentPlayer), a});
+    }
+    
+    if (maximizing) {
+        // Sort descending for maximizing player (try best moves first)
+        std::sort(scoredActions.begin(), scoredActions.end(),
+                  [](const auto& a, const auto& b) { return a.first > b.first; });
+        
+        int maxEval = std::numeric_limits<int>::min();
+        for (const auto& [score, a] : scoredActions) {
+            board->applyAction(a);
+            const int eval = alphaBeta(board, selfId, depth - 1, alpha, beta, false);
+            board->undoLastAction();
+
+            maxEval = std::max(maxEval, eval);
+            alpha = std::max(alpha, eval);
+            if (beta <= alpha) break;
+        }
+        return maxEval;
+    } else {
+        // Sort ascending for minimizing player (try worst moves for opponent first)
+        std::sort(scoredActions.begin(), scoredActions.end(),
+                  [](const auto& a, const auto& b) { return a.first > b.first; });
+        
+        int minEval = std::numeric_limits<int>::max();
+        for (const auto& [score, a] : scoredActions) {
+            board->applyAction(a);
+            const int eval = alphaBeta(board, selfId, depth - 1, alpha, beta, true);
+            board->undoLastAction();
+
+            minEval = std::min(minEval, eval);
+            beta = std::min(beta, eval);
+            if (beta <= alpha) break;
+        }
+        return minEval;
+    }
+}
 
 } // namespace
 
 Action::PackedAction alphaBetaPlayer::getTurnAction() {
-	const PlayerId selfId = boardState->currentPlayer;
-	auto actions = boardState->getLegalActions(selfId);
-	if (actions.empty()) return Action::getEmptyAction();
+    const PlayerId selfId = boardState->currentPlayer;
 
-	std::vector<Action::PackedAction> deterministic;
-	for (auto a : actions) {
-		if (is_deterministic(Action::unpackType(a))) deterministic.push_back(a);
-	}
-	if (deterministic.empty()) deterministic = std::move(actions);
+    auto actions = boardState->getLegalActions(selfId);
+    if (actions.empty()) return Action::getEmptyAction();
 
-	std::vector<std::pair<int, Action::PackedAction>> scored;
-	scored.reserve(deterministic.size());
-	for (auto a : deterministic) {
-		int h = heuristicActionScore(*boardState, a);
-		scored.push_back({h, a});
-	}
+    // Separate deterministic from non-deterministic actions
+    std::vector<Action::PackedAction> buildActions;
+    std::vector<Action::PackedAction> tradeActions;
+    std::vector<Action::PackedAction> otherActions;
+    Action::PackedAction devBuyAction = Action::getEmptyAction();
+    Action::PackedAction endTurnAction = Action::getEmptyAction();
 
-	std::sort(scored.begin(), scored.end(),
-			[](auto& lhs, auto& rhs){ return lhs.first > rhs.first; });
+    for (const auto a : actions) {
+        if (!is_deterministic_action(a)) {
+            if (Action::unpackType(a) == ActionType::BuyDevCard) {
+                devBuyAction = a;
+            }
+            continue;
+        }
+        
+        const ActionType type = Action::unpackType(a);
+        if (type == ActionType::BuildCity || type == ActionType::BuildSettlement || type == ActionType::BuildRoad) {
+            buildActions.push_back(a);
+        } else if (type == ActionType::TradeBank) {
+            tradeActions.push_back(a);
+        } else if (type == ActionType::EndTurn) {
+            endTurnAction = a;
+        } else {
+            otherActions.push_back(a);
+        }
+    }
+    
+    // Combine actions with filtering
+    std::vector<Action::PackedAction> deterministicActions;
+    
+    // Always include all building actions (highest value)
+    deterministicActions.insert(deterministicActions.end(), buildActions.begin(), buildActions.end());
+    deterministicActions.insert(deterministicActions.end(), otherActions.begin(), otherActions.end());
+    
+    // Filter trades based on game phase and count
+    const GamePhase phase = determine_game_phase(boardState);
+    size_t maxTrades = 10; // Default limit
+    
+    if (phase == GamePhase::Late) {
+        maxTrades = 6;  // Fewer trades in endgame, focus on building
+    } else if (phase == GamePhase::Early) {
+        maxTrades = 15; // More trades early for flexibility
+    }
+    
+    if (tradeActions.size() > maxTrades) {
+        // Score and sort trades, keep only the best ones
+        std::vector<std::pair<int, Action::PackedAction>> scoredTrades;
+        for (const auto a : tradeActions) {
+            scoredTrades.push_back({quick_action_score(a, boardState, selfId), a});
+        }
+        std::sort(scoredTrades.begin(), scoredTrades.end(), 
+                  [](const auto& a, const auto& b) { return a.first > b.first; });
+        
+        for (size_t i = 0; i < maxTrades && i < scoredTrades.size(); ++i) {
+            deterministicActions.push_back(scoredTrades[i].second);
+        }
+    } else {
+        deterministicActions.insert(deterministicActions.end(), tradeActions.begin(), tradeActions.end());
+    }
+    
+    // Always include EndTurn as fallback
+    if (Action::unpackType(endTurnAction) == ActionType::EndTurn) {
+        deterministicActions.push_back(endTurnAction);
+    }
 
-	const int K = 5;
-	std::vector<Action::PackedAction> pruned;
-	for (int i = 0; i < (int)scored.size() && i < K; ++i) {
-		pruned.push_back(scored[i].second);
-	}
+    if (deterministicActions.empty()) {
+        // If only non-deterministic actions available (like dev card buy), fall back to it5 logic
+        return It5Player::getTurnAction();
+    }
 
-	Action::PackedAction best = Action::getEmptyAction();
-	int bestScore = std::numeric_limits<int>::min();
+    int searchDepth = kMaxDepth - 1;
+    if (phase == GamePhase::Late) {
+        searchDepth = kMaxDepth; // Deeper search in endgame when decisions are critical
+    } else if (phase == GamePhase::Early && deterministicActions.size() > 15) {
+        searchDepth = std::max(2, kMaxDepth - 2); // Shallower search early game with many options
+    }
 
-	for (const auto a : pruned) {
-		boardState->applyAction(a);
-		const int score = alphabeta(*boardState, kMaxDepth - 1, std::numeric_limits<int>::min() / 2, std::numeric_limits<int>::max() / 2, selfId);
-		boardState->undoLastAction();
-		if (score > bestScore) {
-			bestScore = score;
-			best = a;
-		}
-	}
+    // Run alpha-beta search on deterministic actions
+    Action::PackedAction bestAction = Action::getEmptyAction();
+    int bestScore = std::numeric_limits<int>::min();
 
-	// Fallback to the previous heuristic if nothing was chosen.
-	if (Action::unpackType(best) == ActionType::NoAction) {
-		return It5Player::getTurnAction();
-	}
+    // In late game, prioritize city/settlement builds
+    if (phase == GamePhase::Late) {
+        for (const auto a : deterministicActions) {
+            if (Action::unpackType(a) == ActionType::BuildCity || Action::unpackType(a) == ActionType::BuildSettlement) {
+                boardState->applyAction(a);
+                const int score = alphaBeta(boardState, selfId, searchDepth, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), false);
+                boardState->undoLastAction();
 
-	return best;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestAction = a;
+                }
+            }
+        }
+        
+        // If we found a good build in late game, take it immediately
+        if (Action::unpackType(bestAction) == ActionType::BuildCity || Action::unpackType(bestAction) == ActionType::BuildSettlement) {
+            return bestAction;
+        }
+    }
+
+    // Sort actions for root search (best first for better alpha-beta pruning)
+    std::vector<std::pair<int, Action::PackedAction>> rootScoredActions;
+    for (const auto a : deterministicActions) {
+        rootScoredActions.push_back({quick_action_score(a, boardState, selfId), a});
+    }
+    std::sort(rootScoredActions.begin(), rootScoredActions.end(),
+              [](const auto& a, const auto& b) { return a.first > b.first; });
+    
+    // Search all deterministic actions (now in priority order)
+    for (const auto& [heuristic, a] : rootScoredActions) {
+        boardState->applyAction(a);
+        const int score = alphaBeta(boardState, selfId, searchDepth, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), false);
+        boardState->undoLastAction();
+
+        if (score > bestScore) {
+            bestScore = score;
+            bestAction = a;
+        }
+    }
+
+    // Consider dev card buy heuristically (same as it5Player)
+    if (Action::unpackType(devBuyAction) == ActionType::BuyDevCard) {
+        const PlayerId enemyId = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+        const int selfVP = effective_vp(boardState, selfId);
+        const int enemyVP = effective_vp(boardState, enemyId);
+        const int baseScore = evaluate_position(boardState, selfId);
+
+        int devScore = baseScore + 1500;
+        if (enemyVP > selfVP) devScore += 2500;
+        if (selfVP >= 8) devScore -= 500;
+
+        // Check if we have trades/roads as alternatives
+        bool hasTrade = false;
+        bool hasRoad = false;
+        for (const auto a : deterministicActions) {
+            if (Action::unpackType(a) == ActionType::TradeBank) hasTrade = true;
+            if (Action::unpackType(a) == ActionType::BuildRoad) hasRoad = true;
+        }
+        if (hasTrade) devScore -= 500;
+        if (hasRoad) devScore -= 200;
+
+        if (devScore > bestScore) {
+            bestScore = devScore;
+            bestAction = devBuyAction;
+        }
+    }
+
+    // If the best action is EndTurn and doesn't improve position, fall back to it5
+    if (Action::unpackType(bestAction) == ActionType::EndTurn) {
+        const int currentScore = evaluate_position(boardState, selfId);
+        if (bestScore < currentScore) {
+            return It5Player::getTurnAction();
+        }
+    }
+
+    if (Action::unpackType(bestAction) == ActionType::NoAction) {
+        return It5Player::getTurnAction();
+    }
+
+    return bestAction;
 }

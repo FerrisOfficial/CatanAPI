@@ -6,6 +6,7 @@
 #include "players/it4Player.hpp"
 #include "players/it5Player.hpp"
 #include "players/alphaBetaPlayer.hpp"
+#include "players/oneResourcePlayer.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -41,6 +42,9 @@ std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
     if (flag == "ab") {
         return std::make_unique<alphaBetaPlayer>();
     }
+    if (flag == "or") {
+        return std::make_unique<OneResourcePlayer>();
+    }
 
     return nullptr;
 }
@@ -72,7 +76,8 @@ void print_usage(const char* exe) {
         << "  it3 It3Player\n"
         << "  it4 It4Player\n"
         << "  it5 It5Player\n"
-        << "  it6 It6Player\n";
+        << "  ab AlphaBetaPlayer\n"
+        << "  or  OneResourcePlayer\n";
 }
 
 struct Options {
