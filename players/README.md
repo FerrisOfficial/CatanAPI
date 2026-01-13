@@ -78,11 +78,3 @@ It5Player inherits **It4Player** and focuses on handling the “7 discard” rul
 - **Turn action** (`getTurnAction()`): uses a 1-step lookahead for deterministic actions (builds, roads, trades) by temporarily applying an action to the board, scoring the resulting position, then undoing it.
 	- It intentionally does **not** simulate RNG actions like `BuyDevCard` (because that would consume randomness and bias the simulation).
 
-## It6Player
-
-It6Player is the “ranked 1v1”-style bot: it keeps It5’s discard behavior, but upgrades both the **opening** and the **turn planner**.
-
-- **Initial placements** (`getInitialPlacement()`, `get2InitialPlacement()`): aggressively optimizes for scarcity-aware production (Ore/Grain/Brick), city potential (Ore+Grain clusters), and diversity; it also includes a simple opponent-denial term by evaluating how strong the opponent’s best reply would be after each candidate placement.
-- **Robber** (`getMoveRobber()`): prefers blocking the opponent’s key production (Grain → Ore → Brick, etc.) while avoiding self-blocking, with extra weight once stealing becomes active (opponent at 3+ VP).
-- **Turn actions** (`getTurnAction()`): uses a lightweight MCTS-style search over *deterministic* actions within the current turn (builds/roads/trades). It intentionally avoids simulating RNG actions like `BuyDevCard` during search.
-

@@ -1,4 +1,5 @@
 #include "it3Player.hpp"
+#include "playerHelpers.hpp"
 
 #include <algorithm>
 #include <array>
@@ -7,22 +8,7 @@
 
 namespace {
 
-uint8_t dice_pips(uint8_t diceNumber) {
-    // Classic Catan distribution weights.
-    switch (diceNumber) {
-        case 2:  return 1;
-        case 3:  return 2;
-        case 4:  return 3;
-        case 5:  return 4;
-        case 6:  return 5;
-        case 8:  return 5;
-        case 9:  return 4;
-        case 10: return 3;
-        case 11: return 2;
-        case 12: return 1;
-        default: return 0; // includes 7 and invalid
-    }
-}
+using PlayerHelpers::dice_pips;
 
 uint8_t resource_weight_early(Resource r) {
     // Small bias towards early expansion resources.
