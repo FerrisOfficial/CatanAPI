@@ -300,13 +300,6 @@ Action::PackedAction BoardState::handleMoveRobber(Action::PackedAction action, P
 void BoardState::handleUndoMoveRobber(Action::PackedAction action, PlayerId playerId) {
     auto previousHexId = Action::unpackArg1(action);
     robberPosition = previousHexId;
-
-    auto resourceType = static_cast<Resource>(Action::unpackArg2(action));
-    Action::PackedAction undoStealAction = 0;
-    undoStealAction = Action::packType(undoStealAction, ActionType::StealResource);
-    undoStealAction = Action::packPlayerID(undoStealAction, playerId);
-    undoStealAction = Action::packArg1(undoStealAction, static_cast<uint8_t>(resourceType));
-    handleUndoStealResource(undoStealAction, playerId);
 }
 
 static bool nodeBlocksRoad(BoardState board, PlayerId playerId, NodeId nodeId) {
@@ -622,6 +615,15 @@ Action::PackedAction BoardState::handlePlayDevCardKnight(Action::PackedAction ac
     auto &p = packedPlayers[static_cast<uint8_t>(playerId)];
     auto enemyPlayerId = (playerId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
     auto previousRobberPosition = robberPosition;
+
+    // Store previous Largest Army flags so undo can restore exactly.
+    // This avoids recomputing edge-cases (e.g. ties) on undo.
+    {
+        const bool prevSelf = Player::unpackLargestArmyFlag(packedPlayers[static_cast<uint8_t>(playerId)]);
+        const bool prevEnemy = Player::unpackLargestArmyFlag(packedPlayers[static_cast<uint8_t>(enemyPlayerId)]);
+        const uint8_t flags = (prevSelf ? 1u : 0u) | (prevEnemy ? 2u : 0u);
+        action = Action::packArg2(action, flags);
+    }
     p = Player::packDevCard(
         p,
         DevType::Knight,
@@ -667,22 +669,17 @@ void BoardState::handleUndoPlayDevCardKnight(Action::PackedAction action, Player
         p,
         Player::unpackUsedKnights(p) - 1
     );
-    
-    uint8_t usedKnights = Player::unpackUsedKnights(p);
-    auto enemyPlayerId = (playerId == PlayerId::Player0) ? PlayerId ::Player1 : PlayerId::Player0;
-    if (usedKnights < 3 && Player::unpackLargestArmyFlag(p)) {
+
+    // Restore Largest Army flags exactly as before the Knight was played.
+    auto enemyPlayerId = (playerId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+    {
+        const uint8_t flags = Action::unpackArg2(action);
+        const bool prevSelf = (flags & 1u) != 0;
+        const bool prevEnemy = (flags & 2u) != 0;
         packedPlayers[static_cast<uint8_t>(playerId)] =
-            Player::packLargestArmyFlag(
-                packedPlayers[static_cast<uint8_t>(playerId)],
-                false
-            );
-        if (Player::unpackUsedKnights(packedPlayers[static_cast<uint8_t>(enemyPlayerId)]) >= 3) {
-            packedPlayers[static_cast<uint8_t>(enemyPlayerId)] =
-                Player::packLargestArmyFlag(
-                    packedPlayers[static_cast<uint8_t>(enemyPlayerId)],
-                    true
-                );
-        }
+            Player::packLargestArmyFlag(packedPlayers[static_cast<uint8_t>(playerId)], prevSelf);
+        packedPlayers[static_cast<uint8_t>(enemyPlayerId)] =
+            Player::packLargestArmyFlag(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], prevEnemy);
     }
 
     action = Action::packArg1(action, robberPosition);
@@ -913,10 +910,14 @@ void BoardState::handleUndoDiscardResources(Action::PackedAction action, PlayerI
     Player::changeResourceQuantity(p, Resource::Ore, Action::unpackResource(action, Resource::Ore));
 }
 
-void BoardState::handleStealResource(Action::PackedAction action, PlayerId playerId) {
+Action::PackedAction BoardState::handleStealResource(Action::PackedAction action, PlayerId playerId) {
     auto enemyPlayerId = playerId == PlayerId::Player0 ? PlayerId::Player1 : PlayerId::Player0;
 
     uint32_t total = Player::totalResources(packedPlayers[static_cast<uint8_t>(enemyPlayerId)]);
+    if (total == 0) {
+        // Nothing to steal; keep action as-is for undo symmetry.
+        return action;
+    }
     uint32_t pick = RandomDevice::uniform_u32(total);
     int chosenRes = 0;
     uint32_t acc = 0;
@@ -939,6 +940,10 @@ void BoardState::handleStealResource(Action::PackedAction action, PlayerId playe
     // handleDiscardResources();
     Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(enemyPlayerId)], static_cast<Resource>(chosenRes), -1);
     Player::changeResourceQuantity(packedPlayers[static_cast<uint8_t>(playerId)], static_cast<Resource>(chosenRes), 1);
+
+    // Record which resource was stolen so undo can restore exactly.
+    action = Action::packArg1(action, static_cast<uint8_t>(chosenRes));
+    return action;
 }
 
 void BoardState::handleUndoStealResource(Action::PackedAction action, PlayerId playerId) {
@@ -1008,7 +1013,7 @@ void BoardState::applyAction(Action::PackedAction action) {
         handlePlayDevCardYearOfPlenty(action, playerId);
         break;
     case ActionType::PlayDevCardMonopoly:
-        handlePlayDevCardMonopoly(action, playerId);
+        action = handlePlayDevCardMonopoly(action, playerId);
         break;
     case ActionType::TradeBank:
         handleTradeBank(action, playerId);
@@ -1017,7 +1022,7 @@ void BoardState::applyAction(Action::PackedAction action) {
         handleReceiveResources(action, playerId);
         break;
     case ActionType::StealResource:
-        handleStealResource(action, playerId);
+        action = handleStealResource(action, playerId);
         break;
     case ActionType::PlaceInitialStructures:
         handlePlaceInitialStructures(action, playerId);

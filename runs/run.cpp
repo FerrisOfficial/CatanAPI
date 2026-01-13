@@ -5,7 +5,8 @@
 #include "players/it3Player.hpp"
 #include "players/it4Player.hpp"
 #include "players/it5Player.hpp"
-#include "players/it6Player.hpp"
+#include "players/paraPlayer.hpp"
+#include "players/paraSetit5Player.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -38,8 +39,11 @@ std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
     if (flag == "it5") {
         return std::make_unique<It5Player>();
     }
-    if (flag == "it6") {
-        return std::make_unique<It6Player>();
+    if (flag == "para") {
+        return std::make_unique<ParaPlayer>();
+    }
+    if (flag == "psit5") {
+        return std::make_unique<ParaSetIt5Player>();
     }
 
     return nullptr;
@@ -52,7 +56,8 @@ std::string display_name_from_flag(const std::string& flag) {
     if (flag == "it3") return "It3Player";
     if (flag == "it4") return "It4Player";
     if (flag == "it5") return "It5Player";
-    if (flag == "it6") return "It6Player";
+    if (flag == "para") return "ParaPlayer";
+    if (flag == "psit5") return "ParaSettleIt5Player";
     return flag;
 }
 
@@ -72,7 +77,8 @@ void print_usage(const char* exe) {
         << "  it3 It3Player\n"
         << "  it4 It4Player\n"
         << "  it5 It5Player\n"
-        << "  it6 It6Player\n";
+        << "  para ParaPlayer (params from ./players/paraPlayer.cfg; override via CATAN_PARA_CFG)\n"
+        << "  psit5 ParaSettleIt5Player (It5 + param init placement from ./players/paraSetit5Player.cfg; override via CATAN_PARA_SETIT5_CFG)\n";
 }
 
 struct Options {
@@ -344,8 +350,15 @@ int main(int argc, char** argv) {
                   << "NP=" << winsNP << "\n";
     }
 
-    // Preserve the original single-value output for scripts.
-    std::cout << "winner=" << winner_name << "\n";
-    std::cout << "turns=" << lastTurns << "\n";
+    // Preserve the original single-value output for scripts (single-game runs).
+    // For multi-game runs, printing just "winner=..." is ambiguous (it would mean last game only),
+    // so use explicit names.
+    if (opt.games == 1) {
+        std::cout << "winner=" << winner_name << "\n";
+        std::cout << "turns=" << lastTurns << "\n";
+    } else {
+        std::cout << "last_winner=" << winner_name << "\n";
+        std::cout << "last_turns=" << lastTurns << "\n";
+    }
     return 0;
 }

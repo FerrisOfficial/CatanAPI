@@ -246,7 +246,7 @@ struct BoardState {
     void handlePlayDevCardRoadBuilding(Action::PackedAction action, PlayerId playerId);
     void handlePlayDevCardYearOfPlenty(Action::PackedAction action, PlayerId playerId);
     Action::PackedAction handlePlayDevCardMonopoly(Action::PackedAction action, PlayerId playerId);
-    void handleStealResource(Action::PackedAction action, PlayerId playerId);
+    Action::PackedAction handleStealResource(Action::PackedAction action, PlayerId playerId);
     void handleTradeBank(Action::PackedAction action, PlayerId playerId);
     void handleReceiveResources(Action::PackedAction action, PlayerId playerId);
 
