@@ -7,6 +7,8 @@
 #include "players/it5Player.hpp"
 #include "players/paraPlayer.hpp"
 #include "players/paraSetit5Player.hpp"
+#include "players/alphaBetaPlayer.hpp"
+#include "players/oneResourcePlayer.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -44,6 +46,11 @@ std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
     }
     if (flag == "psit5") {
         return std::make_unique<ParaSetIt5Player>();
+    if (flag == "ab") {
+        return std::make_unique<alphaBetaPlayer>();
+    }
+    if (flag == "or") {
+        return std::make_unique<OneResourcePlayer>();
     }
 
     return nullptr;
@@ -79,6 +86,8 @@ void print_usage(const char* exe) {
         << "  it5 It5Player\n"
         << "  para ParaPlayer (params from ./players/paraPlayer.cfg; override via CATAN_PARA_CFG)\n"
         << "  psit5 ParaSettleIt5Player (It5 + param init placement from ./players/paraSetit5Player.cfg; override via CATAN_PARA_SETIT5_CFG)\n";
+        << "  ab AlphaBetaPlayer\n"
+        << "  or  OneResourcePlayer\n";
 }
 
 struct Options {

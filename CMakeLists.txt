@@ -50,6 +50,7 @@ set(GAME_SIM_SRC
   players/randomPlayer.cpp
   players/paraPlayer.cpp
   players/paraSetit5Player.cpp
+  players/playerHelpers.cpp
   game_simulation/game.cpp
   game_simulation/board.cpp
   game_simulation/board_generate_actions.cpp
