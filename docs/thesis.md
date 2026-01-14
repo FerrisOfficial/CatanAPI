@@ -505,3 +505,4 @@ pokazanie, czy koszt obliczeniowy alpha-beta się opłaca.
 - Catan - Wikipedia https://en.wikipedia.org/wiki/Catan
 - https://www.artofcatan.com/p/was-it-luck-or-skill
 - GoogleTest User’s Guide https://google.github.io/googletest/reference/testing.html
+- tkinter — Python interface to Tcl/Tk https://docs.python.org/3/library/tkinter.html
