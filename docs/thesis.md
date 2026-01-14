@@ -73,7 +73,7 @@ cel badawczy: projekt i porównanie botów o różnych strategiach
 
 # 4. Architektura i implementacja systemu
 
-## 4.1. Wybór technologii i narzędzi (C++, GoogleTest)
+## 4.1. Wybór technologii i narzędzi
 
 Implementacja gry została wykonana w języku **C++**, który zapewnia wysoką wydajność obliczeniową, pełną kontrolę nad zarządzaniem pamięcią oraz możliwość precyzyjnego modelowania struktur danych. Wybór ten był szczególnie istotny ze względu na planowane uruchamianie **dużej liczby symulacji rozgrywek** w celu porównywania strategii botów, co wymaga niskiego narzutu czasowego na pojedynczą symulację.
 
@@ -90,6 +90,10 @@ Do testowania poprawności implementacji zasad gry wykorzystano framework **Goog
 - automatyczną weryfikację niezmienników stanu gry po wykonaniu akcji.
 
 Testy pełnią istotną rolę w projekcie, ponieważ nawet niewielkie błędy w implementacji zasad mogą prowadzić do nieprawidłowych decyzji botów i zafałszowania wyników porównań strategii.
+
+W celu wsparcia analizy zachowania botów oraz ułatwienia debugowania silnika gry opracowano dodatkowe narzędzie do odtwarzania przebiegu rozgrywek. Narzędzie to zostało zaimplementowane w języku **Python** z wykorzystaniem biblioteki **Tkinter**, która została wybrana ze względu na dostępność w standardowej bibliotece języka, brak zależności zewnętrznych oraz wystarczającą funkcjonalność do tworzenia prostych interfejsów graficznych.
+
+Aplikacja umożliwia wizualne prześledzenie rozgrywki krok po kroku na podstawie zapisanego stanu gry, co pozwala na analizę decyzji podejmowanych przez boty oraz weryfikację poprawności działania mechanizmów silnika. Dane o przebiegu gry są zapisywane przez silnik w plikach w formacie **JSONL**, w których każda linia reprezentuje pojedyncze akcje. Takie rozwiązanie pozwala na efektywny zapis danych, ich łatwe przetwarzanie oraz jednoznaczne odtworzenie całej rozgrywki w narzędziu analitycznym.
 
 
 ## 4.2. Struktura projektu
@@ -296,12 +300,197 @@ Ostatnia wersja bota heurystycznego (it5) łączy wszystkie wcześniejsze kryter
 Bot ten reprezentuje **najbardziej zaawansowaną strategię heurystyczną** w pracy i stanowi bezpośredni punkt odniesienia dla bota wykorzystującego algorytm przeszukiwania drzewa gry, opisanego w kolejnym podrozdziale.
 
 ### 6.3. Bot wykorzystujący algorytm alpha-beta
-### 6.4. Porównanie złożoności i założeń strategii
+
+Kolejny, bardziej zaawansowanym graczem automatycznym jest bot wykorzystujący **algorytm przeszukiwania drzewa gry alpha-beta**. Jego celem jest podejmowanie decyzji na podstawie analizy przyszłych stanów gry, z uwzględnieniem możliwych odpowiedzi przeciwnika.
+
+W przeciwieństwie do botów heurystycznych, które oceniają jedynie pojedynczy ruch, bot alpha-beta eksploruje sekwencje akcji, traktując grę jako **dwuosobową grę o sumie zerowej** i zakładając racjonalne zachowanie przeciwnika.
+
+#### Podstawowa wersja algorytmu
+
+Początkowa implementacja bota opierała się na klasycznym algorytmie **minimax z obcinaniem alpha-beta**, przeszukującym drzewo gry do stałej głębokości. W węzłach drzewa:
+
+- gracz sterowany przez bota pełni rolę **maksymalizującą**,
+- przeciwnik traktowany jest jako gracz **minimalizujący** wartość funkcji oceny.
+
+Po osiągnięciu maksymalnej głębokości przeszukiwania lub stanu terminalnego, pozycja oceniana jest za pomocą **rozbudowanej funkcji heurystycznej**, uwzględniającej m.in.:
+
+- różnicę punktów zwycięstwa,
+- produkcję zasobów,
+- potencjał przyszłych osad,
+- stan zasobów na ręce,
+- długość najdłuższej drogi,
+- liczbę kart rozwoju.
+
+Głębokość przeszukiwania została ograniczona do niewielkiej wartości (maksymalnie 3), co wynika z dużego współczynnika rozgałęzienia drzewa gry *Catan*, szczególnie w fazach obejmujących liczne akcje handlu.
+
+
+#### Sortowanie akcji i poprawa skuteczności obcinania
+
+W praktyce okazało się, że naiwne przeszukiwanie drzewa, w którym akcje rozważane są w kolejności generowanej przez silnik gry, prowadzi do znacznych kosztów obliczeniowych i ogranicza efektywność obcinania alpha-beta.
+
+W celu przyspieszenia działania algorytmu wprowadzono **heurystyczne sortowanie akcji** przed ich eksploracją. Każdej legalnej, deterministycznej akcji przypisywana jest szybka, przybliżona ocena jakości, która:
+
+- preferuje akcje budowy miasta i osady,
+- promuje działania prowadzące do zdobycia punktów zwycięstwa,
+- wstępnie ocenia użyteczność handlu z bankiem.
+
+Następnie:
+
+Następnie:
+
+- w węzłach maksymalizujących akcje są rozważane w **kolejności malejącej** oceny,
+- w węzłach minimalizujących akcje są rozważane w **kolejności rosnącej** oceny.
+
+Takie uporządkowanie powoduje, że w węzłach maksymalizujących najsilniejsze ruchy analizowane są jako pierwsze, natomiast w węzłach minimalizujących priorytetowo rozważane są ruchy najbardziej niekorzystne dla gracza maksymalizującego. Dzięki temu znacznie częściej spełniony zostaje warunek obcinania (`beta ≤ alpha`), co prowadzi do istotnej redukcji liczby odwiedzanych węzłów drzewa gry.
+
+W praktyce umożliwia to przeszukiwanie głębszych drzew decyzyjnych przy tym samym budżecie czasowym, bez pogorszenia jakości podejmowanych decyzji.
+
+#### Adaptacja algorytmu do fazy gry
+
+Kolejnym istotnym rozszerzeniem algorytmu było wprowadzenie mechanizmu **dynamicznej adaptacji strategii do fazy gry**. Faza gry określana jest na podstawie maksymalnej liczby punktów zwycięstwa posiadanych przez dowolnego gracza:
+
+- **faza początkowa** – mniej niż 5 punktów zwycięstwa,
+- **faza środkowa** – od 5 do 7 punktów,
+- **faza końcowa** – 8 lub więcej punktów.
+
+W zależności od fazy gry modyfikowane są:
+
+- wagi składowych funkcji oceny,
+- maksymalna głębokość przeszukiwania,
+- liczba rozważanych akcji handlu,
+- priorytety typów akcji (np. budowa vs. handel).
+
+W fazie początkowej algorytm preferuje rozwój produkcji i elastyczność zasobów, przy jednoczesnym ograniczeniu głębokości przeszukiwania ze względu na bardzo dużą liczbę dostępnych akcji. W fazie środkowej równoważone są aspekty ekonomiczne i punktowe. Natomiast w fazie końcowej algorytm kładzie silny nacisk na **natychmiastowe zdobywanie punktów zwycięstwa**, zwiększając wagę budowy miast i osad oraz pogłębiając przeszukiwanie drzewa gry.
+
+
+#### Selekcja i filtrowanie akcji
+
+Aby dodatkowo ograniczyć złożoność obliczeniową, bot alpha-beta rozważa wyłącznie **akcje deterministyczne**, pomijając działania o losowym efekcie (np. dobór kart rozwoju), które nie są bezpośrednio modelowane w drzewie gry.
+
+Akcje handlu z bankiem są dodatkowo filtrowane — w każdej turze analizowana jest jedynie ograniczona liczba najlepiej ocenionych transakcji, przy czym limit ten zależy od aktualnej fazy gry. W fazie końcowej liczba rozważanych wymian jest celowo zmniejszana, aby skoncentrować obliczenia na akcjach prowadzących bezpośrednio do zakończenia rozgrywki.
+
+#### Integracja z botami heurystycznymi
+
+W sytuacjach, w których:
+
+- dostępne są wyłącznie akcje niedeterministyczne,
+- najlepszą decyzją według algorytmu okazuje się zakończenie tury,
+- lub wynik przeszukiwania nie poprawia bieżącej oceny pozycji,
+
+bot alpha-beta stosuje **mechanizm awaryjny**, delegując decyzję do najbardziej zaawansowanego bota heurystycznego (it5). Takie rozwiązanie zapewnia stabilność zachowania i zapobiega podejmowaniu decyzji ewidentnie gorszych od strategii heurystycznej.
+
+### 6.4. Bot celujący w jeden zasób (strategia monosurowcowa – bot eksperymentalny)
+
+Oprócz botów opisanych wcześniej zaimplementowano również dodatkowego gracza o wąsko wyspecjalizowanej strategii, nazwanego roboczo **OneResourcePlayer**. Jego założeniem jest maksymalizacja korzyści z jednego, wybranego surowca poprzez:
+
+- wybór **priorytetowego surowca** na podstawie aktualnej konfiguracji planszy,
+- dążenie do zajęcia **portu 2:1** dla tego surowca już w ustawieniach początkowych,
+- prowadzenie rozwoju infrastruktury (osady, miasta, drogi) w kierunku pól oraz portów związanych z tym surowcem,
+- wykonywanie transakcji z bankiem głównie wtedy, gdy zwiększają liczbę kart priorytetowego surowca.
+
+W odróżnieniu od bota alpha-beta, celem tego gracza nie jest optymalna gra w sensie minimaksowym, lecz sprawdzenie hipotezy: **czy silna specjalizacja w jeden surowiec i wczesne pozyskanie portu 2:1 może stanowić skuteczną strategię w wariancie 1 vs 1**. Z tego względu bot ten należy traktować jako **bot eksperymentalny**.
+
+#### Wybór priorytetowego surowca
+
+Priorytetowy surowiec wybierany jest automatycznie na podstawie parametrów planszy. Dla każdego surowca obliczane są cechy opisujące jego „atrakcyjność”:
+
+- suma oczek (pips) ze wszystkich heksów danego surowca (ogólna dostępność),
+- najlepszy pojedynczy węzeł (ile pipsów danego surowca może generować jedna osada),
+- najlepszy węzeł połączony z portem 2:1 dla tego surowca,
+- liczba heksów z danym surowcem.
+
+Na tej podstawie konstruowany jest wynik punktowy, w którym najwyżej premiowane są przypadki umożliwiające połączenie **dobrego źródła produkcji** z **portem 2:1**. Dodatkowo wprowadzono minimalne rozstrzyganie remisów na korzyść cegły i drewna (z uwagi na ich rolę w budowie dróg).
+
+#### Ustawienie początkowe: wymuszenie portu 2:1
+
+Najważniejszym elementem strategii OneResourcePlayer jest faza początkowa. Bot stara się tak dobrać pierwszą osadę, aby:
+
+1. znajdowała się na węźle z portem 2:1 odpowiadającym wybranemu surowcowi,
+2. miała możliwie wysoką produkcję tego surowca (wysokie pipsy),
+3. zapewniała sensowną możliwość rozwoju (premiowany jest „stopień” węzła, tj. liczba dostępnych krawędzi do dalszej rozbudowy dróg).
+
+Jeżeli wśród legalnych akcji nie ma możliwości uzyskania portu 2:1 dla najlepszego surowca (np. z uwagi na ograniczenia legalnych ustawień), bot podejmuje próbę znalezienia **jakiegokolwiek** portu 2:1 dostępnego w danym układzie, a dopiero w ostateczności wybiera pierwszą legalną akcję.
+
+Drugie ustawienie początkowe również preferuje surowiec priorytetowy (wysokie pipsy), ale dodatkowo wprowadza słabą heurystykę „uzupełniania braków” — premiowane są węzły dostarczające innych surowców, których bot nie miał w pierwszej osadzie, aby ograniczyć ryzyko całkowitego zablokowania rozwoju.
+
+
+#### Logika tury: specjalizacja zamiast balansu
+
+W normalnej fazie gry bot rozważa wyłącznie akcje deterministyczne i stosuje następującą kolejność priorytetów:
+
+1. **budowa miasta** – silnie premiowana, jeśli zwiększa produkcję priorytetowego surowca oraz (dodatkowo) leży na porcie 2:1,
+2. **budowa osady** – analogicznie premiowana w zależności od pipsów surowca priorytetowego oraz portu,
+3. **handel z bankiem** – wykonywany wyłącznie wtedy, gdy po wymianie liczba kart priorytetowego surowca wzrasta (czyli strategia aktywnie „pompuje” jeden surowiec),
+4. **budowa drogi** – oceniana przez funkcję potencjału, która bada węzły w zasięgu 1–2 krawędzi i premiuje:
+   - pipsy priorytetowego surowca w możliwych lokalizacjach osad,
+   - potencjalny dostęp do portu 2:1 dla priorytetowego surowca,
+   - możliwości dalszej rozbudowy (stopień węzła),
+   - przy jednoczesnym ignorowaniu miejsc, gdzie nie da się legalnie postawić osady (reguła odległości).
+
+Warto zauważyć, że strategia ta jest celowo **jednostronna**: bot często poświęca równowagę zasobów na rzecz maksymalizacji jednego kanału ekonomicznego (produkcja + port 2:1).
+
+#### Odrzucanie kart przy rozbójniku
+
+Bot implementuje również własną politykę zrzucania kart w sytuacji przekroczenia limitu (powyżej 9). Mechanizm ten:
+
+- wybiera „docelowy zakup” (miasto / osada / droga / karta rozwoju) poprzez minimalizację deficytu zasobów,
+- jednocześnie stosuje mocny bias na zachowanie surowca priorytetowego,
+- unika zrzucania zasobów niezbędnych do najbardziej sensownego zakupu.
+
+Dzięki temu bot stara się utrzymać spójność strategii nawet w sytuacjach przymusowej redukcji ręki.
+
+
+#### Mechanizm awaryjny: powrót do bota zbalansowanego
+
+W sytuacji, gdy żaden z ruchów nie daje wyraźnej korzyści w ramach strategii monosurowcowej, bot nie wykonuje losowych działań. Zamiast tego stosowany jest fallback do **It5Player**, czyli najbardziej zbalansowanego bota heurystycznego. Zapobiega to „utknięciu” strategii w stanach, w których dążenie do jednego surowca przestaje być racjonalne.
+
+
+#### Ocena wstępna i charakter eksperymentalny
+
+W późniejszych eksperymentach porównawczych okazało się, że strategia monosurowcowa **nie daje stabilnej przewagi** nad najlepszymi botami heurystycznymi ani nad botem alpha-beta. W szczególności:
+
+- nadmierna specjalizacja zwiększa ryzyko zablokowania rozwoju przy niekorzystnym rozkładzie rzutów,
+- strategia jest wrażliwa na to, czy port 2:1 faktycznie zostanie osiągnięty na silnym węźle,
+- przeciwnik może częściowo kontrować plan poprzez blokowanie kluczowych lokalizacji ekspansji.
+
+W związku z tym OneResourcePlayer należy traktować przede wszystkim jako **bot eksperymentalny**, zaprojektowany w celu przetestowania konkretnej hipotezy strategicznej i lepszego zrozumienia dynamiki gry w wariancie 1 vs 1, a nie jako docelowo najsilniejszego przeciwnika.
 
 ## 7. Eksperymenty i analiza wyników
 (Wspomnieć o tym że normalna gra w Catana trwa 60-70 tur i porównać to z botami)
 ### 7.1. Metodologia porównania botów
 ### 7.2. Scenariusze testowe
+### Scenariusz 1: Skalowanie jakości botów
+Każdy bot gra z losowym graczem
+
+Cel:
+pokazanie, że każdy kolejny bot jest obiektywnie lepszy od baseline.
+
+Porównania:
+Random vs it1
+Random vs it5
+Random vs AlphaBeta
+
+### Scenariusz 2: Porównanie heurystyk
+Boty heurystyczne między sobą
+Cel:
+uzasadnienie iteracyjnego podejścia.
+
+Porównania:
+it1 vs it3
+it3 vs it5
+
+### Scenariusz 3: Bot eksperymentalny
+OneResource vs it5 / AlphaBeta
+
+Cel:
+pokazanie, że ciekawa hipoteza ≠ najlepszy wynik.
+To bardzo dobrze wygląda:
+„strategia monosurowcowa jest interesująca, ale niestabilna”.
+
+### Scenariusz 4: Najlepszy vs najlepszy
+AlphaBeta vs it5
+Cel:
+pokazanie, czy koszt obliczeniowy alpha-beta się opłaca.
 ### 7.3. Wyniki eksperymentów
 ### 7.4. Analiza i interpretacja wyników
 
@@ -316,3 +505,4 @@ Bot ten reprezentuje **najbardziej zaawansowaną strategię heurystyczną** w pr
 - Catan - Wikipedia https://en.wikipedia.org/wiki/Catan
 - https://www.artofcatan.com/p/was-it-luck-or-skill
 - GoogleTest User’s Guide https://google.github.io/googletest/reference/testing.html
+- tkinter — Python interface to Tcl/Tk https://docs.python.org/3/library/tkinter.html

@@ -105,7 +105,7 @@ Resource choose_priority_resource(const Board::BoardState* board) {
 	int bestScore = std::numeric_limits<int>::min();
 	Resource bestR = Resource::Brick;
 
-	for (Resource r : {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Ore}) {
+	for (Resource r : {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Grain}) {
 		const int idx = static_cast<int>(r);
 
 		// Weights chosen so that:

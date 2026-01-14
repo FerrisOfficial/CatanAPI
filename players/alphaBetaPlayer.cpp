@@ -18,7 +18,7 @@ using PlayerHelpers::production_score_for_player;
 using PlayerHelpers::settlement_potential_score;
 using PlayerHelpers::is_deterministic_action;
 
-constexpr int kMaxDepth = 3;
+constexpr int kMaxDepth = 3; // search depth (ply-based)
 
 enum class GamePhase {
     Early,   // Max VP < 5
@@ -53,6 +53,7 @@ int evaluate_position(const Board::BoardState* board, PlayerId selfId) {
     int vpWeight = 50000;
     if (phase == GamePhase::Late) {
         vpWeight = 100000; // Drastically increase VP importance in endgame
+        // Extra bonus if we're close to winning
         if (selfVP >= 9) vpWeight = 200000;
     } else if (phase == GamePhase::Mid) {
         vpWeight = 65000;
@@ -63,11 +64,11 @@ int evaluate_position(const Board::BoardState* board, PlayerId selfId) {
     int prodWeight = 35;
     int potWeight = 12;
     if (phase == GamePhase::Late) {
-        prodWeight = 15;
-        potWeight = 5;
+        prodWeight = 15;  // Production matters less when racing to 10 VP
+        potWeight = 5;    // Settlement potential matters less
     } else if (phase == GamePhase::Early) {
-        prodWeight = 45;
-        potWeight = 18;
+        prodWeight = 45;  // Production very important early
+        potWeight = 18;   // Expansion potential critical
     }
     
     const int prodTerm = prodWeight * (production_score_for_player(board, selfId) - production_score_for_player(board, enemyId));
@@ -85,11 +86,11 @@ int evaluate_position(const Board::BoardState* board, PlayerId selfId) {
     
     if (phase == GamePhase::Late) {
         // In late game, prioritize immediate VP gains
-        cityDefWeight = 4500;
-        settleDefWeight = 3500;
-        devDefWeight = 1200;
+        cityDefWeight = 4500;      // Cities are 2 VP, heavily prioritize
+        settleDefWeight = 3500;    // Settlements are 1 VP, also important
+        devDefWeight = 1200;       // Dev cards can be VPs too
     } else if (phase == GamePhase::Early) {
-        settleDefWeight = 2000;
+        settleDefWeight = 2000;    // Settlements more important than cities early
         cityDefWeight = 1800;
     }
     
@@ -108,8 +109,8 @@ int evaluate_position(const Board::BoardState* board, PlayerId selfId) {
     int devWeight = 250;
     int roadWeight = 200;
     if (phase == GamePhase::Late) {
-        devWeight = 400;
-        roadWeight = 500;
+        devWeight = 400;   // Dev cards can have VPs
+        roadWeight = 500;  // Longest road is 2 VP, critical in endgame
     }
     
     const int devTerm = devWeight * (static_cast<int>(Player::totalDevCards(selfPacked)) - static_cast<int>(Player::totalDevCards(enemyPacked)));
@@ -124,11 +125,11 @@ int quick_action_score(Action::PackedAction action, const Board::BoardState* boa
     
     switch (type) {
         case ActionType::BuildCity:
-            return 10000;
+            return 10000; // Highest priority: +2 VP
         case ActionType::BuildSettlement:
-            return 9000;
+            return 9000;  // High priority: +1 VP and production
         case ActionType::BuildRoad:
-            return 3000;
+            return 3000;  // Medium priority: enables settlements
         case ActionType::TradeBank: {
             // Evaluate if trade helps us afford high-value purchases
             const auto selfPacked = board->packedPlayers[static_cast<uint8_t>(selfId)];
@@ -143,14 +144,15 @@ int quick_action_score(Action::PackedAction action, const Board::BoardState* boa
             return 2000 - (cityDefBefore + settleDefBefore) * 100;
         }
         case ActionType::EndTurn:
-            return 0;
+            return 0;  // Lowest priority
         default:
             return 1000;
     }
 }
 
-
+// Alpha-beta minimax search
 int alphaBeta(Board::BoardState* board, PlayerId selfId, int depth, int alpha, int beta, bool maximizing) {
+    // Terminal conditions
     if (depth == 0) {
         return evaluate_position(board, selfId);
     }
@@ -190,13 +192,13 @@ int alphaBeta(Board::BoardState* board, PlayerId selfId, int depth, int alpha, i
 
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
-            if (beta <= alpha) break;
+            if (beta <= alpha) break; // Beta cutoff
         }
         return maxEval;
     } else {
         // Sort ascending for minimizing player (try worst moves for opponent first)
         std::sort(scoredActions.begin(), scoredActions.end(),
-                  [](const auto& a, const auto& b) { return a.first > b.first; });
+                  [](const auto& a, const auto& b) { return a.first < b.first; });
         
         int minEval = std::numeric_limits<int>::max();
         for (const auto& [score, a] : scoredActions) {
@@ -206,7 +208,7 @@ int alphaBeta(Board::BoardState* board, PlayerId selfId, int depth, int alpha, i
 
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
-            if (beta <= alpha) break;
+            if (beta <= alpha) break; // Alpha cutoff
         }
         return minEval;
     }
@@ -221,9 +223,9 @@ Action::PackedAction alphaBetaPlayer::getTurnAction() {
     if (actions.empty()) return Action::getEmptyAction();
 
     // Separate deterministic from non-deterministic actions
-    std::vector<Action::PackedAction> buildActions;
-    std::vector<Action::PackedAction> tradeActions;
-    std::vector<Action::PackedAction> otherActions;
+    std::vector<Action::PackedAction> buildActions;    // Cities, settlements, roads
+    std::vector<Action::PackedAction> tradeActions;    // Bank trades
+    std::vector<Action::PackedAction> otherActions;    // Everything else
     Action::PackedAction devBuyAction = Action::getEmptyAction();
     Action::PackedAction endTurnAction = Action::getEmptyAction();
 
