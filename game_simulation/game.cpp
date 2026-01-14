@@ -77,7 +77,7 @@ auto callPlayerGuarded(const Game& game, Board::BoardState& board, IPlayer& play
     return result;
 }
 
-}
+} // namespace
 
 Game::Game(IPlayer& p1, IPlayer& p2)
     : player1(p1)

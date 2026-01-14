@@ -9,6 +9,8 @@
 #include "players/paraSetit5Player.hpp"
 #include "players/alphaBetaPlayer.hpp"
 #include "players/oneResourcePlayer.hpp"
+#include "players/devPlayer.hpp"
+#include "players/roadPlayer.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -53,6 +55,12 @@ std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
     if (flag == "or") {
         return std::make_unique<OneResourcePlayer>();
     }
+    if (flag == "dev") {
+        return std::make_unique<DevPlayer>();
+    }
+    if (flag == "road") {
+        return std::make_unique<RoadPlayer>();
+    }
 
     return nullptr;
 }
@@ -66,7 +74,16 @@ std::string display_name_from_flag(const std::string& flag) {
     if (flag == "it5") return "It5Player";
     if (flag == "para") return "ParaPlayer";
     if (flag == "psit5") return "ParaSettleIt5Player";
+    if (flag == "dev") return "DevPlayer";
+    if (flag == "road") return "RoadPlayer";
     return flag;
+}
+
+std::string bybot_label(const std::string& flag, char which, bool disambiguate) {
+    if (!disambiguate) return flag;
+    std::ostringstream oss;
+    oss << which << "(" << flag << ")";
+    return oss.str();
 }
 
 void print_usage(const char* exe) {
@@ -88,7 +105,9 @@ void print_usage(const char* exe) {
         << "  para ParaPlayer (params from ./players/paraPlayer.cfg; override via CATAN_PARA_CFG)\n"
         << "  psit5 ParaSettleIt5Player (It5 + param init placement from ./players/paraSetit5Player.cfg; override via CATAN_PARA_SETIT5_CFG)\n"
         << "  ab  alphaBetaPlayer\n"
-        << "  or  OneResourcePlayer\n";
+        << "  or  OneResourcePlayer\n"
+        << "  dev DevPlayer (heavily prioritizes development cards)\n"
+        << "  road RoadPlayer (road-focused, aims for long continuous road)\n";
 }
 
 struct Options {
@@ -234,6 +253,8 @@ int main(int argc, char** argv) {
     const std::string p0_flag = positional[0];
     const std::string p1_flag = positional[1];
 
+    const bool sameFlags = (p0_flag == p1_flag);
+
     // Validate flags early.
     if (!make_player_from_flag(p0_flag) || !make_player_from_flag(p1_flag)) {
         std::cerr << "Unknown player flag(s): '" << p0_flag << "', '" << p1_flag << "'\n";
@@ -248,6 +269,13 @@ int main(int argc, char** argv) {
         std::cout << "Note: dump is ON and will create " << opt.games << " log files in ./logs. "
                   << "Use --no-dump for batch runs.\n";
     }
+
+    if (opt.games > 1 && sameFlags && !opt.switchSeats) {
+        std::cout << "Note: you are running the same bot ('" << p0_flag << "' vs '" << p1_flag
+                  << "') without --switch. Results will reflect seat advantage (P0/P1), not bot strength. "
+                  << "Use --switch for a fair ~50/50 comparison.\n";
+    }
+
     std::cout << "Running " << opt.games << " game(s): " << p0_name << " vs " << p1_name
               << " | dump=" << (opt.dump ? "on" : "off")
               << " | switchSeats=" << (opt.switchSeats ? "on" : "off") << "\n";
@@ -295,13 +323,20 @@ int main(int argc, char** argv) {
             }
 
             // Map seat winner back to the original bot ordering.
-            if (winner == PlayerId::NoPlayer) {
-                // nothing
-            } else {
+            // IMPORTANT: When flags are identical (e.g., it5 vs it5), comparing strings cannot
+            // distinguish bot A from bot B. Use seating (and swap state) instead.
+            if (winner != PlayerId::NoPlayer) {
                 const bool seat0Won = (winner == PlayerId::Player0);
-                const std::string& winningFlag = seat0Won ? seat0_flag : seat1_flag;
-                if (winningFlag == p0_flag) ++winsBotA;
-                else if (winningFlag == p1_flag) ++winsBotB;
+                const bool seat0IsBotA = !swapped; // when swapped, seat0 is botB
+
+                if (seat0Won) {
+                    if (seat0IsBotA) ++winsBotA;
+                    else ++winsBotB;
+                } else {
+                    // seat1 won
+                    if (seat0IsBotA) ++winsBotB;
+                    else ++winsBotA;
+                }
             }
 
         } catch (const std::exception& e) {
@@ -316,6 +351,8 @@ int main(int argc, char** argv) {
         maxTurns = std::max(maxTurns, lastTurns);
 
         if (gameIndex == 1 || gameIndex == opt.games || (gameIndex % progressEvery) == 0) {
+            const std::string botAProgressLabel = bybot_label(p0_flag, 'A', sameFlags);
+            const std::string botBProgressLabel = bybot_label(p1_flag, 'B', sameFlags);
             print_progress(
                 gameIndex,
                 opt.games,
@@ -325,8 +362,8 @@ int main(int argc, char** argv) {
                 winsBotA,
                 winsBotB,
                 opt.switchSeats,
-                p0_flag,
-                p1_flag,
+                botAProgressLabel,
+                botBProgressLabel,
                 totalTurns,
                 maxTurns,
                 start
@@ -354,9 +391,11 @@ int main(int argc, char** argv) {
               << ", speed=" << std::fixed << std::setprecision(1) << gps << " g/s\n";
 
     if (opt.switchSeats) {
+        const std::string botALabel = bybot_label(p0_flag, 'A', sameFlags);
+        const std::string botBLabel = bybot_label(p1_flag, 'B', sameFlags);
         std::cout << "ByBot: "
-                  << p0_flag << "=" << winsBotA << ", "
-                  << p1_flag << "=" << winsBotB << ", "
+                  << botALabel << "=" << winsBotA << ", "
+                  << botBLabel << "=" << winsBotB << ", "
                   << "NP=" << winsNP << "\n";
     }
 
