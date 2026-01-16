@@ -881,7 +881,7 @@ Action::PackedAction greedy_pick_from_scores(const std::vector<std::pair<double,
 
     if (p.policy_temperature > 1e-9) {
         // Softmax sampling.
-        double maxS = -1e300;
+        double maxS = 0;
         for (const auto& it : scored) maxS = std::max(maxS, it.first);
 
         std::vector<double> w;
@@ -1104,7 +1104,7 @@ Action::PackedAction ParaPlayer::getMoveRobber() {
     auto actions = boardState->generateMoveRobberActions(selfId);
     if (actions.empty()) return Action::getEmptyAction();
 
-    double best = -1e300;
+    double best = 0;
     Action::PackedAction bestA = actions[0];
 
     for (auto a : actions) {
@@ -1154,7 +1154,7 @@ Action::PackedAction ParaPlayer::getTurnAction() {
     // 1) If we can build a city/settlement, prefer the best of those by simulation.
     {
         Action::PackedAction bestBuild = Action::getEmptyAction();
-        double bestBuildScore = -1e300;
+        double bestBuildScore = 0;
         for (auto a : actions) {
             const auto t = Action::unpackType(a);
             if (t != ActionType::BuildCity && t != ActionType::BuildSettlement) continue;
@@ -1258,7 +1258,7 @@ Action::PackedAction ParaPlayer::getTurnAction() {
     // Avoid ending the turn if it makes the position worse.
     if (Action::unpackType(pick) == ActionType::EndTurn) {
         Action::PackedAction bestAlt = Action::getEmptyAction();
-        double bestAltScore = -1e300;
+        double bestAltScore = 0;
         for (const auto& it : scored) {
             if (Action::unpackType(it.second) == ActionType::EndTurn) continue;
             if (it.first > bestAltScore) {

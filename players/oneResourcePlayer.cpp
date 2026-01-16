@@ -228,9 +228,9 @@ int road_priority_potential(const Board::BoardState* board, EdgeId edgeId, Resou
 		s += 50 * pips;
 
 		// Large bonus for potential 2:1 port to the prioritized resource.
-		if (node_has_2to1_port(board, nodeId, prio)) {
-			s += 600;
-		}
+		// if (node_has_2to1_port(board, nodeId, prio)) {
+		// 	s += 600;
+		// }
 
 		// Minimal bonus for node "degree" (more road/settlement options).
 		const auto adj = Board::Node::getAdjacentEdges(board->nodes[nodeId]);

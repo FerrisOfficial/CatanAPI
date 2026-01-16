@@ -453,7 +453,7 @@ inline BoardState::BoardState() noexcept {
     edges[26] = Edge::makeEdge(19, 20);
     edges[27] = Edge::makeEdge(20, 21);
     edges[28] = Edge::makeEdge(21, 22);
-    edges[29] = Edge::makeEdge(29, 23);
+    edges[29] = Edge::makeEdge(22, 23);
     edges[30] = Edge::makeEdge(23, 24);
     edges[31] = Edge::makeEdge(24, 25);
     edges[32] = Edge::makeEdge(25, 26);
