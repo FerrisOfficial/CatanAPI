@@ -105,7 +105,7 @@ Resource choose_priority_resource(const Board::BoardState* board) {
 	int bestScore = std::numeric_limits<int>::min();
 	Resource bestR = Resource::Brick;
 
-	for (Resource r : {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Ore}) {
+	for (Resource r : {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Grain}) {
 		const int idx = static_cast<int>(r);
 
 		// Weights chosen so that:
@@ -228,9 +228,9 @@ int road_priority_potential(const Board::BoardState* board, EdgeId edgeId, Resou
 		s += 50 * pips;
 
 		// Large bonus for potential 2:1 port to the prioritized resource.
-		if (node_has_2to1_port(board, nodeId, prio)) {
-			s += 600;
-		}
+		// if (node_has_2to1_port(board, nodeId, prio)) {
+		// 	s += 600;
+		// }
 
 		// Minimal bonus for node "degree" (more road/settlement options).
 		const auto adj = Board::Node::getAdjacentEdges(board->nodes[nodeId]);

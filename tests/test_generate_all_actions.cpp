@@ -634,6 +634,41 @@ INSTANTIATE_TEST_SUITE_P(
     )
 );
 
+TEST_F(ActionTest, ExpectBuildSettlementActionsWithFiveRoads){
+    setPlayersResourcesSeven();
+
+    std::vector<EdgeId> myRoadEdgeIds = {43, 50};
+    std::vector<NodeId> myCityNodeIds = {32, 40};
+    std::vector<EdgeId> enemyRoadEdgeIds = {7, 31, 37};
+    std::vector<NodeId> enemySettlementNodeIds = {2, 35};
+
+    for (const auto& edgeId : myRoadEdgeIds) {
+        boardState.edges[edgeId] = Edge::packHasRoad(boardState.edges[edgeId], true);
+        boardState.edges[edgeId] = Edge::packOwner(boardState.edges[edgeId], PlayerId::Player0);
+    }
+
+    for (const auto& edgeId : enemyRoadEdgeIds) {
+        boardState.edges[edgeId] = Edge::packHasRoad(boardState.edges[edgeId], true);
+        boardState.edges[edgeId] = Edge::packOwner(boardState.edges[edgeId], PlayerId::Player1);
+    }
+
+    for (const auto& nodeId : myCityNodeIds) {
+        boardState.nodes[nodeId] = Node::packStructure(boardState.nodes[nodeId], StructureType::City);
+        boardState.nodes[nodeId] = Node::packOwner(boardState.nodes[nodeId], PlayerId::Player0);
+    }
+
+    for (const auto& nodeId : enemySettlementNodeIds) {
+        boardState.nodes[nodeId] = Node::packStructure(boardState.nodes[nodeId], StructureType::Settlement);
+        boardState.nodes[nodeId] = Node::packOwner(boardState.nodes[nodeId], PlayerId::Player1);
+    }
+
+    std::vector<Action::PackedAction> buildSettlementActions;
+
+    buildSettlementActions = boardState.generateBuildSettlementActions(PlayerId::Player0);
+
+    EXPECT_EQ(buildSettlementActions.size(), 0);
+}
+
 TEST_F(ActionTest, ExpectBuildSettlementWithGoodDistance){
     setPlayersResourcesSeven();
 

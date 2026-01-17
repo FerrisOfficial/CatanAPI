@@ -615,11 +615,7 @@ class BoardRenderer:
                 ax, ay = self.node_pos[a]
                 bx, by = self.node_pos[b]
 
-                # Defensive: if geometry placement went wrong for a node, skip absurdly long segments.
-                if math.hypot(ax - bx, ay - by) > 3.0 * self.size:
-                    if has_road:
-                        roads_skipped_too_long += 1
-                    continue
+                # Always draw built roads; don't skip based on segment length.
                 owner = int(e.get("owner", 2)) if isinstance(e.get("owner"), int) else 2
 
                 if has_road:

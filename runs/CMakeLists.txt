@@ -15,6 +15,8 @@ add_executable(run
     ${CMAKE_SOURCE_DIR}/players/it5Player.cpp
     ${CMAKE_SOURCE_DIR}/players/alphaBetaPlayer.cpp
     ${CMAKE_SOURCE_DIR}/players/oneResourcePlayer.cpp
+    ${CMAKE_SOURCE_DIR}/players/devPlayer.cpp
+    ${CMAKE_SOURCE_DIR}/players/roadPlayer.cpp
 )
 
 target_include_directories(run PRIVATE

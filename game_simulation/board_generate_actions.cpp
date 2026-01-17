@@ -119,13 +119,12 @@ std::vector<Action::PackedAction> BoardState::generateBuildSettlementActions(
 
             for (int i = 0; i < 3; ++i) {
                 EdgeId adjacentEdgeId = Node::unpackAdjacentEdge(nodes[nodeId], i);
-                
-                if (Edge::unpackHasRoad(edges[adjacentEdgeId]) &&
-                    Edge::unpackOwner(edges[adjacentEdgeId]) == playerId) {
-                    hasAtLeastOneAdjacentRoad = true;
-                }
 
                 if (adjacentEdgeId != EdgeIdNone) {
+                    if (Edge::unpackHasRoad(edges[adjacentEdgeId]) &&
+                    Edge::unpackOwner(edges[adjacentEdgeId]) == playerId) {
+                        hasAtLeastOneAdjacentRoad = true;
+                    }
                     Edge::PackedEdge adjacentEdge = edges[adjacentEdgeId];
                     NodeId adjacentNodeA = Edge::unpackAdjacentNode(adjacentEdge, 0);
                     NodeId adjacentNodeB = Edge::unpackAdjacentNode(adjacentEdge, 1);

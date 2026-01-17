@@ -2,6 +2,7 @@
 
 #include "game_simulation/board.hpp"
 #include "utils/randomDevice.hpp"
+#include "playerHelpers.hpp"
 
 #include <algorithm>
 #include <array>
@@ -17,6 +18,8 @@
 #include <vector>
 
 namespace {
+
+using PlayerHelpers::dice_pips;
 
 constexpr const char* PARA_SETIT5_CFG_ENV = "CATAN_PARA_SETIT5_CFG";
 
@@ -198,22 +201,6 @@ const ParaSettleParams& get_cached_params() {
     return params;
 }
 
-uint8_t dice_pips(uint8_t diceNumber) {
-    switch (diceNumber) {
-        case 2:  return 1;
-        case 3:  return 2;
-        case 4:  return 3;
-        case 5:  return 4;
-        case 6:  return 5;
-        case 8:  return 5;
-        case 9:  return 4;
-        case 10: return 3;
-        case 11: return 2;
-        case 12: return 1;
-        default: return 0;
-    }
-}
-
 int node_production_score(const Board::BoardState* board, NodeId nodeId, const ParaSettleParams& p) {
     if (nodeId >= NODE_COUNT) return std::numeric_limits<int>::min();
     const auto node = board->nodes[nodeId];
@@ -236,7 +223,7 @@ int node_production_score(const Board::BoardState* board, NodeId nodeId, const P
         const auto hex = board->hexes[h];
         const Resource r = Board::Hex::unpackResource(hex);
         if (r == Resource::NoResource) continue;
-        const uint8_t pip = dice_pips(Board::Hex::unpackCatanNumber(hex));
+        const uint8_t pip = PlayerHelpers::dice_pips(Board::Hex::unpackCatanNumber(hex));
         s += static_cast<double>(pip) * res_weight(r);
     }
 
