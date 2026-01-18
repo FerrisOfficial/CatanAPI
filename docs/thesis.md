@@ -192,10 +192,6 @@ Całość tworzy **deterministyczny, testowalny i wydajny system symulacji**, kt
 
 ## 6. Projekt i implementacja botów
 
-Celem niniejszego rozdziału jest opis zaprojektowanych i zaimplementowanych graczy automatycznych (botów), które zostały wykorzystane do badań porównawczych w dalszej części pracy. Boty różnią się stopniem złożoności strategii decyzyjnej – od gracza w pełni losowego, pełniącego rolę punktu odniesienia, po boty heurystyczne rozwijane iteracyjnie poprzez stopniowe wzbogacanie funkcji oceny stanu gry.
-
-Takie podejście umożliwia analizę wpływu poszczególnych elementów strategii na skuteczność rozgrywki oraz pozwala na obserwację, w jakim stopniu nawet proste heurystyki poprawiają jakość decyzji względem losowego wyboru akcji.
-
 
 ## 6.1. Gracz losowy (baseline)
 
@@ -267,37 +263,91 @@ Pierwsza wersja bota heurystycznego (it1) opiera się na najbardziej oczywistym 
 
 Strategia ta jest prosta, lecz krótkowzroczna – nie uwzględnia przyszłej produkcji zasobów ani kontroli przestrzeni na planszy.
 
-#### it2 – uwzględnienie produkcji zasobów
+#### it2 – zarządzanie zasobami i handel z bankiem
 
-W drugiej iteracji dodano ocenę potencjalnej **produkcji surowców** wynikającej z budowy osady lub miasta. Akcje zwiększające dostęp do heksów o wysokim prawdopodobieństwie produkcji (numery 6 i 8) są premiowane.
+Druga iteracja bota wprowadza fundamentalną zmianę: **aktywne wykorzystanie handlu z bankiem** do optymalizacji ścieżki do zakupu struktur.
 
-Bot zaczyna w ten sposób preferować lokalizacje zapewniające stabilny dopływ zasobów, co przekłada się na większą liczbę możliwych akcji w kolejnych turach.
+Bot wykrywa kontrolowane porty (2:1 specyficzne, 3:1 generyczne, 4:1 standardowy bank) i wykorzystuje je do przekształcania nadwyżek surowców w brakujące zasoby. Kluczowym mechanizmem jest ocena **osiągalności celu po uwzględnieniu handlu** poprzez obliczenie, ile surowców pozostanie do zdobycia nawet po optymalnej wymianie nadwyżek.
 
-#### it3 – kontrola przestrzeni i sieci dróg
+Bot wybiera cel zakupu nie na podstawie tego, co może kupić natychmiast, lecz **do czego jest najbliżej po serii transakcji**. Może świadomie zrezygnować z budowy drogi, jeśli po wymianie zasobów będzie w stanie zbudować osadę lub miasto. Handel jest rozważany przed akcjami niższego priorytetu (drogi, karty rozwoju), co pozwala systematycznie gromadzić zasoby do celów wysokowartościowych.
 
-Trzecia wersja heurystyki rozszerza ocenę o aspekty **przestrzenne**:
+Hierarchia priorytetów:
+```
+Miasto/Osada (natychmiast) → Handel (w kierunku celu) → Droga → Karta rozwoju → Koniec tury
+```
 
-- ciągłość sieci dróg,
-- blokowanie potencjalnych lokalizacji przeciwnika,
-- dostęp do nowych węzłów budowy.
+Strategia ta redukuje liczbę „martwych tur" i przyspiesza osiąganie celów wysokowartościowych, jednak nadal nie analizuje aspektów przestrzennych planszy.
 
-Bot it3 nie tylko rozwija własną infrastrukturę, ale również aktywnie ogranicza możliwości rozwoju przeciwnika.
+#### it3 – optymalizacja fazy początkowej i kontrola przeciwnika
 
-#### it4 – zarządzanie zasobami i kosztami
+Trzecia iteracja wprowadza **strategię ustawień początkowych** oraz mechanizm aktywnego ograniczania rozwoju przeciwnika poprzez mądre użycie rozbójnika.
 
-W czwartej iteracji uwzględniono bieżący stan zasobów gracza. Akcje, które prowadzą do nadmiernego gromadzenia jednego typu surowca kosztem innych, są karane niższą oceną.
+**Ocena węzłów początkowych** uwzględnia produkcję ważoną (pipsy × wagi surowców, gdzie brick/lumber = 5, grain/wool = 4, ore = 3), co odzwierciedla potrzeby wczesnej ekspansji. Bot silnie premiuje **różnorodność zasobów** (+25 za każdy unikalny typ) i karze duplikaty na tym samym węźle (-20 za powtórzenie), preferując węzły typu [brick, lumber, grain] nad [lumber, lumber, grain]. Porty są oceniane wyżej w drugim ustawieniu niż w pierwszym.
 
-Celem tej heurystyki jest:
+**Strategia drugiego ustawienia** jest komplementarna: bot analizuje, jakich surowców brakuje z pierwszej osady i premiuje węzły dostarczające nowych typów zasobów (+18 za każdy nowy, +10 dodatkowego za brick/lumber). Celem jest pokrycie wszystkich pięciu typów surowców zamiast kumulacji tych samych.
 
-- zmniejszenie liczby „martwych tur”,
-- utrzymanie elastyczności decyzyjnej,
-- lepsze wykorzystanie banku zasobów.
+**Rozbójnik jako narzędzie kontroli**: bot maksymalizuje szkody dla przeciwnika (pipsy × 30 × wartość przeciwnika) przy jednoczesnej minimalizacji własnych strat (pipsy × 45 × własna wartość). Silnie preferowane są heksy, gdzie tylko przeciwnik posiada budynki. Strategia unika blokowania pustych pól i własnej produkcji.
+
+Bot it3 łączy zbalansowany rozwój ekonomiczny z aktywną obroną, jednak nadal dziedziczy zarządzanie zasobami z it2 dla fazy głównej gry.
+
+#### it4 – inteligentne użycie kart rozwoju i selekcja deterministyczna
+
+Czwarta iteracja wprowadza dwie fundamentalne innowacje: **zaawansowane zarządzanie kartami rozwoju** oraz **deterministyczny wybór najlepszej akcji budowy** (w miejsce losowego wyboru z it1–it3).
+
+Bot implementuje odrębną logikę dla każdego typu karty rozwoju. **Knight** oceniany jest według szkód dla przeciwnika (+10000 za zdobycie Largest Army, +2000 jeśli odbiera ją przeciwnikowi, +700 za możliwość kradzieży kart). **Monopoly** akceptowany tylko gdy przeciwnik ma ≥3 kart danego surowca; bot modeluje stan po monopoly i przyznaje +8000 jeśli pozwoli kupić miasto, +6000 za osadę. **Year of Plenty** wybiera pary surowców maksymalizujące redukcję deficytu do najbliższego zakupu (+9000 za unlock miasta).
+
+Kluczowym mechanizmem jest **świadomość ryzyka pre-roll**: karty zwiększające rękę (Monopoly, Year of Plenty) są karane (-4500) jeśli projekcja ręki przekracza 10 kart przed rzutem, co chroni przed stratami przy wyrzuceniu 7. Karty bezpieczne (Knight, Road Building) nie mają tej kary.
+
+**Deterministyczny wybór budowy** preferuje węzły o najwyższej produkcji ważonej (ore=14, grain=13 > brick/lumber=12 > wool=11), co odzwierciedla potrzeby mid-game (miasta, dev cards). Drogi oceniane są według potencjału otwieranych węzłów (3× production score). Bot adaptuje strategię do fazy gry: przy VP≥6 preferuje dev cards nad drogami, chyba że droga ma wyjątkowo wysoki score (>4200).
 
 #### it5 – heurystyka zbalansowana
 
-Ostatnia wersja bota heurystycznego (it5) łączy wszystkie wcześniejsze kryteria w jedną, zbalansowaną funkcję oceny. Wagi poszczególnych składowych zostały dobrane eksperymentalnie na podstawie wyników symulacji.
+Piąta i finalna iteracja bota heurystycznego wprowadza dwa kluczowe ulepszenia: **inteligentne zarządzanie zrzucaniem kart** oraz **symulacyjną ocenę akcji** wykorzystującą mechanizm apply/undo silnika gry. Bot it5 reprezentuje najbardziej zaawansowaną strategię heurystyczną w pracy, łącząc wszystkie wcześniejsze mechanizmy z nowymi technikami oceny pozycji.
 
-Bot ten reprezentuje **najbardziej zaawansowaną strategię heurystyczną** w pracy i stanowi bezpośredni punkt odniesienia dla bota wykorzystującego algorytm przeszukiwania drzewa gry, opisanego w kolejnym podrozdziale.
+**Inteligentne zrzucanie kart przy przekroczeniu limitu**
+
+Gdy gracz posiada więcej niż 9 kart i musi zrzucić połowę po wyrzuceniu 7, bot it5 implementuje strategię opartą na **celu zakupu**. Mechanizm działa w trzech krokach:
+
+1. **Wybór najlepszego celu** — bot analizuje wszystkie możliwe zakupy (miasto, osada, droga, karta rozwoju) i wybiera ten, do którego jest najbliżej pod względem deficytu zasobów. W przypadku remisu preferowane są cele wyższej wartości (miasto > osada > droga > karta rozwoju).
+
+2. **Dynamiczne wagi zasobów** — dla wybranego celu bot przypisuje wagi każdemu typowi surowca, odzwierciedlające jego znaczenie dla danego zakupu. Wagi bazowe (brick=10, lumber=10, wool=8, grain=12, ore=13) są modyfikowane w zależności od celu:
+   - **Miasto**: +10 ore, +8 grain (priorytet surowców do miast)
+   - **Osada**: +7 brick/lumber, +6 wool/grain (zbalansowany mix)
+   - **Droga**: +8 brick/lumber (podstawowe surowce)
+   - **Karta rozwoju**: +7 ore/grain/wool (elastyczność)
+
+3. **Preferencja nadwyżek** — bot silnie preferuje zrzucanie zasobów, które są nadwyżką względem wybranego celu. Zasoby potrzebne do zakupu są chronione dodatkową karą (+500), co minimalizuje ryzyko zablokowania możliwości zakupu w następnej turze.
+
+Strategia ta zapewnia, że nawet w sytuacji przymusowego zrzucania kart, bot zachowuje spójność z długoterminowym planem zakupów i nie traci kluczowych zasobów.
+
+**Symulacyjna ocena akcji**
+
+Najważniejszą innowacją bota it5 jest wykorzystanie **symulacji akcji** do oceny ich jakości. Zamiast polegać wyłącznie na heurystykach statycznych, bot:
+
+1. **Symuluje każdą deterministyczną akcję** — dla akcji budowy miasta, osady, drogi oraz handlu z bankiem, bot tymczasowo stosuje akcję (`applyAction()`), ocenia wynikową pozycję za pomocą funkcji `evaluate_position()`, a następnie cofa akcję (`undoLastAction()`).
+
+2. **Premiuje akcje odblokowujące** — akcje handlu i budowy dróg otrzymują dodatkowy bonus (+8000 za odblokowanie możliwości budowy miasta, +5000 za osadę), jeśli po ich wykonaniu bot mógłby natychmiast zbudować strukturę wysokiej wartości. Mechanizm ten pozwala botowi planować sekwencje akcji zamiast oceniać je w izolacji.
+
+3. **Hierarchia priorytetów z symulacją**:
+   - **Miasta i osady** — wszystkie legalne akcje są symulowane, wybierana jest ta o najwyższej ocenie pozycji
+   - **Drogi i handel** — również oceniane przez symulację, z dodatkowymi bonusami za odblokowanie
+   - **Karty rozwoju** — oceniane heurystycznie (bez symulacji, ze względu na losowość), z modyfikacjami zależnymi od fazy gry i pozycji względem przeciwnika
+
+**Adaptacja do fazy gry i pozycji**
+
+Bot it5 uwzględnia kontekst rozgrywki przy podejmowaniu decyzji:
+
+- **Karty rozwoju** są preferowane gdy bot jest w tyle względem przeciwnika (+2500 bonus) lub w fazie środkowej gry, ale karane w fazie końcowej (VP≥8, -500) oraz gdy dostępne są lepsze opcje deterministyczne (handel -500, droga -200).
+
+- **Fallback do it4** — jeśli symulacja nie wskazuje wyraźnie lepszej akcji niż obecna pozycja, bot deleguje decyzję do strategii it4, zapewniając stabilność zachowania.
+
+- **Ochrona przed regresją** — bot unika wyboru `EndTurn`, jeśli ocena pozycji po zakończeniu tury byłaby gorsza niż obecna, ponownie korzystając z fallbacku do it4.
+
+**Podsumowanie strategii it5**
+
+Bot it5 łączy wszystkie mechanizmy z poprzednich iteracji (handel, kontrola przestrzeni, zarządzanie kartami rozwoju) z nowymi technikami: inteligentnym zrzucaniem kart oraz symulacyjną oceną akcji. Dzięki wykorzystaniu mechanizmu apply/undo silnika gry, bot może oceniać konsekwencje akcji w sposób bardziej precyzyjny niż czysto heurystyczne podejście, zachowując jednocześnie niski koszt obliczeniowy w porównaniu do pełnego przeszukiwania drzewa gry. Strategia ta stanowi punkt odniesienia dla bota wykorzystującego algorytm alpha-beta, opisanego w kolejnym podrozdziale.
+
+
 
 ### 6.3. Bot wykorzystujący algorytm alpha-beta
 
@@ -333,8 +383,6 @@ W celu przyspieszenia działania algorytmu wprowadzono **heurystyczne sortowanie
 - preferuje akcje budowy miasta i osady,
 - promuje działania prowadzące do zdobycia punktów zwycięstwa,
 - wstępnie ocenia użyteczność handlu z bankiem.
-
-Następnie:
 
 Następnie:
 
@@ -506,3 +554,4 @@ pokazanie, czy koszt obliczeniowy alpha-beta się opłaca.
 - https://www.artofcatan.com/p/was-it-luck-or-skill
 - GoogleTest User’s Guide https://google.github.io/googletest/reference/testing.html
 - tkinter — Python interface to Tcl/Tk https://docs.python.org/3/library/tkinter.html
+- https://www.alcumena.fundacjapsc.pl/index.php/alcumena/article/download/337/182/710
