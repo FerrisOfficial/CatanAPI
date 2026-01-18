@@ -21,7 +21,40 @@ Algorytmy sztucznej inteligencji umożliwiają symulowanie tysięcy rozgrywek w 
 
 *Catan* (wcześniej znany jako *The Settlers of Catan*) to strategiczna gra planszowa zaprojektowana przez Klausa Teubera, w której gracze rozwijają osadnictwo na wyspie poprzez pozyskiwanie surowców, handel oraz budowę dróg, osad i miast. Rozgrywka łączy elementy planowania ekonomicznego z umiarkowaną losowością wynikającą z rzutów kośćmi decydujących o produkcji zasobów.
 
-#### Zalety gry *Catan*
+### 1.2.1. Plansza, cel gry i podstawowe zasady
+
+Plansza gry *Catan* składa się z heksagonalnych pól reprezentujących różne typy terenu, takich jak lasy, wzgórza, pola uprawne, pastwiska oraz góry, z których każde odpowiada określonemu rodzajowi surowca. Pola te rozmieszczone są w sposób modularny, co powoduje, że każda rozgrywka posiada inną konfigurację przestrzenną. Pomiędzy heksami znajdują się węzły (skrzyżowania), na których gracze mogą budować osady i miasta, oraz krawędzie, na których budowane są drogi.
+
+Celem gry jest zdobycie **10 punktów zwycięstwa** (15 w wariancie rozgrywki 1 vs 1), które przyznawane są głównie za budowę osad i miast, a także za osiągnięcia specjalne (np. Najdłuższa Droga, Największa Armia) oraz karty punktowe. W dalszej części pracy punkty zwycięstwa będą oznaczane skrótem **VP** (ang. *Victory Points*). Rozgrywka toczy się w turach, a zwycięstwo następuje natychmiast po osiągnięciu wymaganej liczby punktów przez jednego z graczy.
+
+Każdy typ pola produkcyjnego na planszy odpowiada określonemu surowcowi:
+- lasy produkują drewno (*Lumber*),
+- wzgórza produkują cegłę (*Brick*),
+- pola uprawne produkują zboże (*Grain*),
+- pastwiska produkują wełnę (*Wool*),
+- góry produkują rudę (*Ore*).
+
+Pola pustynne nie generują zasobów i stanowią początkową lokalizację rozbójnika.
+
+Podstawowy przebieg tury obejmuje rzut dwiema kośćmi sześciennymi, który determinuje produkcję zasobów na planszy. Gracze otrzymują surowce z tych pól, których numer odpowiada wyrzuconej sumie, pod warunkiem że posiadają przy nich osady lub miasta. Następnie możliwe jest prowadzenie handlu (z innymi graczami lub z bankiem) oraz wykonywanie akcji budowy, takich jak wznoszenie dróg, osad, miast lub zakup kart rozwoju.
+
+Istotnym elementem gry jest losowość wynikająca z rzutów kośćmi, która wpływa na tempo pozyskiwania zasobów, jednak decyzje strategiczne — wybór lokalizacji budowy, kierunek rozwoju infrastruktury oraz zarządzanie zasobami — mają kluczowe znaczenie dla długoterminowego sukcesu. Ta kombinacja **niepełnej informacji, losowości i planowania** sprawia, że *Catan* stanowi interesujące środowisko badawcze dla analizy algorytmów decyzyjnych i strategii gry.
+
+### 1.2.2. Produkcja zasobów i miara pipsów
+
+Każde pole produkcyjne (heks) na planszy posiada przypisaną liczbę z zakresu 2–12 (z wyjątkiem 7, który odpowiada aktywacji rozbójnika). Liczby te odpowiadają możliwym sumom wyrzuconym na dwóch sześciennych kościach. Ze względu na różną liczbę kombinacji prowadzących do danej sumy, poszczególne liczby mają odmienne prawdopodobieństwo wystąpienia. W praktyce wprowadza się miarę **pipsów** (z ang. *pips*, dosłownie: oczka na kości), która odzwierciedla częstość występowania danej liczby:
+
+- **2 lub 12**: 1 pipsa (1 kombinacja: 1+1 lub 6+6),
+- **3 lub 11**: 2 pipsy (2 kombinacje: 1+2, 2+1 lub 5+6, 6+5),
+- **4 lub 10**: 3 pipsy (3 kombinacje),
+- **5 lub 9**: 4 pipsy (4 kombinacje),
+- **6 lub 8**: 5 pipsów (5 kombinacji).
+
+Liczba 7 nie występuje na heksach produkcyjnych — jej wyrzucenie aktywuje rozbójnika i wymusza odrzucenie połowy kart przez graczy posiadających więcej niż siedem zasobów.
+
+Miara pipsów stanowi użyteczne narzędzie analityczne, ponieważ bezpośrednio odzwierciedla **wartość oczekiwaną produkcji** z danego pola. Heksy o wyższych pipsach generują zasoby częściej, co czyni je bardziej wartościowymi celami w fazie ustawień początkowych oraz podczas oceny potencjału produkcyjnego pozycji gracza. Pojęcie to będzie wykorzystywane w dalszej części pracy przy opisie strategii botów, które oceniają jakość lokalizacji budowy oraz prognozują przyszłą produkcję zasobów.
+
+### 1.2.4. Zalety gry *Catan*
 
 Jedną z najczęściej wskazywanych zalet gry Catan jest umiejętne połączenie relatywnie prostych zasad z wysokim poziomem satysfakcji oraz znaczną głębią strategiczną. W recenzji opublikowanej na łamach magazynu Pyramid podkreślono, że gra oferuje satysfakcjonujące doświadczenie rozwoju ekonomicznego i wymiany zasobów, przy jednocześnie umiarkowanym czasie rozgrywki, wynoszącym zazwyczaj od półtorej do dwóch godzin. Zwrócono uwagę, że poziom satysfakcji płynący z rozgrywki jest porównywalny z grami o znacznie dłuższym czasie trwania.
 
@@ -153,18 +186,24 @@ Wszystkie działania w grze są reprezentowane przez jednolity typ **akcji**, za
 - opcjonalne argumenty (np. identyfikatory heksów, węzłów, krawędzi),
 - wektor zasobów, jeżeli akcja tego wymaga.
 
-Taka reprezentacja upraszcza interfejs pomiędzy botami a silnikiem gry — bot zawsze zwraca jedną wartość opisującą swoją decyzję, a silnik interpretuje ją zgodnie z typem akcji.
+Taka reprezentacja upraszcza interfejs pomiędzy botami a silnikiem gry — bot zawsze zwraca jedną wartość opisującą swoją decyzję, a silnik interpretuje ją zgodnie z typem akcji. Jednocześnie pozwala ona traktować akcje jako **dane**, które mogą być przechowywane, kopiowane oraz przekazywane pomiędzy komponentami systemu.
+
+Zaprojektowany system akcji został **zainspirowany wzorcem projektowym *Command***. Zgodnie z jego założeniami, każda akcja stanowi samodzielny opis żądanej operacji, oddzielony od logiki jej wykonania. Odpowiedzialność za interpretację i realizację akcji spoczywa na silniku gry, który pełni rolę wykonawcy, natomiast boty oraz logika sterująca rozgrywką jedynie generują i przekazują akcje do wykonania. Takie rozdzielenie zmniejsza sprzężenie pomiędzy komponentami oraz ułatwia rozbudowę systemu o nowe typy działań.
 
 Silnik gry implementuje mechanizm **apply / undo**, który obejmuje:
 
-- zastosowanie akcji do bieżącego stanu,
-- zapis minimalnej informacji potrzebnej do cofnięcia skutków,
+- zastosowanie akcji do bieżącego stanu gry,
+- zapis minimalnej informacji potrzebnej do cofnięcia jej skutków,
 - możliwość przywrócenia poprzedniego stanu gry.
+
+W praktyce oznacza to, że każda akcja niesie ze sobą komplet informacji pozwalających nie tylko na jej wykonanie, lecz również na deterministyczne cofnięcie zmian, co jest charakterystyczną cechą implementacji wzorca *Command* z obsługą historii poleceń. Informacje potrzebne do cofania są zapisywane w sposób minimalny, co ogranicza narzut pamięciowy i czasowy.
 
 Mechanizm cofania ruchów jest kluczowy dla:
 
-- botów analizujących wiele wariantów przyszłych stanów,
-- testów jednostkowych,
+- botów analizujących wiele wariantów przyszłych stanów gry,
+- algorytmów przeszukiwania drzewa decyzji,
+- testów jednostkowych oraz regresyjnych,
+- symulacji deterministycznych i odtwarzania przebiegu rozgrywki.
 - symulacji deterministycznych.
 
 
@@ -184,6 +223,8 @@ Boty otrzymują dostęp wyłącznie do **odczytu stanu gry**, a po wykonaniu dec
 
 Całość tworzy **deterministyczny, testowalny i wydajny system symulacji**, który stanowi solidną podstawę do dalszej części pracy, poświęconej implementacji i analizie graczy automatycznych.
 
+## Modul do odtwarzania rozgrywek
+
 
 ## 5. Testowanie i weryfikacja poprawności
 ### 5.1. Strategia testowania
@@ -191,6 +232,10 @@ Całość tworzy **deterministyczny, testowalny i wydajny system symulacji**, kt
 ### 5.3. Walidacja zgodności z zasadami gry
 
 ## 6. Projekt i implementacja botów
+
+Celem niniejszego rozdziału jest opis zaprojektowanych i zaimplementowanych graczy automatycznych (botów), które zostały wykorzystane do badań porównawczych w dalszej części pracy. Boty różnią się stopniem złożoności strategii decyzyjnej – od gracza w pełni losowego, pełniącego rolę punktu odniesienia, po boty heurystyczne rozwijane iteracyjnie poprzez stopniowe wzbogacanie funkcji oceny stanu gry.
+
+Architektura botów została zaprojektowana w oparciu o wzorzec projektowy **Strategy**. Silnik gry współpracuje z botami poprzez wspólny interfejs gracza, natomiast konkretne implementacje strategii decyzyjnej są enkapsulowane w klasach poszczególnych botów. Umożliwia to wymienne stosowanie różnych algorytmów podejmowania decyzji bez konieczności modyfikacji logiki silnika, a także ułatwia prowadzenie eksperymentów porównawczych pomiędzy strategiami.
 
 
 ## 6.1. Gracz losowy (baseline)
@@ -232,30 +277,7 @@ Pomimo tego, dzięki losowości rzutów kośćmi, bot ten jest w stanie okazjona
 
 ## 6.2. Boty heurystyczne
 
-Drugą grupę graczy automatycznych stanowią **boty heurystyczne**, które podejmują decyzje na podstawie uproszczonej oceny jakości dostępnych akcji. W przeciwieństwie do gracza losowego, boty te wykorzystują wiedzę domenową o mechanice gry *Catan*, jednak nie stosują przeszukiwania drzewa gry ani symulacji przyszłych stanów.
-
-Zastosowano podejście **iteracyjnego ulepszania strategii**, w którym każda kolejna wersja bota rozszerza poprzednią o nowe kryteria oceny.
-
-### 6.2.1. Założenia wspólne
-
-Wszystkie boty heurystyczne (it1–it5) działają według wspólnego schematu:
-
-1. silnik gry generuje listę legalnych akcji,
-2. dla każdej akcji bot oblicza **wartość heurystyczną**,
-3. wybierana jest akcja o najwyższej ocenie,
-4. w przypadku remisu stosowane jest losowe rozstrzygnięcie.
-
-Heurystyka ma charakter **funkcji punktowej**, której wartość jest sumą ważonych składowych opisujących bieżące korzyści i potencjalne ryzyka związane z daną akcją.
-
-Takie podejście pozwala zachować:
-
-- niski koszt obliczeniowy decyzji,
-- deterministyczność zachowania (z wyjątkiem remisów),
-- łatwość modyfikacji i rozszerzania strategii.
-
-### 6.2.2. Iteracyjne rozszerzanie heurystyk (it1–it5)
-
-Proces projektowania botów heurystycznych przebiegał iteracyjnie. Każda kolejna wersja bota rozszerzała funkcję oceny o nowe elementy, obserwowane jako istotne podczas analizy rozgrywek poprzednich wersji.
+Proces projektowania botów heurystycznych przebiegał iteracyjnie. Każda kolejna wersja bota rozszerzała funkcję oceny o nowe elementy, obserwowane jako istotne podczas analizy rozgrywek poprzednich wersji. Takie podejście umożliwia analizę wpływu poszczególnych elementów strategii na skuteczność rozgrywki oraz pozwala na obserwację, w jakim stopniu nawet proste heurystyki poprawiają jakość decyzji względem losowego wyboru akcji.
 
 #### it1 – heurystyka punktów zwycięstwa
 
@@ -300,58 +322,38 @@ Kluczowym mechanizmem jest **świadomość ryzyka pre-roll**: karty zwiększają
 
 **Deterministyczny wybór budowy** preferuje węzły o najwyższej produkcji ważonej (ore=14, grain=13 > brick/lumber=12 > wool=11), co odzwierciedla potrzeby mid-game (miasta, dev cards). Drogi oceniane są według potencjału otwieranych węzłów (3× production score). Bot adaptuje strategię do fazy gry: przy VP≥6 preferuje dev cards nad drogami, chyba że droga ma wyjątkowo wysoki score (>4200).
 
-#### it5 – heurystyka zbalansowana
+#### it5 – heurystyka zbalansowana ze symulacją pozycji
 
-Piąta i finalna iteracja bota heurystycznego wprowadza dwa kluczowe ulepszenia: **inteligentne zarządzanie zrzucaniem kart** oraz **symulacyjną ocenę akcji** wykorzystującą mechanizm apply/undo silnika gry. Bot it5 reprezentuje najbardziej zaawansowaną strategię heurystyczną w pracy, łącząc wszystkie wcześniejsze mechanizmy z nowymi technikami oceny pozycji.
+Piąta iteracja bota (it5) stanowi rozwinięcie podejścia heurystycznego poprzez wprowadzenie **lokalnej symulacji skutków akcji** (ang. *one-step lookahead*) oraz bardziej zbalansowanej oceny pozycji. W przeciwieństwie do wcześniejszych botów, które w dużej mierze opierały się na statycznych rankingach priorytetów lub prostych punktacjach, it5 podejmuje decyzję na podstawie **porównania jakości stanu gry przed i po wykonaniu rozważanej akcji**.
 
-**Inteligentne zrzucanie kart przy przekroczeniu limitu**
+Podstawowym mechanizmem jest funkcja oceny pozycji `evaluate_position`, która zwraca skalarną wartość opisującą „siłę” aktualnego stanu z perspektywy bota. W każdej turze bot generuje listę akcji legalnych, a następnie dla każdej z nich wykonuje cykl:
 
-Gdy gracz posiada więcej niż 9 kart i musi zrzucić połowę po wyrzuceniu 7, bot it5 implementuje strategię opartą na **celu zakupu**. Mechanizm działa w trzech krokach:
+- tymczasowe zastosowanie akcji do stanu gry (`applyAction`),
+- obliczenie wartości oceny nowego stanu,
+- cofnięcie akcji (`undoLastAction`),
+- wybór akcji dającej najwyższy wynik.
 
-1. **Wybór najlepszego celu** — bot analizuje wszystkie możliwe zakupy (miasto, osada, droga, karta rozwoju) i wybiera ten, do którego jest najbliżej pod względem deficytu zasobów. W przypadku remisu preferowane są cele wyższej wartości (miasto > osada > droga > karta rozwoju).
+W praktyce tworzy to prosty, lecz efektywny schemat selekcji: **akcje są porównywane nie po typie, lecz po realnym wpływie na stan gry**, co poprawia jakość decyzji szczególnie w sytuacjach, gdzie kilka ruchów ma podobny „priorytet” (np. alternatywne budowy dróg lub transakcje z bankiem).
 
-2. **Dynamiczne wagi zasobów** — dla wybranego celu bot przypisuje wagi każdemu typowi surowca, odzwierciedlające jego znaczenie dla danego zakupu. Wagi bazowe (brick=10, lumber=10, wool=8, grain=12, ore=13) są modyfikowane w zależności od celu:
-   - **Miasto**: +10 ore, +8 grain (priorytet surowców do miast)
-   - **Osada**: +7 brick/lumber, +6 wool/grain (zbalansowany mix)
-   - **Droga**: +8 brick/lumber (podstawowe surowce)
-   - **Karta rozwoju**: +7 ore/grain/wool (elastyczność)
+Bot rozróżnia działania deterministyczne i niedeterministyczne. Symulacja jest wykonywana wyłącznie dla akcji, których skutek jest jednoznaczny (m.in. **budowa**, **handel z bankiem**, **zakończenie tury**). Dzięki temu unika się błędnej oceny ruchów obarczonych losowością (np. zakup karty rozwoju), dla których stosowana jest oddzielna heurystyka.
 
-3. **Preferencja nadwyżek** — bot silnie preferuje zrzucanie zasobów, które są nadwyżką względem wybranego celu. Zasoby potrzebne do zakupu są chronione dodatkową karą (+500), co minimalizuje ryzyko zablokowania możliwości zakupu w następnej turze.
+Logika wyboru akcji ma strukturę wieloetapową:
 
-Strategia ta zapewnia, że nawet w sytuacji przymusowego zrzucania kart, bot zachowuje spójność z długoterminowym planem zakupów i nie traci kluczowych zasobów.
+1. **Natychmiastowa budowa struktur punktujących** – jeżeli możliwa jest budowa **miasta** lub **osady**, bot symuluje dostępne warianty i wybiera najlepszy wprost na podstawie oceny pozycji. Zapewnia to zgodność z nadrzędnym celem gry (zdobywanie punktów zwycięstwa), przy jednoczesnym wyborze wariantu maksymalizującego globalną jakość stanu.
 
-**Symulacyjna ocena akcji**
+2. **Ocena akcji wspierających rozwój** – w przypadku braku możliwości natychmiastowej budowy, bot analizuje deterministyczne akcje typu **budowa drogi** oraz **handel z bankiem**. Dodatkowo premiowane są działania, które **odblokowują w kolejnym kroku** możliwość budowy miasta lub osady (np. poprzez uzupełnienie brakujących zasobów).
 
-Najważniejszą innowacją bota it5 jest wykorzystanie **symulacji akcji** do oceny ich jakości. Zamiast polegać wyłącznie na heurystykach statycznych, bot:
+3. **Zakup karty rozwoju jako heurystyka awaryjna** – zakup karty rozwoju nie jest symulowany ze względu na losowość talii, lecz oceniany heurystycznie w zależności od fazy gry oraz relacji punktów zwycięstwa bota do przeciwnika. Opcja ta jest preferowana jedynie w sytuacjach braku korzystnych akcji deterministycznych.
 
-1. **Symuluje każdą deterministyczną akcję** — dla akcji budowy miasta, osady, drogi oraz handlu z bankiem, bot tymczasowo stosuje akcję (`applyAction()`), ocenia wynikową pozycję za pomocą funkcji `evaluate_position()`, a następnie cofa akcję (`undoLastAction()`).
+4. **Fallback do strategii it4** – jeżeli najlepszą ocenioną akcją okazuje się zakończenie tury bez poprawy sytuacji, bot powraca do logiki it4, aby uniknąć pasywnego stylu gry w stanach, w których wcześniejsze heurystyki potrafią znaleźć konstruktywne posunięcie.
 
-2. **Premiuje akcje odblokowujące** — akcje handlu i budowy dróg otrzymują dodatkowy bonus (+8000 za odblokowanie możliwości budowy miasta, +5000 za osadę), jeśli po ich wykonaniu bot mógłby natychmiast zbudować strukturę wysokiej wartości. Mechanizm ten pozwala botowi planować sekwencje akcji zamiast oceniać je w izolacji.
+Rozwinięty został również mechanizm **odrzucania kart przy wyrzuceniu 7**. it5 nie usuwa zasobów losowo, lecz najpierw identyfikuje najbardziej prawdopodobny cel rozwoju (miasto, osada, droga lub karta rozwoju), a następnie odrzuca te surowce, które są **najmniej istotne dla jego realizacji**. Zasoby krytyczne dla wybranego celu są chronione, natomiast odrzucane są przede wszystkim nadwyżki.
 
-3. **Hierarchia priorytetów z symulacją**:
-   - **Miasta i osady** — wszystkie legalne akcje są symulowane, wybierana jest ta o najwyższej ocenie pozycji
-   - **Drogi i handel** — również oceniane przez symulację, z dodatkowymi bonusami za odblokowanie
-   - **Karty rozwoju** — oceniane heurystycznie (bez symulacji, ze względu na losowość), z modyfikacjami zależnymi od fazy gry i pozycji względem przeciwnika
-
-**Adaptacja do fazy gry i pozycji**
-
-Bot it5 uwzględnia kontekst rozgrywki przy podejmowaniu decyzji:
-
-- **Karty rozwoju** są preferowane gdy bot jest w tyle względem przeciwnika (+2500 bonus) lub w fazie środkowej gry, ale karane w fazie końcowej (VP≥8, -500) oraz gdy dostępne są lepsze opcje deterministyczne (handel -500, droga -200).
-
-- **Fallback do it4** — jeśli symulacja nie wskazuje wyraźnie lepszej akcji niż obecna pozycja, bot deleguje decyzję do strategii it4, zapewniając stabilność zachowania.
-
-- **Ochrona przed regresją** — bot unika wyboru `EndTurn`, jeśli ocena pozycji po zakończeniu tury byłaby gorsza niż obecna, ponownie korzystając z fallbacku do it4.
-
-**Podsumowanie strategii it5**
-
-Bot it5 łączy wszystkie mechanizmy z poprzednich iteracji (handel, kontrola przestrzeni, zarządzanie kartami rozwoju) z nowymi technikami: inteligentnym zrzucaniem kart oraz symulacyjną oceną akcji. Dzięki wykorzystaniu mechanizmu apply/undo silnika gry, bot może oceniać konsekwencje akcji w sposób bardziej precyzyjny niż czysto heurystyczne podejście, zachowując jednocześnie niski koszt obliczeniowy w porównaniu do pełnego przeszukiwania drzewa gry. Strategia ta stanowi punkt odniesienia dla bota wykorzystującego algorytm alpha-beta, opisanego w kolejnym podrozdziale.
-
-
+W rezultacie it5 łączy zalety wcześniejszych iteracji (deterministyczna selekcja oraz rozsądne priorytety) z większą świadomością konsekwencji podejmowanych decyzji wynikającą z lokalnej symulacji stanu. Strategia ta pozostaje relatywnie lekka obliczeniowo, a jednocześnie znacząco poprawia jakość decyzji w porównaniu do czysto regułowych heurystyk.
 
 ### 6.3. Bot wykorzystujący algorytm alpha-beta
 
-Kolejny, bardziej zaawansowanym graczem automatycznym jest bot wykorzystujący **algorytm przeszukiwania drzewa gry alpha-beta**. Jego celem jest podejmowanie decyzji na podstawie analizy przyszłych stanów gry, z uwzględnieniem możliwych odpowiedzi przeciwnika.
+Kolejnym graczem automatycznym jest bot wykorzystujący **algorytm przeszukiwania drzewa gry alpha-beta**. Jego celem jest podejmowanie decyzji na podstawie analizy przyszłych stanów gry, z uwzględnieniem możliwych odpowiedzi przeciwnika.
 
 W przeciwieństwie do botów heurystycznych, które oceniają jedynie pojedynczy ruch, bot alpha-beta eksploruje sekwencje akcji, traktując grę jako **dwuosobową grę o sumie zerowej** i zakładając racjonalne zachowanie przeciwnika.
 
@@ -373,6 +375,7 @@ Po osiągnięciu maksymalnej głębokości przeszukiwania lub stanu terminalnego
 
 Głębokość przeszukiwania została ograniczona do niewielkiej wartości (maksymalnie 3), co wynika z dużego współczynnika rozgałęzienia drzewa gry *Catan*, szczególnie w fazach obejmujących liczne akcje handlu.
 
+W trakcie przeszukiwania drzewa gry bot nie modeluje jawnie losowych rzutów kośćmi (co znacząco zwiększałoby współczynnik rozgałęzienia), jednak uwzględnia ich wpływ w sposób przybliżony poprzez **wartość oczekiwaną produkcji zasobów**. W tym celu dla każdej pozycji obliczana jest miara produkcji oparta o tzw. *pipsy* – liczbę oczek odpowiadającą prawdopodobieństwu wyrzucenia danego numeru heksu. Węzły (osady i miasta) oceniane są na podstawie sumy wartości `pips × waga_surowca` dla przyległych heksów, przy czym miasta otrzymują podwojony wkład produkcyjny. Taka agregacja stanowi aproksymację przewidywanej liczby otrzymanych zasobów w kolejnych turach i pozwala botowi preferować linie rozgrywki prowadzące do stabilniejszej oraz bardziej wartościowej ekonomicznie produkcji, bez konieczności explicite symulowania wszystkich możliwych wyników rzutów kośćmi.
 
 #### Sortowanie akcji i poprawa skuteczności obcinania
 
@@ -427,27 +430,29 @@ W sytuacjach, w których:
 
 bot alpha-beta stosuje **mechanizm awaryjny**, delegując decyzję do najbardziej zaawansowanego bota heurystycznego (it5). Takie rozwiązanie zapewnia stabilność zachowania i zapobiega podejmowaniu decyzji ewidentnie gorszych od strategii heurystycznej.
 
-### 6.4. Bot celujący w jeden zasób (strategia monosurowcowa – bot eksperymentalny)
+### 6.4 Boty celujące w jedną strategię
+
+### 6.4.1. Bot celujący w jeden zasób
 
 Oprócz botów opisanych wcześniej zaimplementowano również dodatkowego gracza o wąsko wyspecjalizowanej strategii, nazwanego roboczo **OneResourcePlayer**. Jego założeniem jest maksymalizacja korzyści z jednego, wybranego surowca poprzez:
 
 - wybór **priorytetowego surowca** na podstawie aktualnej konfiguracji planszy,
-- dążenie do zajęcia **portu 2:1** dla tego surowca już w ustawieniach początkowych,
+- zajęcia **portu 2:1** dla tego surowca już w ustawieniach początkowych,
 - prowadzenie rozwoju infrastruktury (osady, miasta, drogi) w kierunku pól oraz portów związanych z tym surowcem,
-- wykonywanie transakcji z bankiem głównie wtedy, gdy zwiększają liczbę kart priorytetowego surowca.
+- wykorzystanie nadprodukcji priorytetowego zasobu do handlu z bankiem po korzystnym kursie 2:1.
 
-W odróżnieniu od bota alpha-beta, celem tego gracza nie jest optymalna gra w sensie minimaksowym, lecz sprawdzenie hipotezy: **czy silna specjalizacja w jeden surowiec i wczesne pozyskanie portu 2:1 może stanowić skuteczną strategię w wariancie 1 vs 1**. Z tego względu bot ten należy traktować jako **bot eksperymentalny**.
+Celem tego gracza jest sprawdzenie hipotezy: **czy silna specjalizacja w jeden surowiec i wczesne pozyskanie portu 2:1 może stanowić skuteczną strategię w wariancie 1 vs 1**. Z tego względu bot ten należy traktować jako **bot eksperymentalny**.
 
 #### Wybór priorytetowego surowca
 
-Priorytetowy surowiec wybierany jest automatycznie na podstawie parametrów planszy. Dla każdego surowca obliczane są cechy opisujące jego „atrakcyjność”:
+Priorytetowy surowiec wybierany jest automatycznie na podstawie parametrów planszy. Dla każdego surowca obliczane są cechy opisujące jego „atrakcyjność":
 
-- suma oczek (pips) ze wszystkich heksów danego surowca (ogólna dostępność),
+- suma pipsów ze wszystkich heksów danego surowca (ogólna dostępność produkcji),
 - najlepszy pojedynczy węzeł (ile pipsów danego surowca może generować jedna osada),
-- najlepszy węzeł połączony z portem 2:1 dla tego surowca,
-- liczba heksów z danym surowcem.
+- najlepszy węzeł połączony z portem 2:1 dla tego surowca (kluczowe dla strategii),
+- liczba heksów z danym surowcem (różnorodność źródeł).
 
-Na tej podstawie konstruowany jest wynik punktowy, w którym najwyżej premiowane są przypadki umożliwiające połączenie **dobrego źródła produkcji** z **portem 2:1**. Dodatkowo wprowadzono minimalne rozstrzyganie remisów na korzyść cegły i drewna (z uwagi na ich rolę w budowie dróg).
+Na tej podstawie konstruowany jest wynik punktowy z wagami: port 2:1 na silnym węźle (+60 za każdy pips), produkcja z najlepszego węzła (+40 za pips), łączna suma pipsów (+50 za pips) oraz liczba heksów (+10). Dodatkowo wprowadzono minimalne rozstrzyganie remisów na korzyść cegły i drewna (+20) z uwagi na ich rolę w budowie dróg.
 
 #### Ustawienie początkowe: wymuszenie portu 2:1
 
@@ -455,53 +460,70 @@ Najważniejszym elementem strategii OneResourcePlayer jest faza początkowa. Bot
 
 1. znajdowała się na węźle z portem 2:1 odpowiadającym wybranemu surowcowi,
 2. miała możliwie wysoką produkcję tego surowca (wysokie pipsy),
-3. zapewniała sensowną możliwość rozwoju (premiowany jest „stopień” węzła, tj. liczba dostępnych krawędzi do dalszej rozbudowy dróg).
+3. zapewniała sensowną możliwość rozwoju (premiowany jest stopień węzła, tj. liczba dostępnych krawędzi do dalszej rozbudowy dróg).
 
-Jeżeli wśród legalnych akcji nie ma możliwości uzyskania portu 2:1 dla najlepszego surowca (np. z uwagi na ograniczenia legalnych ustawień), bot podejmuje próbę znalezienia **jakiegokolwiek** portu 2:1 dostępnego w danym układzie, a dopiero w ostateczności wybiera pierwszą legalną akcję.
+Jeżeli wśród legalnych akcji nie ma możliwości uzyskania portu 2:1 dla najlepszego surowca (np. z uwagi na ograniczenia legalnych ustawień), bot podejmuje próbę znalezienia **jakiegokolwiek** portu 2:1 dostępnego w danym układzie i dostosowuje wybór priorytetowego surowca. Dopiero w ostateczności wybiera pierwszą legalną akcję.
 
-Drugie ustawienie początkowe również preferuje surowiec priorytetowy (wysokie pipsy), ale dodatkowo wprowadza słabą heurystykę „uzupełniania braków” — premiowane są węzły dostarczające innych surowców, których bot nie miał w pierwszej osadzie, aby ograniczyć ryzyko całkowitego zablokowania rozwoju.
+Drugie ustawienie początkowe również preferuje surowiec priorytetowy (wysokie pipsy, +60 za każdy pips), ale dodatkowo wprowadza heurystykę uzupełniania braków — premiowane są węzły dostarczające **innych** surowców, których bot nie miał w pierwszej osadzie (+10 za każdy nowy typ), aby ograniczyć ryzyko całkowitego zablokowania rozwoju.
 
-
-#### Logika tury: specjalizacja zamiast balansu
+#### Logika tury: specjalizacja i konwersja zasobów
 
 W normalnej fazie gry bot rozważa wyłącznie akcje deterministyczne i stosuje następującą kolejność priorytetów:
 
-1. **budowa miasta** – silnie premiowana, jeśli zwiększa produkcję priorytetowego surowca oraz (dodatkowo) leży na porcie 2:1,
-2. **budowa osady** – analogicznie premiowana w zależności od pipsów surowca priorytetowego oraz portu,
-3. **handel z bankiem** – wykonywany wyłącznie wtedy, gdy po wymianie liczba kart priorytetowego surowca wzrasta (czyli strategia aktywnie „pompuje” jeden surowiec),
-4. **budowa drogi** – oceniana przez funkcję potencjału, która bada węzły w zasięgu 1–2 krawędzi i premiuje:
-   - pipsy priorytetowego surowca w możliwych lokalizacjach osad,
-   - potencjalny dostęp do portu 2:1 dla priorytetowego surowca,
-   - możliwości dalszej rozbudowy (stopień węzła),
-   - przy jednoczesnym ignorowaniu miejsc, gdzie nie da się legalnie postawić osady (reguła odległości).
+1. **Budowa miast i osad** – silnie premiowana, szczególnie gdy zwiększa produkcję priorytetowego surowca lub znajduje się na porcie 2:1.
 
-Warto zauważyć, że strategia ta jest celowo **jednostronna**: bot często poświęca równowagę zasobów na rzecz maksymalizacji jednego kanału ekonomicznego (produkcja + port 2:1).
+2. **Handel z bankiem** – kluczowy element strategii. Bot **wydaje nadwyżki priorytetowego surowca** (wykorzystując port 2:1) w zamian za zasoby potrzebne do budowy. Transakcje są wysoko oceniane gdy odblokowują możliwość zakupu miasta lub osady.
 
-#### Odrzucanie kart przy rozbójniku
+3. **Budowa drogi** – oceniana przez funkcję potencjału, która bada węzły w zasięgu 1–2 krawędzi i premiuje pipsy priorytetowego surowca w możliwych lokalizacjach osad oraz możliwości dalszej rozbudowy, ignorując miejsca naruszające regułę odległości.
 
-Bot implementuje również własną politykę zrzucania kart w sytuacji przekroczenia limitu (powyżej 9). Mechanizm ten:
+Strategia ta jest celowo **jednostronna**: bot często poświęca równowagę zasobów na rzecz maksymalizacji jednego kanału ekonomicznego (produkcja + port 2:1 → konwersja → budowa).
 
-- wybiera „docelowy zakup” (miasto / osada / droga / karta rozwoju) poprzez minimalizację deficytu zasobów,
-- jednocześnie stosuje mocny bias na zachowanie surowca priorytetowego,
-- unika zrzucania zasobów niezbędnych do najbardziej sensownego zakupu.
+#### Odrzucanie kart i mechanizm awaryjny
 
-Dzięki temu bot stara się utrzymać spójność strategii nawet w sytuacjach przymusowej redukcji ręki.
-
+Bot implementuje własną politykę zrzucania kart przy przekroczeniu limitu, wybierając docelowy zakup i silnie chroniąc zarówno priorytetowy surowiec, jak i zasoby krytyczne dla najbliższego celu.
 
 #### Mechanizm awaryjny: powrót do bota zbalansowanego
 
-W sytuacji, gdy żaden z ruchów nie daje wyraźnej korzyści w ramach strategii monosurowcowej, bot nie wykonuje losowych działań. Zamiast tego stosowany jest fallback do **It5Player**, czyli najbardziej zbalansowanego bota heurystycznego. Zapobiega to „utknięciu” strategii w stanach, w których dążenie do jednego surowca przestaje być racjonalne.
+W sytuacji, gdy żaden z ruchów nie daje wyraźnej korzyści w ramach strategii monosurowcowej (wszystkie deterministyczne akcje mają gorsze oceny niż It5Player w analogicznej sytuacji), bot nie wykonuje losowych działań. Zamiast tego stosowany jest **fallback do It5Player**, czyli najbardziej zbalansowanego bota heurystycznego. Zapobiega to „utknięciu" strategii w stanach, w których dążenie do jednego surowca przestaje być racjonalne (np. brak portu 2:1, zablokowanie kluczowych lokalizacji przez przeciwnika).
+
+### 6.4.2. Bot celujący w karty rozwoju
+
+DevPlayer stanowi drugą strategię eksperymentalną, opartą na hipotezie, że **priorytetowe skupienie się na zakupie kart rozwoju** oraz szybkie osiąganie związanych z nimi bonusów (takich jak *Largest Army* czy karty punktów zwycięstwa) może w określonych warunkach stanowić skuteczną alternatywę dla klasycznej ekspansji terytorialnej.
+
+#### Ustawienie początkowe i logika tury
+
+W fazie ustawień początkowych bot preferuje lokalizacje zapewniające stabilną produkcję surowców niezbędnych do zakupu kart rozwoju, w szczególności rudę, zboże i wełnę. Premiowana jest różnorodność zasobów oraz dostęp do portów ułatwiających ich wymianę (porty 3:1 i 2:1). Drugie ustawienie wybierane jest w sposób komplementarny, tak aby uzupełnić ewentualne braki w produkcji kluczowych surowców.
+
+W fazie głównej strategia koncentruje się na zakupie kart rozwoju zawsze, gdy jest to możliwe. Jeżeli bezpośredni zakup nie jest dostępny, bot podejmuje działania przygotowawcze — w szczególności handel z bankiem lub ograniczoną rozbudowę infrastruktury — których celem jest umożliwienie zakupu karty w kolejnej turze. Odstępstwo od tej zasady występuje jedynie w sytuacjach, gdy dostępna jest bezpośrednia akcja prowadząca do zakończenia gry poprzez zdobycie brakujących punktów zwycięstwa.
+
+W przypadku gdy strategia oparta na kartach rozwoju przestaje przynosić oczekiwane efekty (np. brak postępu punktowego lub ograniczone możliwości zakupu kart), bot przechodzi do bardziej zbalansowanej strategii heurystycznej, wykorzystując mechanizm awaryjny oparty na it5.
+
+#### Polityka odrzucania i ograniczenia strategii
+
+Przy konieczności odrzucenia kart w wyniku wyrzucenia liczby 7 bot w pierwszej kolejności chroni surowce kluczowe dla zakupu kart rozwoju, natomiast pozbywa się nadwyżek zasobów o mniejszym znaczeniu dla realizowanej strategii. Takie podejście ogranicza ryzyko utraty postępu w kierunku kolejnych zakupów.
+
+Ze względu na silne uzależnienie od losowości talii kart rozwoju oraz rzutów kośćmi, strategia ta charakteryzuje się większą wariancją wyników w porównaniu do botów heurystycznych i algorytmu alpha-beta. W ramach pracy DevPlayer pełni rolę **strategii porównawczej**, umożliwiającej ocenę skuteczności podejścia opartego na rozwoju pośrednim i wysokiej nieprzewidywalności.
+
+### 6.4.3. Bot celujący w najdłuższą drogę
+
+RoadPlayer stanowi trzecią strategię eksperymentalną, której celem jest weryfikacja hipotezy, że **agresywna rozbudowa sieci dróg oraz zdobycie premii Najdłuższa Droga** (2 punkty zwycięstwa) może stanowić efektywną alternatywę dla klasycznego podejścia opartego na szybkim rozwoju osad i miast.
+
+#### Ustawienie początkowe i logika tury
+
+W fazie ustawień początkowych bot preferuje lokalizacje zapewniające wysoką i stabilną produkcję surowców niezbędnych do budowy dróg, w szczególności cegły i drewna. Premiowana jest również różnorodność zasobów, wysoki stopień węzłów (większa liczba możliwych kierunków ekspansji) oraz dostęp do portów ułatwiających wymianę surowców związanych z infrastrukturą drogową. Drugie ustawienie wybierane jest w sposób komplementarny, tak aby ograniczyć ryzyko niedoborów kluczowych zasobów.
+
+W fazie głównej strategia konsekwentnie faworyzuje **budowę dróg** jako podstawową akcję rozwojową. Bot preferuje drogi, które wydłużają istniejącą sieć, zwiększają jej spójność oraz otwierają dostęp do kolejnych obszarów planszy. Jednocześnie uwzględniany jest potencjał węzłów dostępnych po rozbudowie, co pozwala unikać sytuacji, w których sieć dróg rozwija się kosztem całkowitej izolacji ekonomicznej.
+
+Aby zachować minimalną równowagę strategiczną, RoadPlayer nie rezygnuje całkowicie z budowy osad i miast. Akcje te są podejmowane wtedy, gdy bezpośrednio prowadzą do zdobycia punktów zwycięstwa lub gdy umożliwiają dalszą, efektywną rozbudowę sieci dróg. Zakup kart rozwoju traktowany jest drugorzędnie i rozważany głównie w sytuacjach, gdy inne formy ekspansji są chwilowo niedostępne.
+
+#### Polityka odrzucania i ograniczenia strategii
+
+Przy konieczności odrzucania kart w wyniku wyrzucenia liczby 7 bot w pierwszej kolejności chroni surowce bezpośrednio związane z budową dróg, natomiast usuwa nadwyżki zasobów o mniejszym znaczeniu dla realizowanej strategii. W sytuacjach, w których żadna dostępna akcja nie prowadzi do poprawy pozycji, stosowany jest mechanizm awaryjny oparty na bardziej zbalansowanej strategii heurystycznej.
+
+Strategia RoadPlayer jest **wrażliwa na ograniczenia przestrzenne planszy**. Skuteczne blokowanie kluczowych węzłów przez przeciwnika lub przerwanie ciągłości sieci znacząco obniża jej skuteczność. Ponadto jednostronna koncentracja na infrastrukturze drogowej może prowadzić do utraty tempa zdobywania punktów zwycięstwa, szczególnie w starciu z botami preferującymi rozwój ekonomiczny i budowę miast. Wyniki uzyskane przez RoadPlayer potwierdzają, że silna specjalizacja w jednym aspekcie gry nie gwarantuje przewagi nad strategiami zbalansowanymi.
 
 
-#### Ocena wstępna i charakter eksperymentalny
-
-W późniejszych eksperymentach porównawczych okazało się, że strategia monosurowcowa **nie daje stabilnej przewagi** nad najlepszymi botami heurystycznymi ani nad botem alpha-beta. W szczególności:
-
-- nadmierna specjalizacja zwiększa ryzyko zablokowania rozwoju przy niekorzystnym rozkładzie rzutów,
-- strategia jest wrażliwa na to, czy port 2:1 faktycznie zostanie osiągnięty na silnym węźle,
-- przeciwnik może częściowo kontrować plan poprzez blokowanie kluczowych lokalizacji ekspansji.
-
-W związku z tym OneResourcePlayer należy traktować przede wszystkim jako **bot eksperymentalny**, zaprojektowany w celu przetestowania konkretnej hipotezy strategicznej i lepszego zrozumienia dynamiki gry w wariancie 1 vs 1, a nie jako docelowo najsilniejszego przeciwnika.
+## 6.5. Bot oparty na algorytmie genetycznym
 
 ## 7. Eksperymenty i analiza wyników
 (Wspomnieć o tym że normalna gra w Catana trwa 60-70 tur i porównać to z botami)
@@ -554,4 +576,5 @@ pokazanie, czy koszt obliczeniowy alpha-beta się opłaca.
 - https://www.artofcatan.com/p/was-it-luck-or-skill
 - GoogleTest User’s Guide https://google.github.io/googletest/reference/testing.html
 - tkinter — Python interface to Tcl/Tk https://docs.python.org/3/library/tkinter.html
-- https://www.alcumena.fundacjapsc.pl/index.php/alcumena/article/download/337/182/710
+- Command - wzorzec projektowy https://refactoring.guru/design-patterns/command
+- Strategy - wzorzec projektowy https://refactoring.guru/design-patterns/strategy

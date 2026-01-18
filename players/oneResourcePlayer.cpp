@@ -473,9 +473,14 @@ Action::PackedAction OneResourcePlayer::getTurnAction() {
 		}
 	}
 
-	// 3) TRADE – only if it INCREASES count of prioritized resource cards.
+	// 3) TRADE – use accumulated prioritized resource to get other resources via 2:1 port.
+	// Prefer trades that SPEND prioritized resource (we should have a lot of it) to get resources needed for building.
 	if (!tradeActions.empty()) {
+		using PlayerHelpers::cost_for;
+		using PlayerHelpers::deficit;
+		
 		const auto preHave = unpack_resources(boardState->packedPlayers[static_cast<uint8_t>(selfId)]);
+		
 		for (const auto a : tradeActions) {
 			boardState->applyAction(a);
 			const auto postHave = unpack_resources(boardState->packedPlayers[static_cast<uint8_t>(selfId)]);
@@ -484,11 +489,30 @@ Action::PackedAction OneResourcePlayer::getTurnAction() {
 			const int delta = static_cast<int>(postHave[static_cast<size_t>(prioritizedResource)]) -
 							  static_cast<int>(preHave[static_cast<size_t>(prioritizedResource)]);
 
-			if (delta <= 0) {
+			// We want to SPEND the prioritized resource (delta < 0) to get other resources
+			if (delta >= 0) {
 				continue;
 			}
 
-			int bonus = 800 * delta;
+			// Check if trade helps us get closer to building something valuable
+			const auto cityDefPre = deficit(preHave, cost_for(BuyableType::City));
+			const auto cityDefPost = deficit(postHave, cost_for(BuyableType::City));
+			const auto settleDefPre = deficit(preHave, cost_for(BuyableType::Settlement));
+			const auto settleDefPost = deficit(postHave, cost_for(BuyableType::Settlement));
+			
+			int bonus = 0;
+			
+			// Strong bonus for enabling city/settlement build
+			if (cityDefPost == 0 && cityDefPre > 0) bonus += 3000;
+			if (settleDefPost == 0 && settleDefPre > 0) bonus += 2500;
+			
+			// Bonus for reducing deficit to city/settlement
+			bonus += 150 * (cityDefPre - cityDefPost);
+			bonus += 120 * (settleDefPre - settleDefPost);
+			
+			// Extra bonus for spending prioritized resource efficiently (via 2:1 port)
+			bonus += 200 * (-delta);
+			
 			int s = simulate_score(a, bonus);
 			if (s > bestScore) { bestScore = s; best = a; }
 		}
