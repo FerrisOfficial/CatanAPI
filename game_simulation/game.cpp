@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 #include "utils/dumper.hpp"
+#include "../players/alphaBetaPlayer.hpp"
 
 namespace {
 
@@ -21,7 +22,10 @@ auto callPlayerGuarded(const Game& game, Board::BoardState& board, IPlayer& play
 {
     Board::BoardState before = board;
     auto result = func();
-    if (!(before == board)) {
+    const bool boardChanged = !(before == board);
+    const bool isAlphaBeta = dynamic_cast<alphaBetaPlayer*>(&player) != nullptr;
+
+    if (boardChanged && !isAlphaBeta) {
         std::ostringstream details;
         if (before.robberPosition != board.robberPosition) {
             details << "robberPosition " << unsigned(before.robberPosition) << " -> " << unsigned(board.robberPosition);

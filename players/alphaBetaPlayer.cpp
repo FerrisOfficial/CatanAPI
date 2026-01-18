@@ -18,7 +18,7 @@ using PlayerHelpers::production_score_for_player;
 using PlayerHelpers::settlement_potential_score;
 using PlayerHelpers::is_deterministic_action;
 
-constexpr int kMaxDepth = 3; // search depth (ply-based)
+constexpr int kMaxDepth = 3; // search depth (turn-based, not action-based)
 
 enum class GamePhase {
     Early,   // Max VP < 5
@@ -150,65 +150,221 @@ int quick_action_score(Action::PackedAction action, const Board::BoardState* boa
     }
 }
 
-// Alpha-beta minimax search
+// Add expected resource production based on pips and probabilities
+// Returns the exact amount of resources added for each type
+std::array<int, 5> addExpectedResources(Board::BoardState* board, PlayerId playerId) {
+    auto packed = board->packedPlayers[static_cast<uint8_t>(playerId)];
+    auto resources = unpack_resources(packed);
+    
+    // Calculate expected production for each resource type
+    std::array<int, 5> expectedProduction = {0, 0, 0, 0, 0};
+    
+    for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
+        const auto node = board->nodes[nodeId];
+        const auto owner = Board::Node::unpackOwner(node);
+        if (owner != playerId) continue;
+        
+        const auto structure = Board::Node::unpackStructure(node);
+        const int multiplier = (structure == StructureType::City) ? 2 : 1;
+        
+        // Check adjacent hexes
+        for (uint8_t i = 0; i < 3; ++i) {
+            const HexId hexId = Board::Node::unpackAdjacentHex(node, i);
+            if (hexId == HexIdNone || hexId >= HEX_COUNT) continue;
+            
+            const auto hex = board->hexes[hexId];
+            const auto resource = Board::Hex::unpackResource(hex);
+            if (resource == Resource::NoResource) continue;
+            
+            const uint8_t pips = dice_pips(Board::Hex::unpackCatanNumber(hex));
+            const int productionAmount = (pips * multiplier) / 12;
+            
+            expectedProduction[static_cast<size_t>(resource)] += productionAmount;
+        }
+    }
+    
+    // Add expected resources to player's hand
+    for (size_t i = 0; i < 5; ++i) {
+        if (expectedProduction[i] > 0) {
+            resources[i] = std::min(255, resources[i] + expectedProduction[i]);
+        }
+    }
+    
+    // Pack resources back
+    packed = Player::packResource(packed, Resource::Brick, resources[0]);
+    packed = Player::packResource(packed, Resource::Lumber, resources[1]);
+    packed = Player::packResource(packed, Resource::Wool, resources[2]);
+    packed = Player::packResource(packed, Resource::Grain, resources[3]);
+    packed = Player::packResource(packed, Resource::Ore, resources[4]);
+    board->packedPlayers[static_cast<uint8_t>(playerId)] = packed;
+    
+    return expectedProduction;
+}
+
+// Remove exact amount of resources that were added
+void removeExpectedResources(Board::BoardState* board, PlayerId playerId, const std::array<int, 5>& amountAdded) {
+    auto packed = board->packedPlayers[static_cast<uint8_t>(playerId)];
+    auto resources = unpack_resources(packed);
+    
+    // Remove exactly what was added
+    for (size_t i = 0; i < 5; ++i) {
+        if (amountAdded[i] > 0) {
+            resources[i] = static_cast<uint8_t>(std::max(0, static_cast<int>(resources[i]) - amountAdded[i]));
+        }
+    }
+    
+    // Pack resources back
+    packed = Player::packResource(packed, Resource::Brick, resources[0]);
+    packed = Player::packResource(packed, Resource::Lumber, resources[1]);
+    packed = Player::packResource(packed, Resource::Wool, resources[2]);
+    packed = Player::packResource(packed, Resource::Grain, resources[3]);
+    packed = Player::packResource(packed, Resource::Ore, resources[4]);
+    board->packedPlayers[static_cast<uint8_t>(playerId)] = packed;
+}
+
+// Simulate a full turn for a player (all actions until EndTurn)
+// Returns the number of actions taken (for undo purposes)
+int simulateFullTurn(Board::BoardState* board, PlayerId playerId, bool maximizing) {
+    int actionCount = 0;
+    const int maxActionsPerTurn = 20; // Safety limit to prevent infinite loops
+    
+    while (actionCount < maxActionsPerTurn) {
+        auto actions = board->getLegalActions(playerId);
+        if (actions.empty()) break;
+        
+        // Filter to deterministic actions
+        std::vector<std::pair<int, Action::PackedAction>> scoredActions;
+        Action::PackedAction endTurn = Action::getEmptyAction();
+        
+        for (const auto a : actions) {
+            if (!is_deterministic_action(a)) continue;
+            
+            if (Action::unpackType(a) == ActionType::EndTurn) {
+                endTurn = a;
+            } else {
+                scoredActions.push_back({quick_action_score(a, board, playerId), a});
+            }
+        }
+        
+        // If only EndTurn available, take it
+        if (scoredActions.empty()) {
+            if (Action::unpackType(endTurn) == ActionType::EndTurn) {
+                board->applyAction(endTurn);
+                actionCount++;
+            }
+            break;
+        }
+        
+        // Sort actions by heuristic score
+        if (maximizing) {
+            std::sort(scoredActions.begin(), scoredActions.end(),
+                     [](const auto& a, const auto& b) { return a.first > b.first; });
+        } else {
+            std::sort(scoredActions.begin(), scoredActions.end(),
+                     [](const auto& a, const auto& b) { return a.first < b.first; });
+        }
+        
+        // Take the best action (greedy simulation for opponent)
+        board->applyAction(scoredActions[0].second);
+        actionCount++;
+    }
+    
+    return actionCount;
+}
+
+// Alpha-beta minimax search operating on full turns
 int alphaBeta(Board::BoardState* board, PlayerId selfId, int depth, int alpha, int beta, bool maximizing) {
-    // Terminal conditions
     if (depth == 0) {
         return evaluate_position(board, selfId);
     }
 
     const PlayerId currentPlayer = board->currentPlayer;
-    const auto actions = board->getLegalActions(currentPlayer);
-
-    // If no actions or only EndTurn available, evaluate position
-    bool hasNonEndTurn = false;
-    for (const auto a : actions) {
-        if (Action::unpackType(a) != ActionType::EndTurn && is_deterministic_action(a)) {
-            hasNonEndTurn = true;
-            break;
-        }
-    }
-    if (!hasNonEndTurn) {
-        return evaluate_position(board, selfId);
-    }
-
-    // Order actions by heuristic for better pruning
+    
+    auto actions = board->getLegalActions(currentPlayer);
+    
+    // Filter to deterministic actions only
     std::vector<std::pair<int, Action::PackedAction>> scoredActions;
     for (const auto a : actions) {
         if (!is_deterministic_action(a)) continue;
+        if (Action::unpackType(a) == ActionType::EndTurn) continue;
         scoredActions.push_back({quick_action_score(a, board, currentPlayer), a});
     }
     
+    // If no meaningful actions, just evaluate position
+    if (scoredActions.empty()) {
+        return evaluate_position(board, selfId);
+    }
+    
+    // Sort actions by heuristic for better pruning
     if (maximizing) {
-        // Sort descending for maximizing player (try best moves first)
         std::sort(scoredActions.begin(), scoredActions.end(),
                   [](const auto& a, const auto& b) { return a.first > b.first; });
-        
+    } else {
+        std::sort(scoredActions.begin(), scoredActions.end(),
+                  [](const auto& a, const auto& b) { return a.first < b.first; });
+    }
+    
+    if (maximizing) {
         int maxEval = std::numeric_limits<int>::min();
-        for (const auto& [score, a] : scoredActions) {
-            board->applyAction(a);
+        
+        // Try each first action, then simulate rest of turn greedily
+        for (const auto& [score, firstAction] : scoredActions) {
+            board->applyAction(firstAction);
+            int actionsApplied = 1;
+            
+            // Simulate rest of turn greedily
+            actionsApplied += simulateFullTurn(board, currentPlayer, true);
+            const auto resourcesAdded = addExpectedResources(board, currentPlayer);
+            
+            // Switch to opponent's turn
+            board->currentPlayer = (currentPlayer == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+            
             const int eval = alphaBeta(board, selfId, depth - 1, alpha, beta, false);
-            board->undoLastAction();
+
+            board->currentPlayer = currentPlayer;
+            removeExpectedResources(board, currentPlayer, resourcesAdded);
+            
+            // Undo all actions from this turn (in reverse)
+            for (int i = 0; i < actionsApplied; ++i) {
+                board->undoLastAction();
+            }
 
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
             if (beta <= alpha) break; // Beta cutoff
         }
         return maxEval;
-    } else {
-        // Sort ascending for minimizing player (try worst moves for opponent first)
-        std::sort(scoredActions.begin(), scoredActions.end(),
-                  [](const auto& a, const auto& b) { return a.first < b.first; });
         
+    } else {
         int minEval = std::numeric_limits<int>::max();
-        for (const auto& [score, a] : scoredActions) {
-            board->applyAction(a);
+        
+        // Try each first action, then simulate rest of turn greedily
+        for (const auto& [score, firstAction] : scoredActions) {
+            board->applyAction(firstAction);
+            int actionsApplied = 1;
+            
+            // Simulate rest of turn greedily
+            actionsApplied += simulateFullTurn(board, currentPlayer, false);
+            const auto resourcesAdded = addExpectedResources(board, currentPlayer);
+            
+            // Switch to opponent's turn
+            board->currentPlayer = (currentPlayer == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+            
+            // Recursively evaluate opponent's turn
             const int eval = alphaBeta(board, selfId, depth - 1, alpha, beta, true);
-            board->undoLastAction();
+            
+            // Undo opponent player switch
+            board->currentPlayer = currentPlayer;
+            removeExpectedResources(board, currentPlayer, resourcesAdded);
+            
+            // Undo all actions from this turn (in reverse)
+            for (int i = 0; i < actionsApplied; ++i) {
+                board->undoLastAction();
+            }
 
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
-            if (beta <= alpha) break; // Alpha cutoff
+            if (beta <= alpha) break;
         }
         return minEval;
     }
@@ -222,10 +378,9 @@ Action::PackedAction alphaBetaPlayer::getTurnAction() {
     auto actions = boardState->getLegalActions(selfId);
     if (actions.empty()) return Action::getEmptyAction();
 
-    // Separate deterministic from non-deterministic actions
-    std::vector<Action::PackedAction> buildActions;    // Cities, settlements, roads
-    std::vector<Action::PackedAction> tradeActions;    // Bank trades
-    std::vector<Action::PackedAction> otherActions;    // Everything else
+    std::vector<Action::PackedAction> buildActions;
+    std::vector<Action::PackedAction> tradeActions;
+    std::vector<Action::PackedAction> otherActions; 
     Action::PackedAction devBuyAction = Action::getEmptyAction();
     Action::PackedAction endTurnAction = Action::getEmptyAction();
 
@@ -249,7 +404,6 @@ Action::PackedAction alphaBetaPlayer::getTurnAction() {
         }
     }
     
-    // Combine actions with filtering
     std::vector<Action::PackedAction> deterministicActions;
     
     // Always include all building actions (highest value)
@@ -258,12 +412,12 @@ Action::PackedAction alphaBetaPlayer::getTurnAction() {
     
     // Filter trades based on game phase and count
     const GamePhase phase = determine_game_phase(boardState);
-    size_t maxTrades = 10; // Default limit
+    size_t maxTrades = 10;
     
     if (phase == GamePhase::Late) {
-        maxTrades = 6;  // Fewer trades in endgame, focus on building
+        maxTrades = 6;
     } else if (phase == GamePhase::Early) {
-        maxTrades = 15; // More trades early for flexibility
+        maxTrades = 15;
     }
     
     if (tradeActions.size() > maxTrades) {
@@ -292,11 +446,11 @@ Action::PackedAction alphaBetaPlayer::getTurnAction() {
         return It5Player::getTurnAction();
     }
 
-    int searchDepth = kMaxDepth - 1;
+    int searchDepth = kMaxDepth;
     if (phase == GamePhase::Late) {
-        searchDepth = kMaxDepth; // Deeper search in endgame when decisions are critical
+        searchDepth = kMaxDepth;
     } else if (phase == GamePhase::Early && deterministicActions.size() > 15) {
-        searchDepth = std::max(2, kMaxDepth - 2); // Shallower search early game with many options
+        searchDepth = std::max(1, kMaxDepth - 1);
     }
 
     // Run alpha-beta search on deterministic actions
