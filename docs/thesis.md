@@ -25,8 +25,6 @@ Algorytmy sztucznej inteligencji umożliwiają symulowanie tysięcy rozgrywek w 
 
 Plansza gry *Catan* składa się z heksagonalnych pól reprezentujących różne typy terenu, takich jak lasy, wzgórza, pola uprawne, pastwiska oraz góry, z których każde odpowiada określonemu rodzajowi surowca. Pola te rozmieszczone są w sposób modularny, co powoduje, że każda rozgrywka posiada inną konfigurację przestrzenną. Pomiędzy heksami znajdują się węzły (skrzyżowania), na których gracze mogą budować osady i miasta, oraz krawędzie, na których budowane są drogi.
 
-Celem gry jest zdobycie **10 punktów zwycięstwa** (15 w wariancie rozgrywki 1 vs 1), które przyznawane są głównie za budowę osad i miast, a także za osiągnięcia specjalne (np. Najdłuższa Droga, Największa Armia) oraz karty punktowe. W dalszej części pracy punkty zwycięstwa będą oznaczane skrótem **VP** (ang. *Victory Points*). Rozgrywka toczy się w turach, a zwycięstwo następuje natychmiast po osiągnięciu wymaganej liczby punktów przez jednego z graczy.
-
 Każdy typ pola produkcyjnego na planszy odpowiada określonemu surowcowi:
 - lasy produkują drewno (*Lumber*),
 - wzgórza produkują cegłę (*Brick*),
@@ -35,6 +33,12 @@ Każdy typ pola produkcyjnego na planszy odpowiada określonemu surowcowi:
 - góry produkują rudę (*Ore*).
 
 Pola pustynne nie generują zasobów i stanowią początkową lokalizację rozbójnika.
+
+Celem gry jest zdobycie **10 punktów zwycięstwa** (15 w wariancie rozgrywki 1 vs 1). Punkty te są przyznawane głównie za budowę osad (1 punkt zwycięstwa) i miast (2 punkty zwycięstwa). Dodatkowymi źródłami punktów zwycięstwa są premie:
+- Premia **Najdłuższa Droga** przyznawana jest graczowi posiadającemu najdłuższy nieprzerwany ciąg połączonych dróg o długości co najmniej pięciu segmentów. Premia ta może zostać odebrana przez innego gracza, jeśli zbuduje on dłuższą drogę.
+- Premia **Największa Armia** przyznawana jest graczowi, który jako pierwszy użyje co najmniej trzech kart Rycerz i posiada ich więcej niż pozostali gracze. Podobnie jak w przypadku Najdłuższej Drogi, premia ta jest dynamiczna i może przechodzić pomiędzy graczami w trakcie rozgrywki.
+
+Każda z tych premii zapewnia dodatkowe **2 punkty zwycięstwa**, istotnie wpływając na strategię oraz tempo gry. W dalszej części pracy punkty zwycięstwa będą oznaczane skrótem **VP** (ang. *Victory Points*). Rozgrywka toczy się w turach, a zwycięstwo następuje natychmiast po osiągnięciu wymaganej liczby punktów przez jednego z graczy.
 
 Podstawowy przebieg tury obejmuje rzut dwiema kośćmi sześciennymi, który determinuje produkcję zasobów na planszy. Gracze otrzymują surowce z tych pól, których numer odpowiada wyrzuconej sumie, pod warunkiem że posiadają przy nich osady lub miasta. Następnie możliwe jest prowadzenie handlu (z innymi graczami lub z bankiem) oraz wykonywanie akcji budowy, takich jak wznoszenie dróg, osad, miast lub zakup kart rozwoju.
 
@@ -60,9 +64,7 @@ Jedną z najczęściej wskazywanych zalet gry Catan jest umiejętne połączenie
 
 Drugim, bardzo istotnym atutem jest wysoka regrywalność: plansza składa się z heksów, a ich układ i przypisane numery produkcji można zmieniać między partiami, co ogranicza powtarzalność i utrudnia wyuczenie jednej „sztywnej” sekwencji optymalnych ruchów. Dzięki temu gra sprzyja analizie adaptacyjnych strategii oraz reagowania na bieżącą sytuację na planszy.
 
-Kolejną cechą wyróżniającą jest istotna rola handlu i negocjacji. Mechanizm wymiany zasobów między graczami sprawia, że *Catan* nie jest jedynie „łamigłówką optymalizacyjną”, lecz grą, w której liczą się także przewidywanie intencji przeciwnika, ocena ryzyka oraz decyzje o współpracy lub blokowaniu. W praktyce gra równoważy konflikt (blokowanie lokalizacji, „robber”) z kooperacją transakcyjną (handel), co buduje złożoną dynamikę interakcji.
-
-*Catan* jest również uznanym tytułem o silnym wpływie kulturowym i branżowym: zdobył prestiżowe nagrody (m.in. Spiel des Jahres w 1995 oraz Game of the Century według Gamescom w 2015) i stał się jednym z symboli „nowoczesnych” gier planszowych.
+*Catan* jest uznanym tytułem o silnym wpływie kulturowym i branżowym: zdobył prestiżowe nagrody (m.in. Spiel des Jahres w 1995 oraz Game of the Century według Gamescom w 2015) i stał się jednym z symboli „nowoczesnych” gier planszowych.
 
 W niniejszej pracy analizowana jest wersja gry Catan w wariancie 1 vs 1, co w naturalny sposób eliminuje aspekt handlu pomiędzy graczami, który w rozgrywce dwuosobowej traci swój negocjacyjny charakter. W klasycznej wersji gry handel stanowi istotny element interakcji społecznej, jednak przy dwóch graczach sprowadza się on do decyzji trywialnych lub symetrycznych, nie wnosząc istotnej wartości strategicznej.
 
@@ -281,7 +283,7 @@ Proces projektowania botów heurystycznych przebiegał iteracyjnie. Każda kolej
 
 #### it1 – heurystyka punktów zwycięstwa
 
-Pierwsza wersja bota heurystycznego (it1) opiera się na najbardziej oczywistym kryterium: **maksymalizacji przyrostu punktów zwycięstwa**. Akcje prowadzące bezpośrednio do zdobycia punktów (np. budowa osady lub miasta) otrzymują najwyższą ocenę.
+Pierwsza wersja bota heurystycznego (it1) opiera się na najbardziej oczywistym kryterium: **maksymalizacji przyrostu punktów zwycięstwa**. Akcje prowadzące bezpośrednio do zdobycia punktów (budowa osady lub miasta) otrzymują najwyższą ocenę.
 
 Strategia ta jest prosta, lecz krótkowzroczna – nie uwzględnia przyszłej produkcji zasobów ani kontroli przestrzeni na planszy.
 
@@ -298,29 +300,29 @@ Hierarchia priorytetów:
 Miasto/Osada (natychmiast) → Handel (w kierunku celu) → Droga → Karta rozwoju → Koniec tury
 ```
 
-Strategia ta redukuje liczbę „martwych tur" i przyspiesza osiąganie celów wysokowartościowych, jednak nadal nie analizuje aspektów przestrzennych planszy.
+#### it3 – optymalizacja fazy początkowej
 
-#### it3 – optymalizacja fazy początkowej i kontrola przeciwnika
+Trzecia iteracja bota wprowadza dwie istotne zmiany: **świadomą strategię ustawień początkowych** oraz mechanizm aktywnego ograniczania rozwoju przeciwnika poprzez wykorzystanie rozbójnika.
 
-Trzecia iteracja wprowadza **strategię ustawień początkowych** oraz mechanizm aktywnego ograniczania rozwoju przeciwnika poprzez mądre użycie rozbójnika.
+Ocena węzłów początkowych opiera się na **ważonej produkcji zasobów**, w której większe znaczenie przypisane jest surowcom kluczowym dla wczesnej ekspansji. Dodatkowo bot silnie premiuje **różnorodność zasobów**, unikając sytuacji, w których jedna osada produkuje głównie ten sam surowiec.
 
-**Ocena węzłów początkowych** uwzględnia produkcję ważoną (pipsy × wagi surowców, gdzie brick/lumber = 5, grain/wool = 4, ore = 3), co odzwierciedla potrzeby wczesnej ekspansji. Bot silnie premiuje **różnorodność zasobów** (+25 za każdy unikalny typ) i karze duplikaty na tym samym węźle (-20 za powtórzenie), preferując węzły typu [brick, lumber, grain] nad [lumber, lumber, grain]. Porty są oceniane wyżej w drugim ustawieniu niż w pierwszym.
+Drugie ustawienie początkowe dobierane jest w sposób komplementarny względem pierwszego. Bot analizuje, których surowców brakuje w początkowej konfiguracji i preferuje lokalizacje uzupełniające te deficyty, dążąc do możliwie pełnego pokrycia wszystkich typów zasobów.
 
-**Strategia drugiego ustawienia** jest komplementarna: bot analizuje, jakich surowców brakuje z pierwszej osady i premiuje węzły dostarczające nowych typów zasobów (+18 za każdy nowy, +10 dodatkowego za brick/lumber). Celem jest pokrycie wszystkich pięciu typów surowców zamiast kumulacji tych samych.
+Istotnym elementem strategii jest **świadome wykorzystanie rozbójnika jako narzędzia kontroli**. Bot wybiera heksy, których blokada powoduje maksymalne ograniczenie produkcji przeciwnika przy jednoczesnym minimalnym wpływie na własne zasoby. Unikane jest blokowanie pustych pól oraz własnych obszarów produkcyjnych.
 
-**Rozbójnik jako narzędzie kontroli**: bot maksymalizuje szkody dla przeciwnika (pipsy × 30 × wartość przeciwnika) przy jednoczesnej minimalizacji własnych strat (pipsy × 45 × własna wartość). Silnie preferowane są heksy, gdzie tylko przeciwnik posiada budynki. Strategia unika blokowania pustych pól i własnej produkcji.
-
-Bot it3 łączy zbalansowany rozwój ekonomiczny z aktywną obroną, jednak nadal dziedziczy zarządzanie zasobami z it2 dla fazy głównej gry.
+W fazie głównej gry bot it3 zachowuje mechanizmy zarządzania zasobami wprowadzone w iteracji it2.
 
 #### it4 – inteligentne użycie kart rozwoju i selekcja deterministyczna
 
-Czwarta iteracja wprowadza dwie fundamentalne innowacje: **zaawansowane zarządzanie kartami rozwoju** oraz **deterministyczny wybór najlepszej akcji budowy** (w miejsce losowego wyboru z it1–it3).
+Czwarta iteracja bota rozszerza wcześniejsze strategie o **zaawansowane zarządzanie kartami rozwoju** oraz wprowadza **deterministyczny wybór najlepszej akcji budowy**, zastępując losowe rozstrzyganie remisów stosowane w poprzednich wersjach.
 
-Bot implementuje odrębną logikę dla każdego typu karty rozwoju. **Knight** oceniany jest według szkód dla przeciwnika (+10000 za zdobycie Largest Army, +2000 jeśli odbiera ją przeciwnikowi, +700 za możliwość kradzieży kart). **Monopoly** akceptowany tylko gdy przeciwnik ma ≥3 kart danego surowca; bot modeluje stan po monopoly i przyznaje +8000 jeśli pozwoli kupić miasto, +6000 za osadę. **Year of Plenty** wybiera pary surowców maksymalizujące redukcję deficytu do najbliższego zakupu (+9000 za unlock miasta).
+Dla każdego typu karty rozwoju zaimplementowana została odrębna logika decyzyjna. Karty typu Rycerz wykorzystywane są przede wszystkim do ograniczania produkcji przeciwnika oraz budowania przewagi w rywalizacji o premię *Największa Armia*. Karty zapewniające dostęp do zasobów analizowane są pod kątem tego, czy umożliwiają realizację istotnych celów rozwojowych, takich jak budowa miasta lub osady. Karty punktów zwycięstwa traktowane są jako bezpośrednie wzmocnienie pozycji punktowej.
 
-Kluczowym mechanizmem jest **świadomość ryzyka pre-roll**: karty zwiększające rękę (Monopoly, Year of Plenty) są karane (-4500) jeśli projekcja ręki przekracza 10 kart przed rzutem, co chroni przed stratami przy wyrzuceniu 7. Karty bezpieczne (Knight, Road Building) nie mają tej kary.
+Istotnym elementem strategii jest uwzględnianie **ryzyka przed rzutem kośćmi**. Akcje prowadzące do znacznego zwiększenia liczby zasobów na ręce są oceniane ostrożnie, aby ograniczyć ryzyko strat w przypadku wyrzucenia liczby 7. Z kolei działania niewpływające na wielkość ręki uznawane są za bezpieczniejsze w tym kontekście.
 
-**Deterministyczny wybór budowy** preferuje węzły o najwyższej produkcji ważonej (ore=14, grain=13 > brick/lumber=12 > wool=11), co odzwierciedla potrzeby mid-game (miasta, dev cards). Drogi oceniane są według potencjału otwieranych węzłów (3× production score). Bot adaptuje strategię do fazy gry: przy VP≥6 preferuje dev cards nad drogami, chyba że droga ma wyjątkowo wysoki score (>4200).
+W zakresie budowy bot dokonuje deterministycznego wyboru lokalizacji na podstawie **potencjału produkcyjnego** oraz użyteczności strategicznej. Preferowane są węzły zapewniające wysoką i elastyczną produkcję zasobów, szczególnie w środkowej fazie gry, natomiast budowa dróg oceniana jest pod kątem możliwości otwierania kolejnych opcji rozwoju.
+
+Strategia it4 adaptuje swoje priorytety do fazy rozgrywki, stopniowo przesuwając nacisk z rozwoju infrastruktury na bezpośrednie zdobywanie punktów zwycięstwa w miarę zbliżania się do końca gry.
 
 #### it5 – heurystyka zbalansowana ze symulacją pozycji
 
@@ -334,8 +336,6 @@ Podstawowym mechanizmem jest funkcja oceny pozycji `evaluate_position`, która z
 - wybór akcji dającej najwyższy wynik.
 
 W praktyce tworzy to prosty, lecz efektywny schemat selekcji: **akcje są porównywane nie po typie, lecz po realnym wpływie na stan gry**, co poprawia jakość decyzji szczególnie w sytuacjach, gdzie kilka ruchów ma podobny „priorytet” (np. alternatywne budowy dróg lub transakcje z bankiem).
-
-Bot rozróżnia działania deterministyczne i niedeterministyczne. Symulacja jest wykonywana wyłącznie dla akcji, których skutek jest jednoznaczny (m.in. **budowa**, **handel z bankiem**, **zakończenie tury**). Dzięki temu unika się błędnej oceny ruchów obarczonych losowością (np. zakup karty rozwoju), dla których stosowana jest oddzielna heurystyka.
 
 Logika wyboru akcji ma strukturę wieloetapową:
 
@@ -434,7 +434,7 @@ bot alpha-beta stosuje **mechanizm awaryjny**, delegując decyzję do najbardzie
 
 ### 6.4.1. Bot celujący w jeden zasób
 
-Oprócz botów opisanych wcześniej zaimplementowano również dodatkowego gracza o wąsko wyspecjalizowanej strategii, nazwanego roboczo **OneResourcePlayer**. Jego założeniem jest maksymalizacja korzyści z jednego, wybranego surowca poprzez:
+Oprócz botów opisanych wcześniej zaimplementowano również dodatkowego gracza o wąsko wyspecjalizowanej strategii, nazwanego **OneResourcePlayer**. Jego założeniem jest maksymalizacja korzyści z jednego, wybranego surowca poprzez:
 
 - wybór **priorytetowego surowca** na podstawie aktualnej konfiguracji planszy,
 - zajęcia **portu 2:1** dla tego surowca już w ustawieniach początkowych,
@@ -488,11 +488,11 @@ W sytuacji, gdy żaden z ruchów nie daje wyraźnej korzyści w ramach strategii
 
 ### 6.4.2. Bot celujący w karty rozwoju
 
-DevPlayer stanowi drugą strategię eksperymentalną, opartą na hipotezie, że **priorytetowe skupienie się na zakupie kart rozwoju** oraz szybkie osiąganie związanych z nimi bonusów (takich jak *Largest Army* czy karty punktów zwycięstwa) może w określonych warunkach stanowić skuteczną alternatywę dla klasycznej ekspansji terytorialnej.
+DevPlayer stanowi drugą strategię eksperymentalną, opartą na hipotezie, że **priorytetowe skupienie się na zakupie kart rozwoju** oraz szybkie osiąganie związanych z nimi bonusów (takich jak premia *Największa Armia* oraz karty punktów zwycięstwa) może w określonych warunkach stanowić skuteczną alternatywę dla klasycznej ekspansji terytorialnej.
 
 #### Ustawienie początkowe i logika tury
 
-W fazie ustawień początkowych bot preferuje lokalizacje zapewniające stabilną produkcję surowców niezbędnych do zakupu kart rozwoju, w szczególności rudę, zboże i wełnę. Premiowana jest różnorodność zasobów oraz dostęp do portów ułatwiających ich wymianę (porty 3:1 i 2:1). Drugie ustawienie wybierane jest w sposób komplementarny, tak aby uzupełnić ewentualne braki w produkcji kluczowych surowców.
+W fazie ustawień początkowych bot preferuje lokalizacje zapewniające stabilną produkcję surowców niezbędnych do zakupu kart rozwoju, w szczególności rudę, zboże i wełnę, kluczowych dla zakupu kart rozwoju. Premiowana jest różnorodność zasobów oraz dostęp do portów ułatwiających ich wymianę (porty 3:1 i 2:1). Drugie ustawienie wybierane jest w sposób komplementarny, tak aby uzupełnić ewentualne braki w produkcji kluczowych surowców.
 
 W fazie głównej strategia koncentruje się na zakupie kart rozwoju zawsze, gdy jest to możliwe. Jeżeli bezpośredni zakup nie jest dostępny, bot podejmuje działania przygotowawcze — w szczególności handel z bankiem lub ograniczoną rozbudowę infrastruktury — których celem jest umożliwienie zakupu karty w kolejnej turze. Odstępstwo od tej zasady występuje jedynie w sytuacjach, gdy dostępna jest bezpośrednia akcja prowadząca do zakończenia gry poprzez zdobycie brakujących punktów zwycięstwa.
 
@@ -526,43 +526,113 @@ Strategia RoadPlayer jest **wrażliwa na ograniczenia przestrzenne planszy**. Sk
 ## 6.5. Bot oparty na algorytmie genetycznym
 
 ## 7. Eksperymenty i analiza wyników
-(Wspomnieć o tym że normalna gra w Catana trwa 60-70 tur i porównać to z botami)
+
 ### 7.1. Metodologia porównania botów
+
+Wszystkie eksperymenty zostały przeprowadzone zgodnie z następującym protokołem:
+
+- **Liczba rozgrywek**: Każda para botów rozegrała **1000 rozgrywek**, co zapewnia statystyczną istotność wyników.
+
+- **Eliminacja efektu miejsca**: W celu wyeliminowania wpływu kolejności ustawień początkowych (gracz rozpoczynający ma niewielką przewagę), zastosowano mechanizm **przełączania miejsc** (`--switch`). W każdej parze rozgrywek gracze zamieniają się miejscami, co zapewnia sprawiedliwe porównanie niezależne od pozycji startowej.
+
+- **Losowość planszy**: Każda rozgrywka wykorzystuje losowo wygenerowaną planszę zgodnie z zasadami gry *Catan*, co eliminuje możliwość optymalizacji strategii pod konkretną konfigurację terenu.
+
+### 7.1.1. Metryki oceny skuteczności
+
+W celu kompleksowej oceny skuteczności botów wprowadzono następujące metryki:
+
+**Metryki podstawowe:**
+- **Procent wygranych rozgrywek**: Win Rate
+- **Średnia liczba tur do zwycięstwa**: Avg Turns
+- **Średnia liczba punktów przeciwnika przy przegranej**: LossVP
+
+**Metryki dodatkowe**
+- Procent nierozegranych rozgrywek: NW (No Winner) 
+- Częstość zdobycia premii Najdłuższa Droga i Najwięcksza Armia: Longest road% i Largest army%
+- Średnia liczba zakupionych kart rozwoju: Avg DevCards
+- Średnia produkcja zasobów: ProdScore
+
 ### 7.2. Scenariusze testowe
-### Scenariusz 1: Skalowanie jakości botów
-Każdy bot gra z losowym graczem
 
-Cel:
-pokazanie, że każdy kolejny bot jest obiektywnie lepszy od baseline.
+### 7.2.1 Scenariusz 1: Skalowanie jakości botów
 
-Porównania:
-Random vs it1
-Random vs it5
-Random vs AlphaBeta
+Celem pierwszego scenariusza eksperymentalnego było zbadanie, w jaki sposób wzrost złożoności i jakości strategii decyzyjnych botów wpływa na przebieg oraz wynik rozgrywek. W szczególności analizowano, czy kolejne iteracje botów heurystycznych prowadzą jedynie do stopniowej poprawy skuteczności, czy też występują jakościowe „progi”, po których charakter rozgrywki ulega istotnej zmianie.
 
-### Scenariusz 2: Porównanie heurystyk
-Boty heurystyczne między sobą
-Cel:
-uzasadnienie iteracyjnego podejścia.
+#### Podsumowanie danych
 
-Porównania:
-it1 vs it3
-it3 vs it5
+| Bot | Win Rate vs Random | NW% | Avg Turns | LossVP (Random) | LossVP (Bot) | Longest road% | Largest army% | Avg DevCards | ProdScore |
+|-----|-------------------|-----|-----------|-----------------|--------------|---------------|---------------|--------------|-----------|
+| It1 | 56.0% | 7.6% | 448.5 | 6.81 | 7.51 | 51.2% | 58.9% | 3.0 | 730.4 |
+| It2 | 73.3% | 3.6% | 381.0 | 6.23 | 8.48 | 64.4% | 62.0% | 3.0 | 864.3 |
+| It3 | 98.7% | 0.3% | 180.3 | 3.98 | 11.50 | 83.7% | 91.9% | 3.2 | 1003.2 |
+| It4 | 96.9% | 1.6% | 192.6 | 3.64 | 9.80 | 94.6% | 86.7% | 3.0 | 1190.3 |
+| It5 | 100.0% | 0.0% | 115.3 | 3.21 | – | 71.5% | 98.5% | 3.7 | 1096.4 |
+| Para | 99.5% | 0.0% | 125.1 | 3.34 | 4.80 | 90.2% | 25.9% | 9.9 | 1267.8 |
+| ParaSettleIt5 | 100.0% | 0.0% | 111.0 | 3.21 | – | 68.3% | 98.8% | 3.7 | 1111.5 |
+| OneResourcePlayer | 99.8% | 0.0% | 159.9 | 3.79 | 11.50 | 82.0% | 92.4% | 2.9 | 1117.0 |
+| DevPlayer | 99.8% | 0.1% | 166.1 | 4.00 | 12.00 | 52.8% | 99.7% | 4.6 | 1064.8 |
+| RoadPlayer | 100.0% | 0.0% | 132.7 | 3.22 | – | 94.5% | 98.6% | 3.6 | 1051.0 |
 
-### Scenariusz 3: Bot eksperymentalny
-OneResource vs it5 / AlphaBeta
+#### Kluczowe wnioski
+- Nieliniowy charakter progresji jakości
 
-Cel:
-pokazanie, że ciekawa hipoteza ≠ najlepszy wynik.
-To bardzo dobrze wygląda:
-„strategia monosurowcowa jest interesująca, ale niestabilna”.
+Wzrost skuteczności botów heurystycznych nie ma charakteru liniowego. Iteracje It1 i It2 prowadzą do stopniowej poprawy współczynnika zwycięstw (56% -> 73%), natomiast It3 powoduje jakościowy skok skuteczności do 98.7%. Przekroczenie tego progu kompetencyjnego wynika z wprowadzenia strategii optymalnych ustawień początkowych, zapewniających lepsze pozycje startowe, oraz aktywnego wykorzystania rozbójnika do blokowania produkcji przeciwnika. Od tego momentu bot przejmuje kontrolę nad przebiegiem rozgrywki, a kolejne iteracje (It4, It5) stabilizują tę dominację, osiągając 96–100% zwycięstw.
 
-### Scenariusz 4: Najlepszy vs najlepszy
-AlphaBeta vs it5
-Cel:
-pokazanie, czy koszt obliczeniowy alpha-beta się opłaca.
-### 7.3. Wyniki eksperymentów
-### 7.4. Analiza i interpretacja wyników
+1_progression.png
+
+- Zależność jakości strategii od tempa gry
+
+Wraz ze wzrostem jakości botów obserwowany jest istotny spadek średniej liczby tur. It1 rozgrywa partie trwające średnio 448 tur, It3 skraca je do około 180 tur, natomiast It5 do około 115 tur. Lepsze boty nie tylko wygrywają częściej, lecz także szybciej, co świadczy o większej efektywności decyzyjnej i zdolności do domykania gry.
+
+- Metryka LossVP
+
+Analiza średniej liczby punktów zwycięstwa przegranego gracza (LossVP) pokazuje istotne różnice jakościowe pomiędzy botami. Dla It1 i It2 gracz losowy przegrywa, osiągając ponad 6 VP, natomiast od It3 wartość ta spada do około 3–4 VP. Oznacza to, że boty wyższej jakości nie tylko wygrywają, lecz także skutecznie ograniczają rozwój przeciwnika. Wysokie wartości LossVP po stronie botów wyspecjalizowanych (Dev, OneResource) wskazują na większą wariancję ich strategii.
+
+- Metryki dodatkowe
+
+Metryki dodatkowe jednoznacznie wskazują na istnienie odmiennych strategii botów. Wraz ze wzrostem iteracji rośnie częstość zdobywania premii Najdłuższej Drogi oraz Największej Armii, co świadczy o coraz efektywniejszym wykorzystaniu kart rozwoju. Boty It1–It2 uzyskują Najdłuższą Drogę w około 50–64% gier, natomiast od It3 wartość ta wzrasta do 68–94%. RoadPlayer, zgodnie ze swoją specjalizacją, zdobywa tę premię w 94.5% rozgrywek.
+
+Analogicznie, premia Największej Armii jest osiągana przez boty It1–It2 w około 59–62% gier, podczas gdy boty It3 i wyższe w ponad 86% przypadków. DevPlayer niemal zawsze uzyskuje tę premię (99.7%), co jest bezpośrednim efektem strategii intensywnego zakupu kart rozwoju.
+
+Jako dodatkową informację warto zauważyć, że boty It1 i It2 kończą odpowiednio 7.6% i 3.6% rozgrywek bez zwycięzcy (timeout po 1000 turach). To wskazuje na niewystarczającą agresywność strategii. Od iteracji It3 zjawisko to praktycznie zanika (0–0.3%), co potwierdza, że boty wyższej jakości podejmują bardziej deterministyczne decyzje i konsekwentnie domykają rozgrywkę.
+
+### Scenariusz 2: Porównanie iteracyjnych heurystyk
+
+- It1Player vs It2Player
+- It2Player vs It3Player
+- It3Player vs It4Player
+- It4Player vs It5Player
+- It1Player vs It5Player (porównanie skokowe)
+
+#### Scenariusz 3: OneResourcePlayer
+
+- OneResourcePlayer vs
+- OneResourcePlayer vs
+- OneResourcePlayer vs
+- OneResourcePlayer vs
+- OneResourcePlayer vs
+- OneResourcePlayer vs ParaSettleIt5Player
+- OneResourcePlayer vs AlphaBetaPlayer
+
+#### Scenariusz 4: DevPlayer
+
+- DevPlayer vs
+- DevPlayer vs
+- DevPlayer vs
+- DevPlayer vs
+- DevPlayer vs
+- DevPlayer vs ParaSettleIt5Player
+- DevPlayer vs AlphaBetaPlayer
+
+#### Scenariusz 5: RoadPlayer
+
+- RoadPlayer vs
+- RoadPlayer vs
+- RoadPlayer vs
+- RoadPlayer vs
+- RoadPlayer vs
+- RoadPlayer vs ParaSettleIt5Player
+- RoadPlayer vs AlphaBetaPlayer
 
 ## 8. Podsumowanie i wnioski
 ### 8.1. Ocena realizacji celów pracy

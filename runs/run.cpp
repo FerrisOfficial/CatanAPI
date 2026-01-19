@@ -11,6 +11,7 @@
 #include "players/oneResourcePlayer.hpp"
 #include "players/devPlayer.hpp"
 #include "players/roadPlayer.hpp"
+#include "players/playerHelpers.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -22,6 +23,8 @@
 #include <vector>
 
 namespace {
+using PlayerHelpers::effective_vp;
+using PlayerHelpers::production_score_for_player;
 std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
     // Player flags (extensible):
     // - rp : RandomPlayer
@@ -104,7 +107,7 @@ void print_usage(const char* exe) {
         << "  it5 It5Player\n"
         << "  para ParaPlayer (params from ./players/paraPlayer.cfg; override via CATAN_PARA_CFG)\n"
         << "  psit5 ParaSettleIt5Player (It5 + param init placement from ./players/paraSetit5Player.cfg; override via CATAN_PARA_SETIT5_CFG)\n"
-        << "  ab  alphaBetaPlayer\n"
+        << "  ab  AlphaBetaPlayer\n"
         << "  or  OneResourcePlayer\n"
         << "  dev DevPlayer (heavily prioritizes development cards)\n"
         << "  road RoadPlayer (road-focused, aims for long continuous road)\n";
@@ -114,6 +117,45 @@ struct Options {
     size_t games = 1;
     bool dump = true;
     bool switchSeats = false;
+};
+
+// Average VP of the *losing* bot, split by the two compared bots (positional args),
+// independent of which seat they occupied in a given game.
+struct LossVPByBotStats {
+    unsigned long long sumBotALoserVp = 0;
+    unsigned long long sumBotBLoserVp = 0;
+    size_t botALosses = 0;
+    size_t botBLosses = 0;
+
+    // seat0Flag/seat1Flag: which bot played in Player0/Player1 in this particular game.
+    void addGame(const std::string& botAFlag,
+                 const std::string& botBFlag,
+                 const std::string& seat0Flag,
+                 const std::string& seat1Flag,
+                 PlayerId winner,
+                 int vpSeat0,
+                 int vpSeat1) {
+        if (winner == PlayerId::NoPlayer) return;
+
+        const bool seat0Won = (winner == PlayerId::Player0);
+        const std::string& loserFlag = seat0Won ? seat1Flag : seat0Flag;
+        const int loserVp = seat0Won ? vpSeat1 : vpSeat0;
+
+        if (loserFlag == botAFlag) {
+            sumBotALoserVp += static_cast<unsigned long long>(loserVp);
+            ++botALosses;
+        } else if (loserFlag == botBFlag) {
+            sumBotBLoserVp += static_cast<unsigned long long>(loserVp);
+            ++botBLosses;
+        }
+    }
+
+    double avgBotALoserVp() const {
+        return botALosses ? (static_cast<double>(sumBotALoserVp) / static_cast<double>(botALosses)) : 0.0;
+    }
+    double avgBotBLoserVp() const {
+        return botBLosses ? (static_cast<double>(sumBotBLoserVp) / static_cast<double>(botBLosses)) : 0.0;
+    }
 };
 
 bool starts_with(const std::string& s, const char* prefix) {
@@ -290,6 +332,21 @@ int main(int argc, char** argv) {
     unsigned long long totalTurns = 0;
     unsigned maxTurns = 0;
 
+    // Additional metrics
+    size_t longestRoadCountBotA = 0;
+    size_t longestRoadCountBotB = 0;
+    size_t largestArmyCountBotA = 0;
+    size_t largestArmyCountBotB = 0;
+
+    unsigned long long sumDevCardsBotA = 0;
+    unsigned long long sumDevCardsBotB = 0;
+
+    unsigned long long sumProdScoreBotA = 0; // pips-weighted production score (approx production per turn)
+    unsigned long long sumProdScoreBotB = 0;
+
+    // Avg VP of the losing bot, split by the two compared bots (positional args), independent of seat.
+    LossVPByBotStats lossVpByBot;
+
     const size_t progressEvery = (opt.games >= 100) ? std::max<size_t>(1, opt.games / 100) : 1;
     const auto start = std::chrono::steady_clock::now();
 
@@ -316,6 +373,14 @@ int main(int argc, char** argv) {
             lastWinner = winner;
             lastTurns = static_cast<unsigned>(game.boardState.currentTurn);
 
+            // Final state snapshots for metrics
+            const auto packedP0 = game.boardState.packedPlayers[0];
+            const auto packedP1 = game.boardState.packedPlayers[1];
+
+            const int vpSeat0 = effective_vp(&game.boardState, PlayerId::Player0);
+            const int vpSeat1 = effective_vp(&game.boardState, PlayerId::Player1);
+            lossVpByBot.addGame(p0_flag, p1_flag, seat0_flag, seat1_flag, winner, vpSeat0, vpSeat1);
+
             switch (winner) {
                 case PlayerId::Player0: ++winsP0; break;
                 case PlayerId::Player1: ++winsP1; break;
@@ -336,6 +401,55 @@ int main(int argc, char** argv) {
                     // seat1 won
                     if (seat0IsBotA) ++winsBotB;
                     else ++winsBotA;
+                }
+            }
+
+            // Award frequencies (count per bot across all games)
+            {
+                const bool seat0IsBotA = !swapped;
+                const bool lrP0 = Player::unpackLongestRoadFlag(packedP0);
+                const bool lrP1 = Player::unpackLongestRoadFlag(packedP1);
+                const bool laP0 = Player::unpackLargestArmyFlag(packedP0);
+                const bool laP1 = Player::unpackLargestArmyFlag(packedP1);
+
+                if (seat0IsBotA) {
+                    if (lrP0) ++longestRoadCountBotA; else (void)0;
+                    if (laP0) ++largestArmyCountBotA; else (void)0;
+                    if (lrP1) ++longestRoadCountBotB; else (void)0;
+                    if (laP1) ++largestArmyCountBotB; else (void)0;
+                } else {
+                    if (lrP0) ++longestRoadCountBotB; else (void)0;
+                    if (laP0) ++largestArmyCountBotB; else (void)0;
+                    if (lrP1) ++longestRoadCountBotA; else (void)0;
+                    if (laP1) ++largestArmyCountBotA; else (void)0;
+                }
+            }
+
+            // Average dev cards purchased (proxy: total dev cards in final state)
+            {
+                const bool seat0IsBotA = !swapped;
+                const int devP0 = static_cast<int>(Player::totalDevCards(packedP0));
+                const int devP1 = static_cast<int>(Player::totalDevCards(packedP1));
+                if (seat0IsBotA) {
+                    sumDevCardsBotA += devP0;
+                    sumDevCardsBotB += devP1;
+                } else {
+                    sumDevCardsBotA += devP1;
+                    sumDevCardsBotB += devP0;
+                }
+            }
+
+            // Average production score (pips-weighted expected production per turn)
+            {
+                const bool seat0IsBotA = !swapped;
+                const int prodP0 = production_score_for_player(&game.boardState, PlayerId::Player0);
+                const int prodP1 = production_score_for_player(&game.boardState, PlayerId::Player1);
+                if (seat0IsBotA) {
+                    sumProdScoreBotA += prodP0;
+                    sumProdScoreBotB += prodP1;
+                } else {
+                    sumProdScoreBotA += prodP1;
+                    sumProdScoreBotB += prodP0;
                 }
             }
 
@@ -390,6 +504,16 @@ int main(int argc, char** argv) {
               << ", elapsed=" << std::fixed << std::setprecision(2) << elapsed.count() << "s"
               << ", speed=" << std::fixed << std::setprecision(1) << gps << " g/s\n";
 
+    // Avg VP of the bot in games it LOST (per compared bot, not per seat).
+    {
+        const std::string botALabel = bybot_label(p0_flag, 'A', sameFlags);
+        const std::string botBLabel = bybot_label(p1_flag, 'B', sameFlags);
+        std::cout << std::fixed << std::setprecision(2)
+                  << "LossVP(avg VP when bot lost): "
+                  << botALabel << "=" << lossVpByBot.avgBotALoserVp() << ", "
+                  << botBLabel << "=" << lossVpByBot.avgBotBLoserVp() << "\n";
+    }
+
     if (opt.switchSeats) {
         const std::string botALabel = bybot_label(p0_flag, 'A', sameFlags);
         const std::string botBLabel = bybot_label(p1_flag, 'B', sameFlags);
@@ -397,6 +521,29 @@ int main(int argc, char** argv) {
                   << botALabel << "=" << winsBotA << ", "
                   << botBLabel << "=" << winsBotB << ", "
                   << "NP=" << winsNP << "\n";
+
+        // Metrics summary per bot
+        const auto lrPctA = 100.0 * static_cast<double>(longestRoadCountBotA) / static_cast<double>(opt.games);
+        const auto lrPctB = 100.0 * static_cast<double>(longestRoadCountBotB) / static_cast<double>(opt.games);
+        const auto laPctA = 100.0 * static_cast<double>(largestArmyCountBotA) / static_cast<double>(opt.games);
+        const auto laPctB = 100.0 * static_cast<double>(largestArmyCountBotB) / static_cast<double>(opt.games);
+        const auto avgDevA = static_cast<double>(sumDevCardsBotA) / static_cast<double>(opt.games);
+        const auto avgDevB = static_cast<double>(sumDevCardsBotB) / static_cast<double>(opt.games);
+        const auto avgProdA = static_cast<double>(sumProdScoreBotA) / static_cast<double>(opt.games);
+        const auto avgProdB = static_cast<double>(sumProdScoreBotB) / static_cast<double>(opt.games);
+
+        std::cout << std::fixed << std::setprecision(1)
+                  << "Metrics: " << botALabel
+                  << ", LR%=" << lrPctA
+                  << ", LA%=" << laPctA
+                  << ", avgDevCards=" << avgDevA
+                  << ", avgProdScore=" << avgProdA << "\n";
+        std::cout << std::fixed << std::setprecision(1)
+                  << "         " << botBLabel
+                  << ", LR%=" << lrPctB
+                  << ", LA%=" << laPctB
+                  << ", avgDevCards=" << avgDevB
+                  << ", avgProdScore=" << avgProdB << "\n";
     }
 
     // Preserve the original single-value output for scripts (single-game runs).
