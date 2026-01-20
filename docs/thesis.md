@@ -556,11 +556,11 @@ W celu kompleksowej oceny skuteczności botów wprowadzono następujące metryki
 
 ### 7.2.1 Scenariusz 1: Skalowanie jakości botów
 
-Celem pierwszego scenariusza eksperymentalnego było zbadanie, w jaki sposób wzrost złożoności i jakości strategii decyzyjnych botów wpływa na przebieg oraz wynik rozgrywek. W szczególności analizowano, czy kolejne iteracje botów heurystycznych prowadzą jedynie do stopniowej poprawy skuteczności, czy też występują jakościowe „progi”, po których charakter rozgrywki ulega istotnej zmianie.
+W pierwszym scenariuszu kolejne iteracje botów oraz wybrane strategie wyspecjalizowane porównano z graczem losowym, który pełni rolę punktu odniesienia (baseline). Takie zestawienie pozwala bezpośrednio ocenić wpływ wzbogacania heurystyk na skuteczność, tempo rozgrywki oraz zdolność botów do deterministycznego domykania partii.
 
 #### Podsumowanie danych
 
-| Bot | Win Rate vs Random | NW% | Avg Turns | LossVP (Random) | LossVP (Bot) | Longest road% | Largest army% | Avg DevCards | ProdScore |
+| Bot | Win Rate vs Random | NW% | Avg Turns | LossVP (Random) | LossVP (Bot) | Longest Road% (Bot) | Largest Army% (Bot) | Avg DevCards | ProdScore |
 |-----|-------------------|-----|-----------|-----------------|--------------|---------------|---------------|--------------|-----------|
 | It1 | 56.0% | 7.6% | 448.5 | 6.81 | 7.51 | 51.2% | 58.9% | 3.0 | 730.4 |
 | It2 | 73.3% | 3.6% | 381.0 | 6.23 | 8.48 | 64.4% | 62.0% | 3.0 | 864.3 |
@@ -574,11 +574,14 @@ Celem pierwszego scenariusza eksperymentalnego było zbadanie, w jaki sposób wz
 | RoadPlayer | 100.0% | 0.0% | 132.7 | 3.22 | – | 94.5% | 98.6% | 3.6 | 1051.0 |
 
 #### Kluczowe wnioski
-- Nieliniowy charakter progresji jakości
 
-Wzrost skuteczności botów heurystycznych nie ma charakteru liniowego. Iteracje It1 i It2 prowadzą do stopniowej poprawy współczynnika zwycięstw (56% -> 73%), natomiast It3 powoduje jakościowy skok skuteczności do 98.7%. Przekroczenie tego progu kompetencyjnego wynika z wprowadzenia strategii optymalnych ustawień początkowych, zapewniających lepsze pozycje startowe, oraz aktywnego wykorzystania rozbójnika do blokowania produkcji przeciwnika. Od tego momentu bot przejmuje kontrolę nad przebiegiem rozgrywki, a kolejne iteracje (It4, It5) stabilizują tę dominację, osiągając 96–100% zwycięstw.
+**Nieliniowy charakter progresji jakości**
 
-1_progression.png
+Wzrost skuteczności botów heurystycznych nie ma charakteru liniowego. Iteracje It1 i It2 prowadzą do stopniowej poprawy współczynnika zwycięstw (56% → 73%), natomiast It3 powoduje jakościowy skok skuteczności do 98.7%. Przekroczenie tego progu kompetencyjnego wynika z wprowadzenia strategii optymalnych ustawień początkowych, zapewniających lepsze pozycje startowe, oraz aktywnego wykorzystania rozbójnika do blokowania produkcji przeciwnika. Od tego momentu bot przejmuje kontrolę nad przebiegiem rozgrywki, a kolejne iteracje (It4, It5) stabilizują tę dominację, osiągając 96–100% zwycięstw.
+
+![Progresja skuteczności botów heurystycznych vs RandomPlayer](../plots/1_progression.png)
+
+Wykres ilustruje nieliniowy charakter progresji jakości botów heurystycznych. Linia pokazuje wzrost współczynnika zwycięstw wraz z każdą iteracją. Zielony obszar wokół linii reprezentuje przedziały ufności 95%, pokazując statystyczną pewność wyników. 
 
 - Zależność jakości strategii od tempa gry
 
@@ -596,35 +599,170 @@ Analogicznie, premia Największej Armii jest osiągana przez boty It1–It2 w ok
 
 Jako dodatkową informację warto zauważyć, że boty It1 i It2 kończą odpowiednio 7.6% i 3.6% rozgrywek bez zwycięzcy (timeout po 1000 turach). To wskazuje na niewystarczającą agresywność strategii. Od iteracji It3 zjawisko to praktycznie zanika (0–0.3%), co potwierdza, że boty wyższej jakości podejmują bardziej deterministyczne decyzje i konsekwentnie domykają rozgrywkę.
 
-### Scenariusz 2: Porównanie iteracyjnych heurystyk
+**Podsumowanie Scenariusza 1**
 
-- It1Player vs It2Player
-- It2Player vs It3Player
-- It3Player vs It4Player
-- It4Player vs It5Player
-- It1Player vs It5Player (porównanie skokowe)
+Wyniki Scenariusza 1 jednoznacznie potwierdzają, że wszystkie zaawansowane boty z sukcesem pokonują gracza losowego, stanowiącego punkt odniesienia. Boty heurystyczne od iteracji It3 osiągają współczynniki zwycięstw powyżej 96%, przy czym It5 oraz ParaSettleIt5Player osiągają perfekcję — 100% zwycięstw bez ani jednej przegranej w 1000 rozgrywkach. Również bot wykorzystujący algorytm alpha-beta, bot parametryczny (ParaPlayer) oraz wszystkie boty o strategiach ukierunkowanych na wybrany aspekt rozgrywki (OneResourcePlayer, DevPlayer, RoadPlayer) osiągają współczynniki zwycięstw powyżej 99%, co potwierdza, że wprowadzenie jakiejkolwiek świadomej strategii decyzyjnej prowadzi do dramatycznej przewagi nad losowym wyborem akcji.
 
-#### Scenariusz 3: OneResourcePlayer
+### 7.2.2. Scenariusz 2: Porównanie iteracyjnych heurystyk
 
-- OneResourcePlayer vs
-- OneResourcePlayer vs
-- OneResourcePlayer vs
-- OneResourcePlayer vs
-- OneResourcePlayer vs
+Drugi scenariusz weryfikuje skuteczność iteracyjnego podejścia do projektowania botów poprzez bezpośrednie starcia między kolejnymi iteracjami botów heurystycznych. Eksperyment pozwala ocenić, czy każda kolejna wersja wprowadza istotne ulepszenia strategii oraz zidentyfikować momenty przełomowe w rozwoju jakości botów.
+
+#### Podsumowanie danych
+
+| Para | Bot A | Bot B | Win Rate A | Win Rate B | Avg Turns | LossVP A | LossVP B | Longest Road% A | Longest Road% B | Largest Army% A | Largest Army% B | DevCards A | DevCards B | ProdScore A | ProdScore B |
+|------|-------|-------|------------|------------|-----------|----------|----------|--------------|--------------|--------------|--------------|------------|------------|-------------|-------------|
+| It1 vs It2 | It1 | It2 | 35.8% | 61.9% | 339.8 | 6.24 | 7.96 | 37.4% | 62.6% | 45.8% | 52.3% | 2.3 | 2.6 | 589.1 | 832.1 |
+| It2 vs It3 | It2 | It3 | 5.8% | 93.6% | 181.9 | 5.06 | 11.28 | 31.4% | 68.5% | 5.8% | 91.1% | 0.9 | 3.2 | 400.5 | 1017.3 |
+| It3 vs It4 | It3 | It4 | 32.4% | 66.0% | 184.4 | 9.11 | 9.89 | 24.6% | 75.4% | 52.5% | 46.3% | 2.5 | 2.5 | 817.7 | 1127.4 |
+| It4 vs It5 | It4 | It5 | 25.7% | 74.2% | 134.2 | 9.54 | 11.04 | 82.0% | 17.8% | 11.4% | 88.6% | 1.7 | 3.4 | 958.1 | 1070.6 |
+| It1 vs It5 | It1 | It5 | 0.1% | 99.9% | 114.9 | 3.58 | 14.00 | 14.0% | 73.5% | 1.1% | 98.2% | 0.6 | 3.7 | 266.5 | 1096.8 |
+
+#### Kluczowe wnioski
+
+**Każda iteracja jest obiektywnie lepsza**
+
+Wyniki jednoznacznie potwierdzają wartość iteracyjnego podejścia — w każdej parze kolejna iteracja osiąga wyższy współczynnik zwycięstw. It2 wygrywa 61.9% rozgrywek przeciwko It1 (przewaga +26.1 punktów procentowych), It3 dominuje It2 z wynikiem 93.6% (przewaga +87.8 punktów procentowych), It4 wygrywa 66.0% przeciwko It3 (+33.6%), a It5 osiąga 74.2% przeciwko It4 (+48.5%). Porównanie skokowe It1 vs It5 pokazuje pełną skalę postępu — It5 wygrywa 99.9% rozgrywek (tylko 1 przegrana w 1000 meczach), co potwierdza systematyczną poprawę jakości strategii wraz z każdą iteracją.
+
+![Przewaga kolejnej iteracji nad poprzednią](../plots/scenario2_2_advantage_gap.png)
+
+Wykres przedstawia przewagę kolejnej iteracji nad poprzednią wyrażoną w punktach procentowych. Największy skok następuje między It2 a It3 (+87.8 punktów procentowych), co wizualnie potwierdza przepaść kompetencyjną obserwowaną w Scenariuszu 1.
+
+Szczególnie istotna jest obserwacja, że pomimo iż It3Player osiągał lepszy współczynnik zwycięstw przeciwko RandomPlayer niż It4Player (98.7% vs 96.9%), w bezpośrednim starciu It4Player wygrywa 66% rozgrywek przeciwko It3Player. To pokazuje różnicę między ogólną skutecznością przeciwko losowemu przeciwnikowi a skutecznością przeciwko konkretnej strategii — It4Player, dzięki lepszej produkcji zasobów (ProdScore: 1127.4 vs 817.7) oraz deterministycznemu wyborowi najlepszej akcji, jest lepiej przygotowany do starcia z zaawansowanym przeciwnikiem.
+
+**Skok jakościowy It2→It3**
+
+Różnica w współczynniku zwycięstw it3 nad it2 wynosi 87.8 punktów procentowych (93.6% vs 5.8%), co wskazuje na kluczowe znaczenie mechanizmów wprowadzonych w It3: strategii ustawień początkowych oraz aktywnego wykorzystania rozbójnika. Wszystkie metryki szczegółowe pokazują dramatyczną poprawę — produkcja zasobów wzrasta o 154% (400.5 → 1017.3), wykorzystanie Największej Armii z 5.8% do 91.1% (wzrost 15-krotny), a wykorzystanie Najdłuższej Drogi podwaja się (31.4% → 68.5%).
+
+**Tempo rozgrywki**
+
+Kolejne iteracje botów prowadzą do szybszego rozstrzygania partii. Średnia liczba tur spada z 339.8 (It1 vs It2) do 181.9 (It2 vs It3), następnie stabilizuje się na poziomie około 184 tur (It3 vs It4), by ostatecznie osiągnąć 134.2 tury w starciu It4 vs It5. Warto zauważyć, że rozgrywka It3 vs It4 trwała dłużej (184.4 tur) niż It2 vs It3 (181.9 tur), co może wskazywać na bardziej zbalansowaną walkę między zaawansowanymi botami — It4 skutecznie przeciwstawia się strategii It3, co wydłuża rozgrywkę mimo wyższej skuteczności It4.
+
+![Tempo rozgrywki w zależności od iteracji](../plots/scenario2_4_tempo_progression.png)
+
+Wykres ilustruje przyspieszenie tempa rozgrywki wraz z poprawą jakości botów. Największy spadek liczby tur następuje między It2 a It3, a następnie tempo stabilizuje się i ponownie wzrasta w starciu It4 vs It5.
+
+Porównanie skokowe It1 vs It5 pokazuje najszybsze rozgrywki (średnio 114.9 tur), co jest najbliżej klasycznych 60–70 tur charakterystycznych dla rozgrywek między doświadczonymi graczami. To potwierdza, że iteracyjne podejście prowadzi nie tylko do poprawy skuteczności, ale również do zwiększenia efektywności strategii.
+
+#### Scenariusz 4: Algorytm alpha-beta
+
+- AlphaBetaPlayer vs it1
+[ 1000/1000] ab=993(99.3%) it1=7(0.7%) NP=0(0.0%) avgT=138.4 maxT=711 1.1g/s ETA=00:00:00
+Summary: P0=501, P1=499, NP=0, avgTurns=138.4, maxTurns=711, elapsed=930.53s, speed=1.1 g/s
+LossVP(avg VP when bot lost): ab=13.29, it1=4.36
+ByBot: ab=993, it1=7, NP=0
+Metrics: ab, LR%=89.0, LA%=98.0, avgDevCards=3.6, avgProdScore=1026.6
+         it1, LR%=8.8, LA%=2.0, avgDevCards=1.0, avgProdScore=337.7
+last_winner=Player1
+last_turns=129
+
+- AlphaBetaPlayer vs it2
+[ 1000/1000] ab=995(99.5%) it2=5(0.5%) NP=0(0.0%) avgT=138.6 maxT=732 1.2g/s ETA=00:00:00
+Summary: P0=501, P1=499, NP=0, avgTurns=138.6, maxTurns=732, elapsed=834.31s, speed=1.2 g/s
+LossVP(avg VP when bot lost): ab=11.60, it2=4.57
+ByBot: ab=995, it2=5, NP=0
+Metrics: ab, LR%=85.1, LA%=97.6, avgDevCards=3.7, avgProdScore=1031.5
+         it2, LR%=13.6, LA%=2.1, avgDevCards=0.9, avgProdScore=357.8
+last_winner=Player1
+last_turns=124
+
+- AlphaBetaPlayer vs it3
+[ 1000/1000] ab=743(74.3%) it3=257(25.7%) NP=0(0.0%) avgT=144.0 maxT=484 0.4g/s ETA=00:00:00
+Summary: P0=477, P1=523, NP=0, avgTurns=144.0, maxTurns=484, elapsed=2659.33s, speed=0.4 g/s
+LossVP(avg VP when bot lost): ab=10.29, it3=9.07
+ByBot: ab=743, it3=257, NP=0
+Metrics: ab, LR%=58.1, LA%=76.7, avgDevCards=2.9, avgProdScore=1026.1
+         it3, LR%=41.8, LA%=23.3, avgDevCards=2.1, avgProdScore=867.8
+last_winner=Player0
+last_turns=127
+
+- AlphaBetaPlayer vs it4
+- AlphaBetaPlayer vs it5
+- AlphaBetaPlayer vs Para
+- AlphaBetaPlayer vs ParaSettleIt5
+
+#### Scenariusz 5: Player parametryczny
+
+#### Scenariusz 5: Strategie wyspecjalizowane
+
+- OneResourcePlayer vs it1
+[ 1000/1000] or=983(98.3%) it1=15(1.5%) NP=2(0.2%) avgT=160.1 maxT=1000 18.4g/s ETA=00:00:00
+Summary: P0=500, P1=498, NP=2, avgTurns=160.1, maxTurns=1000, elapsed=54.22s, speed=18.4 g/s
+LossVP(avg VP when bot lost): or=9.00, it1=4.37
+ByBot: or=983, it1=15, NP=2
+Metrics: or, LR%=82.9, LA%=89.2, avgDevCards=2.9, avgProdScore=1117.3
+         it1, LR%=14.7, LA%=8.9, avgDevCards=0.9, avgProdScore=321.2
+last_winner=Player1
+last_turns=172
+
+- OneResourcePlayer vs it2
+[ 1000/1000] or=955(95.5%) it2=45(4.5%) NP=0(0.0%) avgT=161.1 maxT=402 18.7g/s ETA=00:00:00
+Summary: P0=503, P1=497, NP=0, avgTurns=161.1, maxTurns=402, elapsed=53.38s, speed=18.7 g/s
+LossVP(avg VP when bot lost): or=9.82, it2=4.93
+ByBot: or=955, it2=45, NP=0
+Metrics: or, LR%=72.8, LA%=89.3, avgDevCards=2.9, avgProdScore=1115.0
+         it2, LR%=26.1, LA%=8.8, avgDevCards=0.9, avgProdScore=387.6
+last_winner=Player1
+last_turns=184
+
+- OneResourcePlayer vs it3
+[ 1000/1000] or=568(56.8%) it3=431(43.1%) NP=1(0.1%) avgT=148.6 maxT=1000 22.6g/s ETA=00:00:00
+Summary: P0=513, P1=486, NP=1, avgTurns=148.6, maxTurns=1000, elapsed=44.34s, speed=22.6 g/s
+LossVP(avg VP when bot lost): or=8.43, it3=9.36
+ByBot: or=568, it3=431, NP=1
+Metrics: or, LR%=43.4, LA%=51.9, avgDevCards=2.3, avgProdScore=968.4
+         it3, LR%=56.5, LA%=47.6, avgDevCards=2.4, avgProdScore=854.7
+last_winner=Player1
+last_turns=80
+
+- OneResourcePlayer vs it4
+[ 1000/1000] or=364(36.4%) it4=636(63.6%) NP=0(0.0%) avgT=146.6 maxT=717 18.7g/s ETA=00:00:00
+Summary: P0=510, P1=490, NP=0, avgTurns=146.6, maxTurns=717, elapsed=53.58s, speed=18.7 g/s
+LossVP(avg VP when bot lost): or=8.23, it4=10.09
+ByBot: or=364, it4=636, NP=0
+Metrics: or, LR%=22.2, LA%=46.9, avgDevCards=2.2, avgProdScore=859.0
+         it4, LR%=77.8, LA%=51.8, avgDevCards=2.5, avgProdScore=1119.4
+last_winner=Player1
+last_turns=330
+
+- OneResourcePlayer vs it5
+[ 1000/1000] or=190(19.0%) it5=810(81.0%) NP=0(0.0%) avgT=116.9 maxT=384 12.5g/s ETA=00:00:00
+Summary: P0=496, P1=504, NP=0, avgTurns=116.9, maxTurns=384, elapsed=80.17s, speed=12.5 g/s
+LossVP(avg VP when bot lost): or=7.24, it5=11.21
+ByBot: or=190, it5=810, NP=0
+Metrics: or, LR%=39.0, LA%=12.1, avgDevCards=1.6, avgProdScore=745.2
+         it5, LR%=55.8, LA%=87.8, avgDevCards=3.3, avgProdScore=1065.1
+last_winner=Player0
+last_turns=143
+
+- OneResourcePlayer vs Para
+[ 1000/1000] or=348(34.8%) para=651(65.1%) NP=1(0.1%) avgT=127.8 maxT=1000 5.0g/s ETA=00:00:00
+Summary: P0=503, P1=496, NP=1, avgTurns=127.8, maxTurns=1000, elapsed=199.22s, speed=5.0 g/s
+LossVP(avg VP when bot lost): or=7.73, para=6.14
+ByBot: or=348, para=651, NP=1
+Metrics: or, LR%=32.2, LA%=60.6, avgDevCards=1.9, avgProdScore=795.7
+         para, LR%=67.2, LA%=33.5, avgDevCards=5.8, avgProdScore=962.1
+last_winner=Player0
+last_turns=95
+
 - OneResourcePlayer vs ParaSettleIt5Player
+[ 1000/1000] or=182(18.2%) psit5=818(81.8%) NP=0(0.0%) avgT=113.2 maxT=242 14.5g/s ETA=00:00:00
+Summary: P0=508, P1=492, NP=0, avgTurns=113.2, maxTurns=242, elapsed=68.94s, speed=14.5 g/s
+LossVP(avg VP when bot lost): or=7.19, psit5=11.24
+ByBot: or=182, psit5=818, NP=0
+Metrics: or, LR%=38.9, LA%=11.1, avgDevCards=1.6, avgProdScore=735.0
+         psit5, LR%=54.7, LA%=88.7, avgDevCards=3.2, avgProdScore=1089.8
+last_winner=Player0
+last_turns=127
+
 - OneResourcePlayer vs AlphaBetaPlayer
 
-#### Scenariusz 4: DevPlayer
-
-- DevPlayer vs
-- DevPlayer vs
-- DevPlayer vs
-- DevPlayer vs
-- DevPlayer vs
+- DevPlayer vs it1
+- DevPlayer vs it2
+- DevPlayer vs it3
+- DevPlayer vs it4
+- DevPlayer vs Para
 - DevPlayer vs ParaSettleIt5Player
 - DevPlayer vs AlphaBetaPlayer
-
-#### Scenariusz 5: RoadPlayer
 
 - RoadPlayer vs
 - RoadPlayer vs
