@@ -32,15 +32,34 @@ Każdy typ pola produkcyjnego na planszy odpowiada określonemu surowcowi:
 - pastwiska produkują wełnę (*Wool*),
 - góry produkują rudę (*Ore*).
 
+![alt text](board.png)
+Przykładowa plansza do gry
 Pola pustynne nie generują zasobów i stanowią początkową lokalizację rozbójnika.
 
-Celem gry jest zdobycie **10 punktów zwycięstwa** (15 w wariancie rozgrywki 1 vs 1). Punkty te są przyznawane głównie za budowę osad (1 punkt zwycięstwa) i miast (2 punkty zwycięstwa). Dodatkowymi źródłami punktów zwycięstwa są premie:
+Celem gry jest zdobycie **10 punktów zwycięstwa** (15 w wariancie rozgrywki 1 vs 1). Punkty te są przyznawane głównie za budowę osad (1 punkt zwycięstwa) i miast (2 punkty zwycięstwa). 
+
+Osady i miasta muszą być połączone drogami — każda nowa struktura musi być dostępna przez ciągłą sieć dróg gracza. Ponadto obowiązuje **zasada dystansu**: osady i miasta różnych graczy (oraz własne) muszą być oddalone od siebie o co najmniej dwie krawędzie.
+
+Każda struktura ma określony koszt budowy wyrażony w surowcach:
+- **Droga**: drewno + cegła (1+1),
+- **Osada**: drewno + cegła + wełna + zboże (1+1+1+1),
+- **Miasto**: ruda + ruda + ruda + zboże + zboże (3+2) — budowane poprzez modernizację istniejącej osady,
+- **Karta rozwoju**: ruda + wełna + zboże (1+1+1).
+
+![alt text](building_costs.png)
+Koszt budowy struktur przedstawiony wizualnie.
+
+**Karty rozwoju** stanowią dodatkowy element strategiczny gry. Po zakupie karty są losowane z talii i mogą być trzech typów: **Rycerz** (umożliwia przemieszczenie rozbójnika i kradzież zasobu od przeciwnika), **Postęp** (karty specjalne takie jak Monopol, Rok Obfitości czy Budowa Dróg) oraz **Punkty zwycięstwa** (ukryte karty dające 1 VP każda, ujawniane dopiero przy osiągnięciu zwycięstwa). Karty Rycerz mogą być zagrywane w dowolnym momencie tury, natomiast karty Postęp i Punkty zwycięstwa są zagrywane przed rzutem kośćmi.
+
+Dodatkowymi źródłami punktów zwycięstwa są premie:
 - Premia **Najdłuższa Droga** przyznawana jest graczowi posiadającemu najdłuższy nieprzerwany ciąg połączonych dróg o długości co najmniej pięciu segmentów. Premia ta może zostać odebrana przez innego gracza, jeśli zbuduje on dłuższą drogę.
 - Premia **Największa Armia** przyznawana jest graczowi, który jako pierwszy użyje co najmniej trzech kart Rycerz i posiada ich więcej niż pozostali gracze. Podobnie jak w przypadku Najdłuższej Drogi, premia ta jest dynamiczna i może przechodzić pomiędzy graczami w trakcie rozgrywki.
 
 Każda z tych premii zapewnia dodatkowe **2 punkty zwycięstwa**, istotnie wpływając na strategię oraz tempo gry. W dalszej części pracy punkty zwycięstwa będą oznaczane skrótem **VP** (ang. *Victory Points*). Rozgrywka toczy się w turach, a zwycięstwo następuje natychmiast po osiągnięciu wymaganej liczby punktów przez jednego z graczy.
 
-Podstawowy przebieg tury obejmuje rzut dwiema kośćmi sześciennymi, który determinuje produkcję zasobów na planszy. Gracze otrzymują surowce z tych pól, których numer odpowiada wyrzuconej sumie, pod warunkiem że posiadają przy nich osady lub miasta. Następnie możliwe jest prowadzenie handlu (z innymi graczami lub z bankiem) oraz wykonywanie akcji budowy, takich jak wznoszenie dróg, osad, miast lub zakup kart rozwoju.
+Podstawowy przebieg tury obejmuje rzut dwiema kośćmi sześciennymi, który determinuje produkcję zasobów na planszy. Gracze otrzymują surowce z tych pól, których numer odpowiada wyrzuconej sumie — osada zapewnia 1 zasób z każdego przylegającego heksu, a miasto 2 zasoby. W przydadku gdzy została wyrzucona liczba 7, żaden heks nie produkuje zasobow. Zamiast tego gracze posiadający więcej niż 9 kart zasobów muszą odrzucić połowę (w dół), a aktywny gracz przemieszcza rozbójnika na wybrany heks (blokując jego produkcję) i może ukraść jedną kartę zasobów od gracza posiadającego osadę lub miasto przy tym heksie.
+
+Następnie możliwe jest prowadzenie handlu (z innymi graczami lub z bankiem) oraz wykonywanie akcji budowy, takich jak wznoszenie dróg, osad, miast lub zakup kart rozwoju. Handlowanie z bankiem odbywa się według standardowego kursu 4:1 (cztery dowolne zasoby za jeden wybrany), jednak gracze posiadający osadę lub miasto przy porcie mogą korzystać z lepszych kursów: port 3:1 (trzy dowolne za jeden) lub port 2:1 (dwa konkretne surowce za jeden tego samego typu). Handlowanie między graczami jest negocjacyjne i może obejmować dowolne kombinacje zasobów, co stanowi istotny element interakcji społecznej w klasycznej wersji gry.
 
 Istotnym elementem gry jest losowość wynikająca z rzutów kośćmi, która wpływa na tempo pozyskiwania zasobów, jednak decyzje strategiczne — wybór lokalizacji budowy, kierunek rozwoju infrastruktury oraz zarządzanie zasobami — mają kluczowe znaczenie dla długoterminowego sukcesu. Ta kombinacja **niepełnej informacji, losowości i planowania** sprawia, że *Catan* stanowi interesujące środowisko badawcze dla analizy algorytmów decyzyjnych i strategii gry.
 
@@ -48,7 +67,7 @@ Istotnym elementem gry jest losowość wynikająca z rzutów kośćmi, która wp
 
 Każde pole produkcyjne (heks) na planszy posiada przypisaną liczbę z zakresu 2–12 (z wyjątkiem 7, który odpowiada aktywacji rozbójnika). Liczby te odpowiadają możliwym sumom wyrzuconym na dwóch sześciennych kościach. Ze względu na różną liczbę kombinacji prowadzących do danej sumy, poszczególne liczby mają odmienne prawdopodobieństwo wystąpienia. W praktyce wprowadza się miarę **pipsów** (z ang. *pips*, dosłownie: oczka na kości), która odzwierciedla częstość występowania danej liczby:
 
-- **2 lub 12**: 1 pipsa (1 kombinacja: 1+1 lub 6+6),
+- **2 lub 12**: 1 pips (1 kombinacja: 1+1 lub 6+6),
 - **3 lub 11**: 2 pipsy (2 kombinacje: 1+2, 2+1 lub 5+6, 6+5),
 - **4 lub 10**: 3 pipsy (3 kombinacje),
 - **5 lub 9**: 4 pipsy (4 kombinacje),
@@ -676,92 +695,137 @@ last_winner=Player0
 last_turns=127
 
 - AlphaBetaPlayer vs it4
+[ 1000/1000] ab=626(62.6%) it4=372(37.2%) NP=2(0.2%) avgT=141.1 maxT=1000 0.1g/s ETA=00:00:00
+Summary: P0=446, P1=552, NP=2, avgTurns=141.1, maxTurns=1000, elapsed=14154.55s, speed=0.1 g/s
+LossVP(avg VP when bot lost): ab=10.18, it4=9.67
+ByBot: ab=626, it4=372, NP=2
+Metrics: ab, LR%=47.6, LA%=76.1, avgDevCards=2.9, avgProdScore=984.0
+         it4, LR%=52.4, LA%=23.8, avgDevCards=2.2, avgProdScore=1010.4
+last_winner=Player1
+last_turns=125
+
 - AlphaBetaPlayer vs it5
+[ 1000/1000] ab=624(62.4%) it5=376(37.6%) NP=0(0.0%) avgT=136.7 maxT=509 0.2g/s ETA=00:00:00
+Summary: P0=496, P1=504, NP=0, avgTurns=136.7, maxTurns=509, elapsed=5544.99s, speed=0.2 g/s
+LossVP(avg VP when bot lost): ab=10.17, it5=9.77
+ByBot: ab=624, it5=376, NP=0
+Metrics: ab, LR%=70.8, LA%=57.9, avgDevCards=2.6, avgProdScore=995.7
+         it5, LR%=29.2, LA%=42.0, avgDevCards=2.6, avgProdScore=974.7
+last_winner=Player1
+last_turns=98
+
 - AlphaBetaPlayer vs Para
 - AlphaBetaPlayer vs ParaSettleIt5
 
 #### Scenariusz 5: Player parametryczny
 
-#### Scenariusz 5: Strategie wyspecjalizowane
+#### Scenariusz 7.2.5: Strategie wyspecjalizowane
 
-- OneResourcePlayer vs it1
-[ 1000/1000] or=983(98.3%) it1=15(1.5%) NP=2(0.2%) avgT=160.1 maxT=1000 18.4g/s ETA=00:00:00
-Summary: P0=500, P1=498, NP=2, avgTurns=160.1, maxTurns=1000, elapsed=54.22s, speed=18.4 g/s
-LossVP(avg VP when bot lost): or=9.00, it1=4.37
-ByBot: or=983, it1=15, NP=2
-Metrics: or, LR%=82.9, LA%=89.2, avgDevCards=2.9, avgProdScore=1117.3
-         it1, LR%=14.7, LA%=8.9, avgDevCards=0.9, avgProdScore=321.2
-last_winner=Player1
-last_turns=172
+Scenariusz piąty weryfikuje skuteczność strategii wyspecjalizowanych przeciwko różnym poziomom przeciwników. W szczególności analizuje, w jakich warunkach specjalizacja w jeden aspekt rozgrywki (np. jeden surowiec) jest efektywna oraz identyfikuje granicę skuteczności strategii wyspecjalizowanych.
 
-- OneResourcePlayer vs it2
-[ 1000/1000] or=955(95.5%) it2=45(4.5%) NP=0(0.0%) avgT=161.1 maxT=402 18.7g/s ETA=00:00:00
-Summary: P0=503, P1=497, NP=0, avgTurns=161.1, maxTurns=402, elapsed=53.38s, speed=18.7 g/s
-LossVP(avg VP when bot lost): or=9.82, it2=4.93
-ByBot: or=955, it2=45, NP=0
-Metrics: or, LR%=72.8, LA%=89.3, avgDevCards=2.9, avgProdScore=1115.0
-         it2, LR%=26.1, LA%=8.8, avgDevCards=0.9, avgProdScore=387.6
-last_winner=Player1
-last_turns=184
+##### OneResourcePlayer — strategia monosurowcowa
 
-- OneResourcePlayer vs it3
-[ 1000/1000] or=568(56.8%) it3=431(43.1%) NP=1(0.1%) avgT=148.6 maxT=1000 22.6g/s ETA=00:00:00
-Summary: P0=513, P1=486, NP=1, avgTurns=148.6, maxTurns=1000, elapsed=44.34s, speed=22.6 g/s
-LossVP(avg VP when bot lost): or=8.43, it3=9.36
-ByBot: or=568, it3=431, NP=1
-Metrics: or, LR%=43.4, LA%=51.9, avgDevCards=2.3, avgProdScore=968.4
-         it3, LR%=56.5, LA%=47.6, avgDevCards=2.4, avgProdScore=854.7
-last_winner=Player1
-last_turns=80
+OneResourcePlayer reprezentuje strategię wyspecjalizowaną, która maksymalizuje korzyści z jednego, wybranego surowca poprzez zajęcie portu 2:1 oraz koncentrację rozwoju infrastruktury wokół tego surowca. Eksperyment weryfikuje hipotezę, czy taka specjalizacja może być skuteczna przeciwko różnym poziomom przeciwników.
 
-- OneResourcePlayer vs it4
-[ 1000/1000] or=364(36.4%) it4=636(63.6%) NP=0(0.0%) avgT=146.6 maxT=717 18.7g/s ETA=00:00:00
-Summary: P0=510, P1=490, NP=0, avgTurns=146.6, maxTurns=717, elapsed=53.58s, speed=18.7 g/s
-LossVP(avg VP when bot lost): or=8.23, it4=10.09
-ByBot: or=364, it4=636, NP=0
-Metrics: or, LR%=22.2, LA%=46.9, avgDevCards=2.2, avgProdScore=859.0
-         it4, LR%=77.8, LA%=51.8, avgDevCards=2.5, avgProdScore=1119.4
-last_winner=Player1
-last_turns=330
+#### Podsumowanie danych
 
-- OneResourcePlayer vs it5
-[ 1000/1000] or=190(19.0%) it5=810(81.0%) NP=0(0.0%) avgT=116.9 maxT=384 12.5g/s ETA=00:00:00
-Summary: P0=496, P1=504, NP=0, avgTurns=116.9, maxTurns=384, elapsed=80.17s, speed=12.5 g/s
-LossVP(avg VP when bot lost): or=7.24, it5=11.21
-ByBot: or=190, it5=810, NP=0
-Metrics: or, LR%=39.0, LA%=12.1, avgDevCards=1.6, avgProdScore=745.2
-         it5, LR%=55.8, LA%=87.8, avgDevCards=3.3, avgProdScore=1065.1
-last_winner=Player0
-last_turns=143
+| Przeciwnik | Win Rate OneResource | Avg Turns | LossVP OneResource | LossVP Przeciwnik | LR% OR | LR% Opp | LA% OR | LA% Opp | ProdScore OR | ProdScore Opp |
+|------------|---------------------|-----------|-------------------|------------------|--------|---------|--------|---------|--------------|---------------|
+| It1 | 98.3% | 160.1 | 9.00 | 4.37 | 82.9% | 14.7% | 89.2% | 8.9% | 1117.3 | 321.2 |
+| It2 | 95.5% | 161.1 | 9.82 | 4.93 | 72.8% | 26.1% | 89.3% | 8.8% | 1115.0 | 387.6 |
+| It3 | 56.8% | 148.6 | 8.43 | 9.36 | 43.4% | 56.5% | 51.9% | 47.6% | 968.4 | 854.7 |
+| It4 | 36.4% | 146.6 | 8.23 | 10.09 | 22.2% | 77.8% | 46.9% | 51.8% | 859.0 | 1119.4 |
+| It5 | 19.0% | 116.9 | 7.24 | 11.21 | 39.0% | 55.8% | 12.1% | 87.8% | 745.2 | 1065.1 |
+| Para | 34.8% | 127.8 | 7.73 | 6.14 | 32.2% | 67.2% | 60.6% | 33.5% | 795.7 | 962.1 |
+| ParaSettleIt5 | 18.2% | 113.2 | 7.19 | 11.24 | 38.9% | 54.7% | 11.1% | 88.7% | 735.0 | 1089.8 |
+| AlphaBeta | 11.9% | 139.1 | 6.91 | 11.15 | 13.6% | 85.9% | 19.9% | 80.1% | 648.7 | 1054.4 |
 
-- OneResourcePlayer vs Para
-[ 1000/1000] or=348(34.8%) para=651(65.1%) NP=1(0.1%) avgT=127.8 maxT=1000 5.0g/s ETA=00:00:00
-Summary: P0=503, P1=496, NP=1, avgTurns=127.8, maxTurns=1000, elapsed=199.22s, speed=5.0 g/s
-LossVP(avg VP when bot lost): or=7.73, para=6.14
-ByBot: or=348, para=651, NP=1
-Metrics: or, LR%=32.2, LA%=60.6, avgDevCards=1.9, avgProdScore=795.7
-         para, LR%=67.2, LA%=33.5, avgDevCards=5.8, avgProdScore=962.1
-last_winner=Player0
-last_turns=95
+#### Kluczowe wnioski
 
-- OneResourcePlayer vs ParaSettleIt5Player
-[ 1000/1000] or=182(18.2%) psit5=818(81.8%) NP=0(0.0%) avgT=113.2 maxT=242 14.5g/s ETA=00:00:00
-Summary: P0=508, P1=492, NP=0, avgTurns=113.2, maxTurns=242, elapsed=68.94s, speed=14.5 g/s
-LossVP(avg VP when bot lost): or=7.19, psit5=11.24
-ByBot: or=182, psit5=818, NP=0
-Metrics: or, LR%=38.9, LA%=11.1, avgDevCards=1.6, avgProdScore=735.0
-         psit5, LR%=54.7, LA%=88.7, avgDevCards=3.2, avgProdScore=1089.8
-last_winner=Player0
-last_turns=127
+**Przepaść skuteczności — strategia działa tylko przeciwko słabym botom**
 
-- OneResourcePlayer vs AlphaBetaPlayer
+Wyniki pokazują dramatyczny spadek skuteczności strategii monosurowcowej wraz z poprawą jakości przeciwnika. OneResourcePlayer osiąga wysokie współczynniki zwycięstw przeciwko It1Player (98.3%) oraz It2Player (95.5%), jednak jego skuteczność gwałtownie spada przeciwko It3Player (56.8%), osiągając jedynie około 11–36% przeciwko zaawansowanym botom (It4, It5, ParaSettleIt5, AlphaBeta).
+
+Istotna jest obserwacja, że It3Player znowuż stanowi punkt przełomowy. Spadek współczynnika zwycięstw z 95.5% (vs It2) do 56.8% (vs It3) pokazuje, że wprowadzenie strategii ustawień początkowych oraz aktywnego wykorzystania rozbójnika w It3 wystarcza, aby zneutralizować przewagę wynikającą z specjalizacji w jeden surowiec. To potwierdza, że strategie wyspecjalizowane są skuteczne tylko w określonych warunkach — przeciwko słabszym przeciwnikom, którzy nie potrafią efektywnie wykorzystać mechanizmów strategicznych dostępnych w grze. (!! nwm czy nie na koncu po prostu powiedzieć że po it3 dla wszystkich jest lipa)
+
+![Skuteczność strategii monosurowcowej w zależności od jakości przeciwnika](../plots/scenario5_or_1_effectiveness_decline.png)
+Wykres demonstrujący współczynnik zwycięstw bota OneResourcePlayer przeciwko różnym botom przeciwnika.
+
+**Zaawansowane boty całkowicie dominują**
+
+Zaawansowane boty (It5, ParaSettleIt5, AlphaBeta) całkowicie dominują strategię monosurowcową, osiągając współczynniki zwycięstw powyżej 80–88%. Co więcej, przeciwnik ma średnio ponad 11 punktów zwycięstwa w momencie przegranej OneResource, co pokazuje, że zaawansowane boty nie tylko wygrywają częściej, ale również dominują zdecydowanie. To potwierdza, że zbalansowane strategie są bardziej skuteczne niż jednostronna specjalizacja w długoterminowej perspektywie.
+
+##### DevPlayer - gracz celujący w karty rozwoju
 
 - DevPlayer vs it1
+[ 1000/1000] dev=983(98.3%) it1=17(1.7%) NP=0(0.0%) avgT=163.4 maxT=978 12.5g/s ETA=00:00:00
+Summary: P0=507, P1=493, NP=0, avgTurns=163.4, maxTurns=978, elapsed=79.79s, speed=12.5 g/s
+LossVP(avg VP when bot lost): dev=11.06, it1=4.55
+ByBot: dev=983, it1=17, NP=0
+Metrics: dev, LR%=53.4, LA%=99.2, avgDevCards=4.5, avgProdScore=1057.3
+         it1, LR%=35.0, LA%=0.8, avgDevCards=0.6, avgProdScore=330.7
+last_winner=Player1
+last_turns=104
+
 - DevPlayer vs it2
+[ 1000/1000] dev=985(98.5%) it2=14(1.4%) NP=1(0.1%) avgT=165.5 maxT=1000 11.2g/s ETA=00:00:00
+Summary: P0=501, P1=498, NP=1, avgTurns=165.5, maxTurns=1000, elapsed=89.17s, speed=11.2 g/s
+LossVP(avg VP when bot lost): dev=11.21, it2=5.23
+ByBot: dev=985, it2=14, NP=1
+Metrics: dev, LR%=39.0, LA%=99.6, avgDevCards=4.7, avgProdScore=1075.7
+         it2, LR%=54.9, LA%=0.4, avgDevCards=0.5, avgProdScore=370.3
+last_winner=Player1
+last_turns=240
+
 - DevPlayer vs it3
+Summary: P0=497, P1=501, NP=2, avgTurns=175.6, maxTurns=1000, elapsed=127.25s, speed=7.9 g/s
+LossVP(avg VP when bot lost): dev=10.19, it3=10.43
+ByBot: dev=684, it3=314, NP=2
+Metrics: dev, LR%=22.2, LA%=91.7, avgDevCards=3.5, avgProdScore=1031.7
+         it3, LR%=77.5, LA%=8.3, avgDevCards=1.6, avgProdScore=936.9
+last_winner=Player1
+last_turns=138
+
 - DevPlayer vs it4
+[ 1000/1000] dev=521(52.1%) it4=475(47.5%) NP=4(0.4%) avgT=185.8 maxT=1000 5.4g/s ETA=00:00:00
+Summary: P0=460, P1=536, NP=4, avgTurns=185.8, maxTurns=1000, elapsed=185.04s, speed=5.4 g/s
+LossVP(avg VP when bot lost): dev=9.78, it4=10.66
+ByBot: dev=521, it4=475, NP=4
+Metrics: dev, LR%=7.8, LA%=89.5, avgDevCards=3.4, avgProdScore=937.8
+         it4, LR%=92.0, LA%=10.5, avgDevCards=1.7, avgProdScore=1153.4
+last_winner=Player0
+last_turns=111
+
+- DevPlayer vs it5
+[ 1000/1000] dev=263(26.3%) it5=735(73.5%) NP=2(0.2%) avgT=132.4 maxT=1000 6.7g/s ETA=00:00:00
+Summary: P0=511, P1=487, NP=2, avgTurns=132.4, maxTurns=1000, elapsed=148.34s, speed=6.7 g/s
+LossVP(avg VP when bot lost): dev=8.80, it5=10.70
+ByBot: dev=263, it5=735, NP=2
+Metrics: dev, LR%=25.8, LA%=59.5, avgDevCards=2.6, avgProdScore=826.4
+         it5, LR%=69.5, LA%=40.4, avgDevCards=2.4, avgProdScore=1134.2
+last_winner=Player0
+last_turns=119
+
 - DevPlayer vs Para
+[ 1000/1000] dev=584(58.4%) para=415(41.5%) NP=1(0.1%) avgT=155.0 maxT=1000 3.4g/s ETA=00:00:00
+Summary: P0=510, P1=489, NP=1, avgTurns=155.0, maxTurns=1000, elapsed=294.41s, speed=3.4 g/s
+LossVP(avg VP when bot lost): dev=8.39, para=5.38
+ByBot: dev=584, para=415, NP=1
+Metrics: dev, LR%=21.8, LA%=92.0, avgDevCards=3.2, avgProdScore=916.2
+         para, LR%=77.2, LA%=7.7, avgDevCards=3.3, avgProdScore=736.1
+last_winner=Player1
+last_turns=134
+
 - DevPlayer vs ParaSettleIt5Player
+[ 1000/1000] dev=255(25.5%) psit5=744(74.4%) NP=1(0.1%) avgT=128.8 maxT=1000 7.8g/s ETA=00:00:00
+Summary: P0=517, P1=482, NP=1, avgTurns=128.8, maxTurns=1000, elapsed=128.51s, speed=7.8 g/s
+LossVP(avg VP when bot lost): dev=8.34, psit5=10.71
+ByBot: dev=255, psit5=744, NP=1
+Metrics: dev, LR%=26.3, LA%=57.2, avgDevCards=2.6, avgProdScore=790.0
+         psit5, LR%=70.1, LA%=42.8, avgDevCards=2.5, avgProdScore=1124.4
+last_winner=Player1
+last_turns=158
+
 - DevPlayer vs AlphaBetaPlayer
 
 - RoadPlayer vs
@@ -772,7 +836,13 @@ last_turns=127
 - RoadPlayer vs ParaSettleIt5Player
 - RoadPlayer vs AlphaBetaPlayer
 
+- OneResource vs DevPlayer
+- OneResource vs RoadPlayer
+- DevPlayer vs RoadPlayers
+
 ## 8. Podsumowanie i wnioski
+
+Alphabeta najlepszy, ale baardzo wolny, a paraSetit5 idealnie wyważony - szybki i mądry
 ### 8.1. Ocena realizacji celów pracy
 ### 8.2. Wnioski z części badawczej
 ### 8.3. Możliwości dalszego rozwoju systemu
