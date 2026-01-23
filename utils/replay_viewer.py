@@ -165,11 +165,13 @@ class ReplayLog:
                     arg2 = a.get("arg2")
                     arg3 = a.get("arg3")
                     args: List[str] = []
-                    if isinstance(arg1, int) and arg1:
+                    show_zeros = (tname == "TradeBank")
+
+                    if isinstance(arg1, int) and (show_zeros or arg1):
                         args.append(f"arg1={arg1}")
-                    if isinstance(arg2, int) and arg2:
+                    if isinstance(arg2, int) and (show_zeros or arg2):
                         args.append(f"arg2={arg2}")
-                    if isinstance(arg3, int) and arg3:
+                    if isinstance(arg3, int) and (show_zeros or arg3):
                         args.append(f"arg3={arg3}")
 
                     res_s = _fmt_resources(a.get("resources"))

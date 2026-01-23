@@ -53,6 +53,8 @@ TEST_F(ActionTest, ExpectTradeActionsWithWoolPort){
 
     tradeActions = boardState.generateTwoToOnePortTradeActions(tradingPlayer);
 
+    EXPECT_EQ(12, tradeActions.size());
+
     for (const auto& action : tradeActions) {
         EXPECT_EQ(ActionType::TradeBank, Action::unpackType(action));
         EXPECT_EQ(tradingPlayer, Action::unpackPlayerID(action));

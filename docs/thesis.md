@@ -32,13 +32,18 @@ Każdy typ pola produkcyjnego na planszy odpowiada określonemu surowcowi:
 - pastwiska produkują wełnę (*Wool*),
 - góry produkują rudę (*Ore*).
 
+Każdy heks produkcyjny posiada przypisaną losowo liczbę z zakresu 2–12 (z wyjątkiem 7), która odpowiada możliwym sumom wyrzuconym na dwóch sześciennych kościach. Liczby te determinują, kiedy dany heks produkuje surowce — po rzucie kośćmi wszystkie heksy oznaczone liczbą odpowiadającą wyrzuconej sumie generują zasoby dla graczy posiadających przy nich osady lub miasta.
+
 ![alt text](board.png)
 Przykładowa plansza do gry
+
 Pola pustynne nie generują zasobów i stanowią początkową lokalizację rozbójnika.
+
+**Rozbójnik** to specjalna figura, która blokuje produkcję surowców z heksu, na którym się znajduje. Gdy gracz wyrzuci sumę 7 na kościach, musi przemieszczyć rozbójnika na wybrany heks (blokując jego produkcję) i może ukraść jedną kartę zasobów od gracza posiadającego osadę lub miasto przy tym heksie.
 
 Celem gry jest zdobycie **10 punktów zwycięstwa** (15 w wariancie rozgrywki 1 vs 1). Punkty te są przyznawane głównie za budowę osad (1 punkt zwycięstwa) i miast (2 punkty zwycięstwa). 
 
-Osady i miasta muszą być połączone drogami — każda nowa struktura musi być dostępna przez ciągłą sieć dróg gracza. Ponadto obowiązuje **zasada dystansu**: osady i miasta różnych graczy (oraz własne) muszą być oddalone od siebie o co najmniej dwie krawędzie.
+Osady i miasta muszą być połącze drogami — każda nowa struktura musi być dostępna przez ciągłą sieć dróg gracza. Ponadto obowiązuje **zasada dystansu**: osady i miasta różnych graczy (oraz własne) muszą być oddalone od siebie o co najmniej dwie krawędzie.
 
 Każda struktura ma określony koszt budowy wyrażony w surowcach:
 - **Droga**: drewno + cegła (1+1),
@@ -57,7 +62,7 @@ Dodatkowymi źródłami punktów zwycięstwa są premie:
 
 Każda z tych premii zapewnia dodatkowe **2 punkty zwycięstwa**, istotnie wpływając na strategię oraz tempo gry. W dalszej części pracy punkty zwycięstwa będą oznaczane skrótem **VP** (ang. *Victory Points*). Rozgrywka toczy się w turach, a zwycięstwo następuje natychmiast po osiągnięciu wymaganej liczby punktów przez jednego z graczy.
 
-Podstawowy przebieg tury obejmuje rzut dwiema kośćmi sześciennymi, który determinuje produkcję zasobów na planszy. Gracze otrzymują surowce z tych pól, których numer odpowiada wyrzuconej sumie — osada zapewnia 1 zasób z każdego przylegającego heksu, a miasto 2 zasoby. W przydadku gdzy została wyrzucona liczba 7, żaden heks nie produkuje zasobow. Zamiast tego gracze posiadający więcej niż 9 kart zasobów muszą odrzucić połowę (w dół), a aktywny gracz przemieszcza rozbójnika na wybrany heks (blokując jego produkcję) i może ukraść jedną kartę zasobów od gracza posiadającego osadę lub miasto przy tym heksie.
+Podstawowy przebieg tury obejmuje rzut dwiema kośćmi sześciennymi, który determinuje produkcję zasobów na planszy. Gracze otrzymują surowce z tych pól, których numer odpowiada wyrzuconej sumie — osada zapewnia 1 zasób z każdego przylegającego heksu, a miasto 2 zasoby. W przydadku gdzy została wyrzucona liczba 7, żaden heks nie produkuje; zamiast tego gracze posiadający więcej niż 7 kart zasobów muszą odrzucić połowę (w dół), a aktywny gracz przemieszcza rozbójnika na wybrany heks (blokując jego produkcję) i może ukraść jedną kartę zasobów od gracza posiadającego osadę lub miasto przy tym heksie.
 
 Następnie możliwe jest prowadzenie handlu (z innymi graczami lub z bankiem) oraz wykonywanie akcji budowy, takich jak wznoszenie dróg, osad, miast lub zakup kart rozwoju. Handlowanie z bankiem odbywa się według standardowego kursu 4:1 (cztery dowolne zasoby za jeden wybrany), jednak gracze posiadający osadę lub miasto przy porcie mogą korzystać z lepszych kursów: port 3:1 (trzy dowolne za jeden) lub port 2:1 (dwa konkretne surowce za jeden tego samego typu). Handlowanie między graczami jest negocjacyjne i może obejmować dowolne kombinacje zasobów, co stanowi istotny element interakcji społecznej w klasycznej wersji gry.
 
@@ -65,21 +70,19 @@ Istotnym elementem gry jest losowość wynikająca z rzutów kośćmi, która wp
 
 ### 1.2.2. Produkcja zasobów i miara pipsów
 
-Każde pole produkcyjne (heks) na planszy posiada przypisaną liczbę z zakresu 2–12 (z wyjątkiem 7, który odpowiada aktywacji rozbójnika). Liczby te odpowiadają możliwym sumom wyrzuconym na dwóch sześciennych kościach. Ze względu na różną liczbę kombinacji prowadzących do danej sumy, poszczególne liczby mają odmienne prawdopodobieństwo wystąpienia. W praktyce wprowadza się miarę **pipsów** (z ang. *pips*, dosłownie: oczka na kości), która odzwierciedla częstość występowania danej liczby:
+Jak wcześniej było wspomnianie, każde pole produkcyjne (heks) na planszy posiada przypisaną liczbę z zakresu 2–12 (z wyjątkiem 7). Ze względu na różną liczbę kombinacji prowadzących do danej sumy, poszczególne liczby mają odmienne prawdopodobieństwo wystąpienia. W praktyce wprowadza się miarę **pipsów** (z ang. *pips*, dosłownie: oczka na kości), która odzwierciedla częstość występowania danej liczby:
 
-- **2 lub 12**: 1 pips (1 kombinacja: 1+1 lub 6+6),
+- **2 lub 12**: 1 pipsa (1 kombinacja: 1+1 lub 6+6),
 - **3 lub 11**: 2 pipsy (2 kombinacje: 1+2, 2+1 lub 5+6, 6+5),
 - **4 lub 10**: 3 pipsy (3 kombinacje),
 - **5 lub 9**: 4 pipsy (4 kombinacje),
 - **6 lub 8**: 5 pipsów (5 kombinacji).
 
-Liczba 7 nie występuje na heksach produkcyjnych — jej wyrzucenie aktywuje rozbójnika i wymusza odrzucenie połowy kart przez graczy posiadających więcej niż siedem zasobów.
-
 Miara pipsów stanowi użyteczne narzędzie analityczne, ponieważ bezpośrednio odzwierciedla **wartość oczekiwaną produkcji** z danego pola. Heksy o wyższych pipsach generują zasoby częściej, co czyni je bardziej wartościowymi celami w fazie ustawień początkowych oraz podczas oceny potencjału produkcyjnego pozycji gracza. Pojęcie to będzie wykorzystywane w dalszej części pracy przy opisie strategii botów, które oceniają jakość lokalizacji budowy oraz prognozują przyszłą produkcję zasobów.
 
 ### 1.2.4. Zalety gry *Catan*
 
-Jedną z najczęściej wskazywanych zalet gry Catan jest umiejętne połączenie relatywnie prostych zasad z wysokim poziomem satysfakcji oraz znaczną głębią strategiczną. W recenzji opublikowanej na łamach magazynu Pyramid podkreślono, że gra oferuje satysfakcjonujące doświadczenie rozwoju ekonomicznego i wymiany zasobów, przy jednocześnie umiarkowanym czasie rozgrywki, wynoszącym zazwyczaj od półtorej do dwóch godzin. Zwrócono uwagę, że poziom satysfakcji płynący z rozgrywki jest porównywalny z grami o znacznie dłuższym czasie trwania.
+Jedną z najczęściej wskazywanych zalet gry Catan jest umiejętne połączenie relatywnie prostych zasad z wysokim poziomem satysfakcji oraz głębią strategiczną. W recenzji opublikowanej na łamach magazynu Pyramid podkreślono, że gra oferuje satysfakcjonujące doświadczenie rozwoju ekonomicznego i wymiany zasobów, przy jednocześnie umiarkowanym czasie rozgrywki, wynoszącym zazwyczaj od półtorej do dwóch godzin. Zwrócono uwagę, że poziom satysfakcji płynący z rozgrywki jest porównywalny z grami o znacznie dłuższym czasie trwania.
 
 Drugim, bardzo istotnym atutem jest wysoka regrywalność: plansza składa się z heksów, a ich układ i przypisane numery produkcji można zmieniać między partiami, co ogranicza powtarzalność i utrudnia wyuczenie jednej „sztywnej” sekwencji optymalnych ruchów. Dzięki temu gra sprzyja analizie adaptacyjnych strategii oraz reagowania na bieżącą sytuację na planszy.
 
@@ -104,7 +107,7 @@ Z perspektywy badań nad algorytmami decyzyjnymi *Catan* jest szczególnie inter
 * **interakcję strategiczną** (blokady, wyścig o przestrzeń i punkty),
 * **wiele dróg do zwycięstwa** (różne kombinacje budowy, kart rozwoju i premii).
 
-W ramach niniejszej pracy gra stanowi więc dogodne środowisko eksperymentalne do implementacji silnika, projektowania agentów (botów) i oceny ich skuteczności w powtarzalnych warunkach, w tym z możliwością odtwarzania i analizy przebiegu rozgrywek.
+Połączenie tych elementów sprawia, że *Catan* stanowi wartościowe środowisko do testowania i porównywania różnych strategii algorytmów decyzyjnych.
 
 ### 1.3. Cel i zakres pracy
 
@@ -140,8 +143,7 @@ Język C++ umożliwił:
 Do testowania poprawności implementacji zasad gry wykorzystano framework **GoogleTest**, który pozwala na:
 
 - tworzenie testów jednostkowych dla pojedynczych reguł (np. budowa drogi, produkcja zasobów),
-- testy regresyjne (czy zmiany w kodzie nie psują wcześniej poprawnych mechanizmów),
-- automatyczną weryfikację niezmienników stanu gry po wykonaniu akcji.
+- testy regresyjne (czy zmiany w kodzie nie psują wcześniej poprawnych mechanizmów).
 
 Testy pełnią istotną rolę w projekcie, ponieważ nawet niewielkie błędy w implementacji zasad mogą prowadzić do nieprawidłowych decyzji botów i zafałszowania wyników porównań strategii.
 
@@ -154,7 +156,7 @@ Aplikacja umożliwia wizualne prześledzenie rozgrywki krok po kroku na podstawi
 
 Projekt został podzielony na kilka warstw logicznych:
 
-- **symulację gry** (część rdzeniową),
+- **symulację gry**,
 - **reprezentację akcji i stanu**,
 - **implementacje graczy automatycznych (botów)**,
 - **narzędzia uruchomieniowe i diagnostyczne**,
@@ -225,7 +227,6 @@ Mechanizm cofania ruchów jest kluczowy dla:
 - algorytmów przeszukiwania drzewa decyzji,
 - testów jednostkowych oraz regresyjnych,
 - symulacji deterministycznych i odtwarzania przebiegu rozgrywki.
-- symulacji deterministycznych.
 
 
 ## 4.5. Zarządzanie stanem gry
@@ -244,7 +245,8 @@ Boty otrzymują dostęp wyłącznie do **odczytu stanu gry**, a po wykonaniu dec
 
 Całość tworzy **deterministyczny, testowalny i wydajny system symulacji**, który stanowi solidną podstawę do dalszej części pracy, poświęconej implementacji i analizie graczy automatycznych.
 
-## Modul do odtwarzania rozgrywek
+## Symulowanie i odtwarzanie rozgrywek
+
 
 
 ## 5. Testowanie i weryfikacja poprawności
@@ -593,14 +595,11 @@ W pierwszym scenariuszu kolejne iteracje botów oraz wybrane strategie wyspecjal
 | RoadPlayer | 100.0% | 0.0% | 132.7 | 3.22 | – | 94.5% | 98.6% | 3.6 | 1051.0 |
 
 #### Kluczowe wnioski
+- Nieliniowy charakter progresji jakości
 
-**Nieliniowy charakter progresji jakości**
+Wzrost skuteczności botów heurystycznych nie ma charakteru liniowego. Iteracje It1 i It2 prowadzą do stopniowej poprawy współczynnika zwycięstw (56% -> 73%), natomiast It3 powoduje jakościowy skok skuteczności do 98.7%. Przekroczenie tego progu kompetencyjnego wynika z wprowadzenia strategii optymalnych ustawień początkowych, zapewniających lepsze pozycje startowe, oraz aktywnego wykorzystania rozbójnika do blokowania produkcji przeciwnika. Od tego momentu bot przejmuje kontrolę nad przebiegiem rozgrywki, a kolejne iteracje (It4, It5) stabilizują tę dominację, osiągając 96–100% zwycięstw.
 
-Wzrost skuteczności botów heurystycznych nie ma charakteru liniowego. Iteracje It1 i It2 prowadzą do stopniowej poprawy współczynnika zwycięstw (56% → 73%), natomiast It3 powoduje jakościowy skok skuteczności do 98.7%. Przekroczenie tego progu kompetencyjnego wynika z wprowadzenia strategii optymalnych ustawień początkowych, zapewniających lepsze pozycje startowe, oraz aktywnego wykorzystania rozbójnika do blokowania produkcji przeciwnika. Od tego momentu bot przejmuje kontrolę nad przebiegiem rozgrywki, a kolejne iteracje (It4, It5) stabilizują tę dominację, osiągając 96–100% zwycięstw.
-
-![Progresja skuteczności botów heurystycznych vs RandomPlayer](../plots/1_progression.png)
-
-Wykres ilustruje nieliniowy charakter progresji jakości botów heurystycznych. Linia pokazuje wzrost współczynnika zwycięstw wraz z każdą iteracją. Zielony obszar wokół linii reprezentuje przedziały ufności 95%, pokazując statystyczną pewność wyników. 
+![alt text](image.png)
 
 - Zależność jakości strategii od tempa gry
 
@@ -618,17 +617,9 @@ Analogicznie, premia Największej Armii jest osiągana przez boty It1–It2 w ok
 
 Jako dodatkową informację warto zauważyć, że boty It1 i It2 kończą odpowiednio 7.6% i 3.6% rozgrywek bez zwycięzcy (timeout po 1000 turach). To wskazuje na niewystarczającą agresywność strategii. Od iteracji It3 zjawisko to praktycznie zanika (0–0.3%), co potwierdza, że boty wyższej jakości podejmują bardziej deterministyczne decyzje i konsekwentnie domykają rozgrywkę.
 
-**Podsumowanie Scenariusza 1**
+### Scenariusz 2: Porównanie iteracyjnych heurystyk
 
-Wyniki Scenariusza 1 jednoznacznie potwierdzają, że wszystkie zaawansowane boty z sukcesem pokonują gracza losowego, stanowiącego punkt odniesienia. Boty heurystyczne od iteracji It3 osiągają współczynniki zwycięstw powyżej 96%, przy czym It5 oraz ParaSettleIt5Player osiągają perfekcję — 100% zwycięstw bez ani jednej przegranej w 1000 rozgrywkach. Również bot wykorzystujący algorytm alpha-beta, bot parametryczny (ParaPlayer) oraz wszystkie boty o strategiach ukierunkowanych na wybrany aspekt rozgrywki (OneResourcePlayer, DevPlayer, RoadPlayer) osiągają współczynniki zwycięstw powyżej 99%, co potwierdza, że wprowadzenie jakiejkolwiek świadomej strategii decyzyjnej prowadzi do dramatycznej przewagi nad losowym wyborem akcji.
-
-### 7.2.2. Scenariusz 2: Porównanie iteracyjnych heurystyk
-
-Drugi scenariusz weryfikuje skuteczność iteracyjnego podejścia do projektowania botów poprzez bezpośrednie starcia między kolejnymi iteracjami botów heurystycznych. Eksperyment pozwala ocenić, czy każda kolejna wersja wprowadza istotne ulepszenia strategii oraz zidentyfikować momenty przełomowe w rozwoju jakości botów.
-
-#### Podsumowanie danych
-
-| Para | Bot A | Bot B | Win Rate A | Win Rate B | Avg Turns | LossVP A | LossVP B | Longest Road% A | Longest Road% B | Largest Army% A | Largest Army% B | DevCards A | DevCards B | ProdScore A | ProdScore B |
+| Para | Bot A | Bot B | Win Rate A | Win Rate B | Avg Turns | LossVP A | LossVP B | Longest road% A | Longest road% B | Largest Army% A | Largest Army% B | DevCards A | DevCards B | ProdScore A | ProdScore B |
 |------|-------|-------|------------|------------|-----------|----------|----------|--------------|--------------|--------------|--------------|------------|------------|-------------|-------------|
 | It1 vs It2 | It1 | It2 | 35.8% | 61.9% | 339.8 | 6.24 | 7.96 | 37.4% | 62.6% | 45.8% | 52.3% | 2.3 | 2.6 | 589.1 | 832.1 |
 | It2 vs It3 | It2 | It3 | 5.8% | 93.6% | 181.9 | 5.06 | 11.28 | 31.4% | 68.5% | 5.8% | 91.1% | 0.9 | 3.2 | 400.5 | 1017.3 |
@@ -636,196 +627,62 @@ Drugi scenariusz weryfikuje skuteczność iteracyjnego podejścia do projektowan
 | It4 vs It5 | It4 | It5 | 25.7% | 74.2% | 134.2 | 9.54 | 11.04 | 82.0% | 17.8% | 11.4% | 88.6% | 1.7 | 3.4 | 958.1 | 1070.6 |
 | It1 vs It5 | It1 | It5 | 0.1% | 99.9% | 114.9 | 3.58 | 14.00 | 14.0% | 73.5% | 1.1% | 98.2% | 0.6 | 3.7 | 266.5 | 1096.8 |
 
-#### Kluczowe wnioski
+## Kluczowe wnioski
 
-**Każda iteracja jest obiektywnie lepsza**
+1. Każda iteracja jest obiektywnie lepsza
 
-Wyniki jednoznacznie potwierdzają wartość iteracyjnego podejścia — w każdej parze kolejna iteracja osiąga wyższy współczynnik zwycięstw. It2 wygrywa 61.9% rozgrywek przeciwko It1 (przewaga +26.1 punktów procentowych), It3 dominuje It2 z wynikiem 93.6% (przewaga +87.8 punktów procentowych), It4 wygrywa 66.0% przeciwko It3 (+33.6%), a It5 osiąga 74.2% przeciwko It4 (+48.5%). Porównanie skokowe It1 vs It5 pokazuje pełną skalę postępu — It5 wygrywa 99.9% rozgrywek (tylko 1 przegrana w 1000 meczach), co potwierdza systematyczną poprawę jakości strategii wraz z każdą iteracją.
+**Obserwacja**: W każdej parze kolejna iteracja osiąga wyższy współczynnik zwycięstw:
+- It1 vs It2: It2 wygrywa 61.9% (różnica: +26.1%)
+- It2 vs It3: It3 wygrywa 93.6% (różnica: +87.8%!)
+- It3 vs It4: It4 wygrywa 66.0% (różnica: +33.6%)
+- It4 vs It5: It5 wygrywa 74.2% (różnica: +48.5%)
+- It1 vs It5: It5 wygrywa 99.9% (różnica: +99.8% - porównanie skokowe!)
 
-![Przewaga kolejnej iteracji nad poprzednią](../plots/scenario2_2_advantage_gap.png)
+**Wnioski**:
+- **Iteracyjne podejście działa** - każda wersja jest lepsza od poprzedniej
+- **Największy skok: It2→It3** - potwierdza "przepaść kompetencyjną" z Scenariusza 1
+- **It4 jest lepszy od It3** mimo że It3 miał lepszy win rate vs Random (98.7% vs 96.9%)
+- **It5 dominuje It4** - wygrywa 74.2% rozgrywek
+- **It1 vs It5 pokazuje pełną progresję** - It5 wygrywa 99.9% (tylko 1 przegrana w 1000 rozgrywkach!)
 
-Wykres przedstawia przewagę kolejnej iteracji nad poprzednią wyrażoną w punktach procentowych. Największy skok następuje między It2 a It3 (+87.8 punktów procentowych), co wizualnie potwierdza przepaść kompetencyjną obserwowaną w Scenariuszu 1.
+![alt text](../plots/scenario2_1_pairwise_comparison.png)
 
-Szczególnie istotna jest obserwacja, że pomimo iż It3Player osiągał lepszy współczynnik zwycięstw przeciwko RandomPlayer niż It4Player (98.7% vs 96.9%), w bezpośrednim starciu It4Player wygrywa 66% rozgrywek przeciwko It3Player. To pokazuje różnicę między ogólną skutecznością przeciwko losowemu przeciwnikowi a skutecznością przeciwko konkretnej strategii — It4Player, dzięki lepszej produkcji zasobów (ProdScore: 1127.4 vs 817.7) oraz deterministycznemu wyborowi najlepszej akcji, jest lepiej przygotowany do starcia z zaawansowanym przeciwnikiem.
+2. Tempo rozgrywki przyspiesza z każdą iteracją
 
-**Skok jakościowy It2→It3**
+**Obserwacja**: Średnia liczba tur spada:
+- It1 vs It2: 339.8 tur
+- It2 vs It3: 181.9 tur (prawie 2x szybciej!)
+- It3 vs It4: 184.4 tur (podobnie)
+- It4 vs It5: 134.2 tury (najszybciej)
 
-Różnica w współczynniku zwycięstw it3 nad it2 wynosi 87.8 punktów procentowych (93.6% vs 5.8%), co wskazuje na kluczowe znaczenie mechanizmów wprowadzonych w It3: strategii ustawień początkowych oraz aktywnego wykorzystania rozbójnika. Wszystkie metryki szczegółowe pokazują dramatyczną poprawę — produkcja zasobów wzrasta o 154% (400.5 → 1017.3), wykorzystanie Największej Armii z 5.8% do 91.1% (wzrost 15-krotny), a wykorzystanie Najdłuższej Drogi podwaja się (31.4% → 68.5%).
+**Wnioski**:
+Jest drastyczny spad długości rozgrywki po graczu it3, lecz gracz it4 "dzielnie" próbuje walczyć z graczem it4, więc ta rozgrywka, it3 VS it4 zajęła dłużej niż rozgrywka mniej zaawanswanych botów it2 VS it3.
+- **Lepsze boty wygrywają szybciej** - są bardziej efektywne
+- **Największe przyspieszenie: It2→It3** - z 339.8 do 181.9 tur
+- **It3+ mają podobne tempo** - różnice są w strategii, nie w szybkości
 
-**Tempo rozgrywki**
+![alt text](image-1.png)
 
-Kolejne iteracje botów prowadzą do szybszego rozstrzygania partii. Średnia liczba tur spada z 339.8 (It1 vs It2) do 181.9 (It2 vs It3), następnie stabilizuje się na poziomie około 184 tur (It3 vs It4), by ostatecznie osiągnąć 134.2 tury w starciu It4 vs It5. Warto zauważyć, że rozgrywka It3 vs It4 trwała dłużej (184.4 tur) niż It2 vs It3 (181.9 tur), co może wskazywać na bardziej zbalansowaną walkę między zaawansowanymi botami — It4 skutecznie przeciwstawia się strategii It3, co wydłuża rozgrywkę mimo wyższej skuteczności It4.
-
-![Tempo rozgrywki w zależności od iteracji](../plots/scenario2_4_tempo_progression.png)
-
-Wykres ilustruje przyspieszenie tempa rozgrywki wraz z poprawą jakości botów. Największy spadek liczby tur następuje między It2 a It3, a następnie tempo stabilizuje się i ponownie wzrasta w starciu It4 vs It5.
-
-Porównanie skokowe It1 vs It5 pokazuje najszybsze rozgrywki (średnio 114.9 tur), co jest najbliżej klasycznych 60–70 tur charakterystycznych dla rozgrywek między doświadczonymi graczami. To potwierdza, że iteracyjne podejście prowadzi nie tylko do poprawy skuteczności, ale również do zwiększenia efektywności strategii.
-
-#### Scenariusz 4: Algorytm alpha-beta
-
-- AlphaBetaPlayer vs it1
-[ 1000/1000] ab=993(99.3%) it1=7(0.7%) NP=0(0.0%) avgT=138.4 maxT=711 1.1g/s ETA=00:00:00
-Summary: P0=501, P1=499, NP=0, avgTurns=138.4, maxTurns=711, elapsed=930.53s, speed=1.1 g/s
-LossVP(avg VP when bot lost): ab=13.29, it1=4.36
-ByBot: ab=993, it1=7, NP=0
-Metrics: ab, LR%=89.0, LA%=98.0, avgDevCards=3.6, avgProdScore=1026.6
-         it1, LR%=8.8, LA%=2.0, avgDevCards=1.0, avgProdScore=337.7
-last_winner=Player1
-last_turns=129
-
-- AlphaBetaPlayer vs it2
-[ 1000/1000] ab=995(99.5%) it2=5(0.5%) NP=0(0.0%) avgT=138.6 maxT=732 1.2g/s ETA=00:00:00
-Summary: P0=501, P1=499, NP=0, avgTurns=138.6, maxTurns=732, elapsed=834.31s, speed=1.2 g/s
-LossVP(avg VP when bot lost): ab=11.60, it2=4.57
-ByBot: ab=995, it2=5, NP=0
-Metrics: ab, LR%=85.1, LA%=97.6, avgDevCards=3.7, avgProdScore=1031.5
-         it2, LR%=13.6, LA%=2.1, avgDevCards=0.9, avgProdScore=357.8
-last_winner=Player1
-last_turns=124
-
-- AlphaBetaPlayer vs it3
-[ 1000/1000] ab=743(74.3%) it3=257(25.7%) NP=0(0.0%) avgT=144.0 maxT=484 0.4g/s ETA=00:00:00
-Summary: P0=477, P1=523, NP=0, avgTurns=144.0, maxTurns=484, elapsed=2659.33s, speed=0.4 g/s
-LossVP(avg VP when bot lost): ab=10.29, it3=9.07
-ByBot: ab=743, it3=257, NP=0
-Metrics: ab, LR%=58.1, LA%=76.7, avgDevCards=2.9, avgProdScore=1026.1
-         it3, LR%=41.8, LA%=23.3, avgDevCards=2.1, avgProdScore=867.8
-last_winner=Player0
-last_turns=127
-
-- AlphaBetaPlayer vs it4
-[ 1000/1000] ab=626(62.6%) it4=372(37.2%) NP=2(0.2%) avgT=141.1 maxT=1000 0.1g/s ETA=00:00:00
-Summary: P0=446, P1=552, NP=2, avgTurns=141.1, maxTurns=1000, elapsed=14154.55s, speed=0.1 g/s
-LossVP(avg VP when bot lost): ab=10.18, it4=9.67
-ByBot: ab=626, it4=372, NP=2
-Metrics: ab, LR%=47.6, LA%=76.1, avgDevCards=2.9, avgProdScore=984.0
-         it4, LR%=52.4, LA%=23.8, avgDevCards=2.2, avgProdScore=1010.4
-last_winner=Player1
-last_turns=125
-
-- AlphaBetaPlayer vs it5
-[ 1000/1000] ab=624(62.4%) it5=376(37.6%) NP=0(0.0%) avgT=136.7 maxT=509 0.2g/s ETA=00:00:00
-Summary: P0=496, P1=504, NP=0, avgTurns=136.7, maxTurns=509, elapsed=5544.99s, speed=0.2 g/s
-LossVP(avg VP when bot lost): ab=10.17, it5=9.77
-ByBot: ab=624, it5=376, NP=0
-Metrics: ab, LR%=70.8, LA%=57.9, avgDevCards=2.6, avgProdScore=995.7
-         it5, LR%=29.2, LA%=42.0, avgDevCards=2.6, avgProdScore=974.7
-last_winner=Player1
-last_turns=98
-
-- AlphaBetaPlayer vs Para
-- AlphaBetaPlayer vs ParaSettleIt5
+#### Scenariusz 4: AplhaBetaPlayer
 
 #### Scenariusz 5: Player parametryczny
 
-#### Scenariusz 7.2.5: Strategie wyspecjalizowane
+#### Scenariusz 5: Boty specialistyczne
 
-Scenariusz piąty weryfikuje skuteczność strategii wyspecjalizowanych przeciwko różnym poziomom przeciwników. W szczególności analizuje, w jakich warunkach specjalizacja w jeden aspekt rozgrywki (np. jeden surowiec) jest efektywna oraz identyfikuje granicę skuteczności strategii wyspecjalizowanych.
+- OneResourcePlayer vs
+- OneResourcePlayer vs
+- OneResourcePlayer vs
+- OneResourcePlayer vs
+- OneResourcePlayer vs
+- OneResourcePlayer vs ParaSettleIt5Player
+- OneResourcePlayer vs AlphaBetaPlayer
 
-##### OneResourcePlayer — strategia monosurowcowa
-
-OneResourcePlayer reprezentuje strategię wyspecjalizowaną, która maksymalizuje korzyści z jednego, wybranego surowca poprzez zajęcie portu 2:1 oraz koncentrację rozwoju infrastruktury wokół tego surowca. Eksperyment weryfikuje hipotezę, czy taka specjalizacja może być skuteczna przeciwko różnym poziomom przeciwników.
-
-#### Podsumowanie danych
-
-| Przeciwnik | Win Rate OneResource | Avg Turns | LossVP OneResource | LossVP Przeciwnik | LR% OR | LR% Opp | LA% OR | LA% Opp | ProdScore OR | ProdScore Opp |
-|------------|---------------------|-----------|-------------------|------------------|--------|---------|--------|---------|--------------|---------------|
-| It1 | 98.3% | 160.1 | 9.00 | 4.37 | 82.9% | 14.7% | 89.2% | 8.9% | 1117.3 | 321.2 |
-| It2 | 95.5% | 161.1 | 9.82 | 4.93 | 72.8% | 26.1% | 89.3% | 8.8% | 1115.0 | 387.6 |
-| It3 | 56.8% | 148.6 | 8.43 | 9.36 | 43.4% | 56.5% | 51.9% | 47.6% | 968.4 | 854.7 |
-| It4 | 36.4% | 146.6 | 8.23 | 10.09 | 22.2% | 77.8% | 46.9% | 51.8% | 859.0 | 1119.4 |
-| It5 | 19.0% | 116.9 | 7.24 | 11.21 | 39.0% | 55.8% | 12.1% | 87.8% | 745.2 | 1065.1 |
-| Para | 34.8% | 127.8 | 7.73 | 6.14 | 32.2% | 67.2% | 60.6% | 33.5% | 795.7 | 962.1 |
-| ParaSettleIt5 | 18.2% | 113.2 | 7.19 | 11.24 | 38.9% | 54.7% | 11.1% | 88.7% | 735.0 | 1089.8 |
-| AlphaBeta | 11.9% | 139.1 | 6.91 | 11.15 | 13.6% | 85.9% | 19.9% | 80.1% | 648.7 | 1054.4 |
-
-#### Kluczowe wnioski
-
-**Przepaść skuteczności — strategia działa tylko przeciwko słabym botom**
-
-Wyniki pokazują dramatyczny spadek skuteczności strategii monosurowcowej wraz z poprawą jakości przeciwnika. OneResourcePlayer osiąga wysokie współczynniki zwycięstw przeciwko It1Player (98.3%) oraz It2Player (95.5%), jednak jego skuteczność gwałtownie spada przeciwko It3Player (56.8%), osiągając jedynie około 11–36% przeciwko zaawansowanym botom (It4, It5, ParaSettleIt5, AlphaBeta).
-
-Istotna jest obserwacja, że It3Player znowuż stanowi punkt przełomowy. Spadek współczynnika zwycięstw z 95.5% (vs It2) do 56.8% (vs It3) pokazuje, że wprowadzenie strategii ustawień początkowych oraz aktywnego wykorzystania rozbójnika w It3 wystarcza, aby zneutralizować przewagę wynikającą z specjalizacji w jeden surowiec. To potwierdza, że strategie wyspecjalizowane są skuteczne tylko w określonych warunkach — przeciwko słabszym przeciwnikom, którzy nie potrafią efektywnie wykorzystać mechanizmów strategicznych dostępnych w grze. (!! nwm czy nie na koncu po prostu powiedzieć że po it3 dla wszystkich jest lipa)
-
-![Skuteczność strategii monosurowcowej w zależności od jakości przeciwnika](../plots/scenario5_or_1_effectiveness_decline.png)
-Wykres demonstrujący współczynnik zwycięstw bota OneResourcePlayer przeciwko różnym botom przeciwnika.
-
-**Zaawansowane boty całkowicie dominują**
-
-Zaawansowane boty (It5, ParaSettleIt5, AlphaBeta) całkowicie dominują strategię monosurowcową, osiągając współczynniki zwycięstw powyżej 80–88%. Co więcej, przeciwnik ma średnio ponad 11 punktów zwycięstwa w momencie przegranej OneResource, co pokazuje, że zaawansowane boty nie tylko wygrywają częściej, ale również dominują zdecydowanie. To potwierdza, że zbalansowane strategie są bardziej skuteczne niż jednostronna specjalizacja w długoterminowej perspektywie.
-
-##### DevPlayer - gracz celujący w karty rozwoju
-
-- DevPlayer vs it1
-[ 1000/1000] dev=983(98.3%) it1=17(1.7%) NP=0(0.0%) avgT=163.4 maxT=978 12.5g/s ETA=00:00:00
-Summary: P0=507, P1=493, NP=0, avgTurns=163.4, maxTurns=978, elapsed=79.79s, speed=12.5 g/s
-LossVP(avg VP when bot lost): dev=11.06, it1=4.55
-ByBot: dev=983, it1=17, NP=0
-Metrics: dev, LR%=53.4, LA%=99.2, avgDevCards=4.5, avgProdScore=1057.3
-         it1, LR%=35.0, LA%=0.8, avgDevCards=0.6, avgProdScore=330.7
-last_winner=Player1
-last_turns=104
-
-- DevPlayer vs it2
-[ 1000/1000] dev=985(98.5%) it2=14(1.4%) NP=1(0.1%) avgT=165.5 maxT=1000 11.2g/s ETA=00:00:00
-Summary: P0=501, P1=498, NP=1, avgTurns=165.5, maxTurns=1000, elapsed=89.17s, speed=11.2 g/s
-LossVP(avg VP when bot lost): dev=11.21, it2=5.23
-ByBot: dev=985, it2=14, NP=1
-Metrics: dev, LR%=39.0, LA%=99.6, avgDevCards=4.7, avgProdScore=1075.7
-         it2, LR%=54.9, LA%=0.4, avgDevCards=0.5, avgProdScore=370.3
-last_winner=Player1
-last_turns=240
-
-- DevPlayer vs it3
-Summary: P0=497, P1=501, NP=2, avgTurns=175.6, maxTurns=1000, elapsed=127.25s, speed=7.9 g/s
-LossVP(avg VP when bot lost): dev=10.19, it3=10.43
-ByBot: dev=684, it3=314, NP=2
-Metrics: dev, LR%=22.2, LA%=91.7, avgDevCards=3.5, avgProdScore=1031.7
-         it3, LR%=77.5, LA%=8.3, avgDevCards=1.6, avgProdScore=936.9
-last_winner=Player1
-last_turns=138
-
-- DevPlayer vs it4
-[ 1000/1000] dev=521(52.1%) it4=475(47.5%) NP=4(0.4%) avgT=185.8 maxT=1000 5.4g/s ETA=00:00:00
-Summary: P0=460, P1=536, NP=4, avgTurns=185.8, maxTurns=1000, elapsed=185.04s, speed=5.4 g/s
-LossVP(avg VP when bot lost): dev=9.78, it4=10.66
-ByBot: dev=521, it4=475, NP=4
-Metrics: dev, LR%=7.8, LA%=89.5, avgDevCards=3.4, avgProdScore=937.8
-         it4, LR%=92.0, LA%=10.5, avgDevCards=1.7, avgProdScore=1153.4
-last_winner=Player0
-last_turns=111
-
-- DevPlayer vs it5
-[ 1000/1000] dev=263(26.3%) it5=735(73.5%) NP=2(0.2%) avgT=132.4 maxT=1000 6.7g/s ETA=00:00:00
-Summary: P0=511, P1=487, NP=2, avgTurns=132.4, maxTurns=1000, elapsed=148.34s, speed=6.7 g/s
-LossVP(avg VP when bot lost): dev=8.80, it5=10.70
-ByBot: dev=263, it5=735, NP=2
-Metrics: dev, LR%=25.8, LA%=59.5, avgDevCards=2.6, avgProdScore=826.4
-         it5, LR%=69.5, LA%=40.4, avgDevCards=2.4, avgProdScore=1134.2
-last_winner=Player0
-last_turns=119
-
-- DevPlayer vs Para
-[ 1000/1000] dev=584(58.4%) para=415(41.5%) NP=1(0.1%) avgT=155.0 maxT=1000 3.4g/s ETA=00:00:00
-Summary: P0=510, P1=489, NP=1, avgTurns=155.0, maxTurns=1000, elapsed=294.41s, speed=3.4 g/s
-LossVP(avg VP when bot lost): dev=8.39, para=5.38
-ByBot: dev=584, para=415, NP=1
-Metrics: dev, LR%=21.8, LA%=92.0, avgDevCards=3.2, avgProdScore=916.2
-         para, LR%=77.2, LA%=7.7, avgDevCards=3.3, avgProdScore=736.1
-last_winner=Player1
-last_turns=134
-
+- DevPlayer vs
+- DevPlayer vs
+- DevPlayer vs
+- DevPlayer vs
+- DevPlayer vs
 - DevPlayer vs ParaSettleIt5Player
-[ 1000/1000] dev=255(25.5%) psit5=744(74.4%) NP=1(0.1%) avgT=128.8 maxT=1000 7.8g/s ETA=00:00:00
-Summary: P0=517, P1=482, NP=1, avgTurns=128.8, maxTurns=1000, elapsed=128.51s, speed=7.8 g/s
-LossVP(avg VP when bot lost): dev=8.34, psit5=10.71
-ByBot: dev=255, psit5=744, NP=1
-Metrics: dev, LR%=26.3, LA%=57.2, avgDevCards=2.6, avgProdScore=790.0
-         psit5, LR%=70.1, LA%=42.8, avgDevCards=2.5, avgProdScore=1124.4
-last_winner=Player1
-last_turns=158
-
 - DevPlayer vs AlphaBetaPlayer
 
 - RoadPlayer vs
@@ -836,13 +693,7 @@ last_turns=158
 - RoadPlayer vs ParaSettleIt5Player
 - RoadPlayer vs AlphaBetaPlayer
 
-- OneResource vs DevPlayer
-- OneResource vs RoadPlayer
-- DevPlayer vs RoadPlayers
-
 ## 8. Podsumowanie i wnioski
-
-Alphabeta najlepszy, ale baardzo wolny, a paraSetit5 idealnie wyważony - szybki i mądry
 ### 8.1. Ocena realizacji celów pracy
 ### 8.2. Wnioski z części badawczej
 ### 8.3. Możliwości dalszego rozwoju systemu
