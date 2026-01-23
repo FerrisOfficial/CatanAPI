@@ -115,6 +115,12 @@ cel aplikacyjny: implementacja silnika gry Catan 1 vs 1
 cel badawczy: projekt i porównanie botów o różnych strategiach
 
 ### 1.4. Podział pracy i wkład autorów
+Yaryna:
+topoligia planszy
+zaimplementowanie systemu akcji (do/undo)
+alphabetaPlayer, OneResource
+Testy :))
+Metryki do porównania botów
 
 ## 2. Przegląd istniejących rozwiązań
 ### 2.1. Istniejące implementacje Catana
@@ -245,23 +251,24 @@ Boty otrzymują dostęp wyłącznie do **odczytu stanu gry**, a po wykonaniu dec
 
 Całość tworzy **deterministyczny, testowalny i wydajny system symulacji**, który stanowi solidną podstawę do dalszej części pracy, poświęconej implementacji i analizie graczy automatycznych.
 
-## Symulowanie i odtwarzanie rozgrywek
+
+## 6. Symulowanie i odtwarzanie rozgrywek
 
 
 
-## 5. Testowanie i weryfikacja poprawności
-### 5.1. Strategia testowania
-### 5.2. Testy jednostkowe i integracyjne
-### 5.3. Walidacja zgodności z zasadami gry
+## 6. Testowanie i weryfikacja poprawności
+### 6.1. Strategia testowania
+### 6.2. Testy jednostkowe i integracyjne
+### 6.3. Walidacja zgodności z zasadami gry
 
-## 6. Projekt i implementacja botów
+## 7. Projekt i implementacja botów
 
 Celem niniejszego rozdziału jest opis zaprojektowanych i zaimplementowanych graczy automatycznych (botów), które zostały wykorzystane do badań porównawczych w dalszej części pracy. Boty różnią się stopniem złożoności strategii decyzyjnej – od gracza w pełni losowego, pełniącego rolę punktu odniesienia, po boty heurystyczne rozwijane iteracyjnie poprzez stopniowe wzbogacanie funkcji oceny stanu gry.
 
 Architektura botów została zaprojektowana w oparciu o wzorzec projektowy **Strategy**. Silnik gry współpracuje z botami poprzez wspólny interfejs gracza, natomiast konkretne implementacje strategii decyzyjnej są enkapsulowane w klasach poszczególnych botów. Umożliwia to wymienne stosowanie różnych algorytmów podejmowania decyzji bez konieczności modyfikacji logiki silnika, a także ułatwia prowadzenie eksperymentów porównawczych pomiędzy strategiami.
 
 
-## 6.1. Gracz losowy (baseline)
+## 7.1. Gracz losowy (baseline)
 
 Najprostszym zaimplementowanym graczem automatycznym jest **gracz losowy**, który stanowi punkt odniesienia (baseline) dla wszystkich pozostałych botów. Jego głównym celem nie jest osiąganie wysokich wyników, lecz dostarczenie **minimalnego poziomu kompetencji**, względem którego można mierzyć skuteczność bardziej zaawansowanych strategii.
 
@@ -298,7 +305,7 @@ W praktyce gracz losowy:
 Pomimo tego, dzięki losowości rzutów kośćmi, bot ten jest w stanie okazjonalnie wygrać pojedyncze rozgrywki, co dodatkowo podkreśla znaczenie przeprowadzania **dużej liczby symulacji** w analizie wyników.
 
 
-## 6.2. Boty heurystyczne
+## 7.2. Boty heurystyczne
 
 Proces projektowania botów heurystycznych przebiegał iteracyjnie. Każda kolejna wersja bota rozszerzała funkcję oceny o nowe elementy, obserwowane jako istotne podczas analizy rozgrywek poprzednich wersji. Takie podejście umożliwia analizę wpływu poszczególnych elementów strategii na skuteczność rozgrywki oraz pozwala na obserwację, w jakim stopniu nawet proste heurystyki poprawiają jakość decyzji względem losowego wyboru akcji.
 
@@ -451,9 +458,9 @@ W sytuacjach, w których:
 
 bot alpha-beta stosuje **mechanizm awaryjny**, delegując decyzję do najbardziej zaawansowanego bota heurystycznego (it5). Takie rozwiązanie zapewnia stabilność zachowania i zapobiega podejmowaniu decyzji ewidentnie gorszych od strategii heurystycznej.
 
-### 6.4 Boty celujące w jedną strategię
+### 7.4 Boty celujące w jedną strategię
 
-### 6.4.1. Bot celujący w jeden zasób
+### 7.4.1. Bot celujący w jeden zasób
 
 Oprócz botów opisanych wcześniej zaimplementowano również dodatkowego gracza o wąsko wyspecjalizowanej strategii, nazwanego **OneResourcePlayer**. Jego założeniem jest maksymalizacja korzyści z jednego, wybranego surowca poprzez:
 
@@ -507,7 +514,7 @@ Bot implementuje własną politykę zrzucania kart przy przekroczeniu limitu, wy
 
 W sytuacji, gdy żaden z ruchów nie daje wyraźnej korzyści w ramach strategii monosurowcowej (wszystkie deterministyczne akcje mają gorsze oceny niż It5Player w analogicznej sytuacji), bot nie wykonuje losowych działań. Zamiast tego stosowany jest **fallback do It5Player**, czyli najbardziej zbalansowanego bota heurystycznego. Zapobiega to „utknięciu" strategii w stanach, w których dążenie do jednego surowca przestaje być racjonalne (np. brak portu 2:1, zablokowanie kluczowych lokalizacji przez przeciwnika).
 
-### 6.4.2. Bot celujący w karty rozwoju
+### 7.4.2. Bot celujący w karty rozwoju
 
 DevPlayer stanowi drugą strategię eksperymentalną, opartą na hipotezie, że **priorytetowe skupienie się na zakupie kart rozwoju** oraz szybkie osiąganie związanych z nimi bonusów (takich jak premia *Największa Armia* oraz karty punktów zwycięstwa) może w określonych warunkach stanowić skuteczną alternatywę dla klasycznej ekspansji terytorialnej.
 
@@ -525,7 +532,7 @@ Przy konieczności odrzucenia kart w wyniku wyrzucenia liczby 7 bot w pierwszej 
 
 Ze względu na silne uzależnienie od losowości talii kart rozwoju oraz rzutów kośćmi, strategia ta charakteryzuje się większą wariancją wyników w porównaniu do botów heurystycznych i algorytmu alpha-beta. W ramach pracy DevPlayer pełni rolę **strategii porównawczej**, umożliwiającej ocenę skuteczności podejścia opartego na rozwoju pośrednim i wysokiej nieprzewidywalności.
 
-### 6.4.3. Bot celujący w najdłuższą drogę
+### 7.4.3. Bot celujący w najdłuższą drogę
 
 RoadPlayer stanowi trzecią strategię eksperymentalną, której celem jest weryfikacja hipotezy, że **agresywna rozbudowa sieci dróg oraz zdobycie premii Najdłuższa Droga** (2 punkty zwycięstwa) może stanowić efektywną alternatywę dla klasycznego podejścia opartego na szybkim rozwoju osad i miast.
 
@@ -544,11 +551,11 @@ Przy konieczności odrzucania kart w wyniku wyrzucenia liczby 7 bot w pierwszej 
 Strategia RoadPlayer jest **wrażliwa na ograniczenia przestrzenne planszy**. Skuteczne blokowanie kluczowych węzłów przez przeciwnika lub przerwanie ciągłości sieci znacząco obniża jej skuteczność. Ponadto jednostronna koncentracja na infrastrukturze drogowej może prowadzić do utraty tempa zdobywania punktów zwycięstwa, szczególnie w starciu z botami preferującymi rozwój ekonomiczny i budowę miast. Wyniki uzyskane przez RoadPlayer potwierdzają, że silna specjalizacja w jednym aspekcie gry nie gwarantuje przewagi nad strategiami zbalansowanymi.
 
 
-## 6.5. Bot oparty na algorytmie genetycznym
+## 7.5. Bot oparty na algorytmie genetycznym
 
-## 7. Eksperymenty i analiza wyników
+## 8. Eksperymenty i analiza wyników
 
-### 7.1. Metodologia porównania botów
+### 8.1. Metodologia porównania botów
 
 Wszystkie eksperymenty zostały przeprowadzone zgodnie z następującym protokołem:
 
@@ -558,7 +565,7 @@ Wszystkie eksperymenty zostały przeprowadzone zgodnie z następującym protoko�
 
 - **Losowość planszy**: Każda rozgrywka wykorzystuje losowo wygenerowaną planszę zgodnie z zasadami gry *Catan*, co eliminuje możliwość optymalizacji strategii pod konkretną konfigurację terenu.
 
-### 7.1.1. Metryki oceny skuteczności
+### 8.1.1. Metryki oceny skuteczności
 
 W celu kompleksowej oceny skuteczności botów wprowadzono następujące metryki:
 
@@ -573,9 +580,9 @@ W celu kompleksowej oceny skuteczności botów wprowadzono następujące metryki
 - Średnia liczba zakupionych kart rozwoju: Avg DevCards
 - Średnia produkcja zasobów: ProdScore
 
-### 7.2. Scenariusze testowe
+### 8.2. Scenariusze testowe
 
-### 7.2.1 Scenariusz 1: Skalowanie jakości botów
+### 8.2.1 Scenariusz 1: Skalowanie jakości botów
 
 W pierwszym scenariuszu kolejne iteracje botów oraz wybrane strategie wyspecjalizowane porównano z graczem losowym, który pełni rolę punktu odniesienia (baseline). Takie zestawienie pozwala bezpośrednio ocenić wpływ wzbogacania heurystyk na skuteczność, tempo rozgrywki oraz zdolność botów do deterministycznego domykania partii.
 
@@ -665,38 +672,179 @@ Jest drastyczny spad długości rozgrywki po graczu it3, lecz gracz it4 "dzielni
 
 #### Scenariusz 4: AplhaBetaPlayer
 
+- AlphaBetaPlayer vs it1
+[ 1000/1000] ab=993(99.3%) it1=7(0.7%) NP=0(0.0%) avgT=138.4 maxT=711 1.1g/s ETA=00:00:00
+Summary: P0=501, P1=499, NP=0, avgTurns=138.4, maxTurns=711, elapsed=930.53s, speed=1.1 g/s
+LossVP(avg VP when bot lost): ab=13.29, it1=4.36
+ByBot: ab=993, it1=7, NP=0
+Metrics: ab, LR%=89.0, LA%=98.0, avgDevCards=3.6, avgProdScore=1026.6
+         it1, LR%=8.8, LA%=2.0, avgDevCards=1.0, avgProdScore=337.7
+last_winner=Player1
+last_turns=129
+
+- AlphaBetaPlayer vs it2
+[ 1000/1000] ab=995(99.5%) it2=5(0.5%) NP=0(0.0%) avgT=138.6 maxT=732 1.2g/s ETA=00:00:00
+Summary: P0=501, P1=499, NP=0, avgTurns=138.6, maxTurns=732, elapsed=834.31s, speed=1.2 g/s
+LossVP(avg VP when bot lost): ab=11.60, it2=4.57
+ByBot: ab=995, it2=5, NP=0
+Metrics: ab, LR%=85.1, LA%=97.6, avgDevCards=3.7, avgProdScore=1031.5
+         it2, LR%=13.6, LA%=2.1, avgDevCards=0.9, avgProdScore=357.8
+last_winner=Player1
+last_turns=124
+
+- AlphaBetaPlayer vs it3
+[ 1000/1000] ab=743(74.3%) it3=257(25.7%) NP=0(0.0%) avgT=144.0 maxT=484 0.4g/s ETA=00:00:00
+Summary: P0=477, P1=523, NP=0, avgTurns=144.0, maxTurns=484, elapsed=2659.33s, speed=0.4 g/s
+LossVP(avg VP when bot lost): ab=10.29, it3=9.07
+ByBot: ab=743, it3=257, NP=0
+Metrics: ab, LR%=58.1, LA%=76.7, avgDevCards=2.9, avgProdScore=1026.1
+         it3, LR%=41.8, LA%=23.3, avgDevCards=2.1, avgProdScore=867.8
+last_winner=Player0
+last_turns=127
+
+- AlphaBetaPlayer vs it4
+[ 1000/1000] ab=626(62.6%) it4=372(37.2%) NP=2(0.2%) avgT=141.1 maxT=1000 0.1g/s ETA=00:00:00
+Summary: P0=446, P1=552, NP=2, avgTurns=141.1, maxTurns=1000, elapsed=14154.55s, speed=0.1 g/
+s
+LossVP(avg VP when bot lost): ab=10.18, it4=9.67
+ByBot: ab=626, it4=372, NP=2
+Metrics: ab, LR%=47.6, LA%=76.1, avgDevCards=2.9, avgProdScore=984.0
+         it4, LR%=52.4, LA%=23.8, avgDevCards=2.2, avgProdScore=1010.4
+last_winner=Player1
+last_turns=125
+
+- AlphaBetaPlayer vs it5
+[ 1000/1000] ab=624(62.4%) it5=376(37.6%) NP=0(0.0%) avgT=136.7 maxT=509 0.2g/s ETA=00:00:00
+Summary: P0=496, P1=504, NP=0, avgTurns=136.7, maxTurns=509, elapsed=5544.99s, speed=0.2 g/s
+LossVP(avg VP when bot lost): ab=10.17, it5=9.77
+ByBot: ab=624, it5=376, NP=0
+Metrics: ab, LR%=70.8, LA%=57.9, avgDevCards=2.6, avgProdScore=995.7
+         it5, LR%=29.2, LA%=42.0, avgDevCards=2.6, avgProdScore=974.7
+last_winner=Player1
+last_turns=98
+
+- AlphaBetaPlayer vs Para
+Summary: P0=479, P1=520, NP=1, avgTurns=139.4, maxTurns=1000, elapsed=3611.10s, speed=0.3 g/s
+LossVP(avg VP when bot lost): ab=10.06, para=8.75
+ByBot: ab=689, para=310, NP=1
+Metrics: ab, LR%=64.7, LA%=78.4, avgDevCards=2.7, avgProdScore=980.8
+         para, LR%=35.2, LA%=21.5, avgDevCards=3.4, avgProdScore=921.6
+last_winner=Player0
+last_turns=122
+
+- AlphaBetaPlayer vs ParaSettleIt5
+
 #### Scenariusz 5: Player parametryczny
 
 #### Scenariusz 5: Boty specialistyczne
 
-- OneResourcePlayer vs
-- OneResourcePlayer vs
-- OneResourcePlayer vs
-- OneResourcePlayer vs
-- OneResourcePlayer vs
-- OneResourcePlayer vs ParaSettleIt5Player
-- OneResourcePlayer vs AlphaBetaPlayer
+Scenariusz piąty weryfikuje skuteczność strategii wyspecjalizowanych przeciwko różnym poziomom przeciwników. W szczególności analizuje, w jakich warunkach specjalizacja w jeden aspekt rozgrywki (np. jeden surowiec) jest efektywna oraz identyfikuje granicę skuteczności strategii wyspecjalizowanych.
 
-- DevPlayer vs
-- DevPlayer vs
-- DevPlayer vs
-- DevPlayer vs
-- DevPlayer vs
-- DevPlayer vs ParaSettleIt5Player
-- DevPlayer vs AlphaBetaPlayer
+**#### OneResourcePlayer**
 
-- RoadPlayer vs
-- RoadPlayer vs
-- RoadPlayer vs
-- RoadPlayer vs
-- RoadPlayer vs
+OneResourcePlayer reprezentuje strategię wyspecjalizowaną, która maksymalizuje korzyści z 
+jednego, wybranego surowca poprzez zajęcie portu 2:1 oraz koncentrację rozwoju 
+infrastruktury wokół tego surowca. Eksperyment weryfikuje hipotezę, czy taka specjalizacja 
+może być skuteczna przeciwko różnym poziomom przeciwników.
+
+#### Podsumowanie danych
+
+| Przeciwnik | Win Rate OneResource | Avg Turns | LossVP OneResource | LossVP Przeciwnik | 
+Longest Road% OR | Longest Road% Opp | Largest Army% OR | Largest Army% Opp | ProdScore OR | ProdScore Opp |
+|------------|---------------------|-----------|-------------------|------------------|
+--------|---------|--------|---------|--------------|---------------|
+| It1 | 98.3% | 160.1 | 9.00 | 4.37 | 82.9% | 14.7% | 89.2% | 8.9% | 1117.3 | 321.2 |
+| It2 | 95.5% | 161.1 | 9.82 | 4.93 | 72.8% | 26.1% | 89.3% | 8.8% | 1115.0 | 387.6 |
+| It3 | 56.8% | 148.6 | 8.43 | 9.36 | 43.4% | 56.5% | 51.9% | 47.6% | 968.4 | 854.7 |
+| It4 | 36.4% | 146.6 | 8.23 | 10.09 | 22.2% | 77.8% | 46.9% | 51.8% | 859.0 | 1119.4 |
+| It5 | 19.0% | 116.9 | 7.24 | 11.21 | 39.0% | 55.8% | 12.1% | 87.8% | 745.2 | 1065.1 |
+| Para | 34.8% | 127.8 | 7.73 | 6.14 | 32.2% | 67.2% | 60.6% | 33.5% | 795.7 | 962.1 |
+| ParaSettleIt5 | 18.2% | 113.2 | 7.19 | 11.24 | 38.9% | 54.7% | 11.1% | 88.7% | 735.0 | 
+1089.8 |
+| AlphaBeta | 11.9% | 139.1 | 6.91 | 11.15 | 13.6% | 85.9% | 19.9% | 80.1% | 648.7 | 1054.4 |
+
+#### Kluczowe wnioski
+
+**Przepaść skuteczności — strategia działa tylko przeciwko słabym botom**
+
+Wyniki pokazują dramatyczny spadek skuteczności strategii monosurowcowej wraz z poprawą jakości przeciwnika. OneResourcePlayer osiąga wysokie współczynniki zwycięstw przeciwko It1Player (98.3%) oraz It2Player (95.5%), jednak jego skuteczność gwałtownie spada przeciwko It3Player (56.8%), osiągając jedynie około 11–36% przeciwko zaawansowanym botom (It4, It5, ParaSettleIt5, AlphaBeta).
+
+Istotna jest obserwacja, że It3Player znowuż stanowi punkt przełomowy. Spadek współczynnika zwycięstw z 95.5% (vs It2) do 56.8% (vs It3) pokazuje, że wprowadzenie strategii ustawień początkowych oraz aktywnego wykorzystania rozbójnika w It3 wystarcza, aby zneutralizować 
+przewagę wynikającą z specjalizacji w jeden surowiec. To potwierdza, że strategie wyspecjalizowane są skuteczne tylko w określonych warunkach — przeciwko słabszym przeciwnikom, którzy nie potrafią efektywnie wykorzystać mechanizmów strategicznych dostępnych w grze.
+
+(!! nwm czy nie na koncu po prostu powiedzieć że po it3 dla wszystkich jest lipa)
+
+![Skuteczność strategii monosurowcowej w zależności od jakości przeciwnika](image-3.png)
+Wykres demonstrujący współczynnik zwycięstw bota OneResourcePlayer przeciwko różnym botom 
+przeciwnika.
+
+**Zaawansowane boty całkowicie dominują**
+
+Zaawansowane boty (It5, ParaSettleIt5, AlphaBeta) całkowicie dominują strategię 
+monosurowcową, osiągając współczynniki zwycięstw powyżej 80–88%. To potwierdza, że zbalansowane strategie są bardziej skuteczne niż jednostronna specjalizacja w 
+długoterminowej perspektywie.
+
+**#### DevPlayer**
+
+DevPlayer reprezentuje strategię opartą na priorytetowym skupieniu się na zakupie kart rozwoju oraz szybkim osiąganiu związanych z nimi bonusów, takich jak premia *Największa Armia* oraz karty punktów zwycięstwa. Eksperyment weryfikuje hipotezę, czy taka strategia pośrednia może stanowić skuteczną alternatywę dla klasycznej ekspansji terytorialnej przeciwko różnym poziomom przeciwników.
+
+#### Podsumowanie danych
+
+| Przeciwnik | Win Rate DevPlayer | Avg Turns | LossVP DevPlayer | LossVP Przeciwnik | Longest Road% Dev | Longest Road% Opp | Largest Army% Dev | Largest Army% Opp | Avg DevCards Dev | Avg DevCards Opp | ProdScore Dev | ProdScore Opp |
+|------------|-------------------|-----------|-----------------|------------------|------------------|------------------|------------------|------------------|-----------------|-----------------|---------------|---------------|
+| It1 | 98.8% | 164.4 | 11.00 | 4.57 | 52.6% | 36.1% | 98.9% | 1.0% | 4.5 | 0.6 | 1067.2 | 322.6 |
+| It2 | 97.5% | 163.0 | 11.56 | 5.20 | 39.4% | 53.7% | 99.4% | 0.6% | 4.6 | 0.6 | 1083.6 | 373.3 |
+| It3 | 69.1% | 171.9 | 10.08 | 10.40 | 20.6% | 79.2% | 91.3% | 8.7% | 3.4 | 1.6 | 1035.4 | 925.2 |
+| It4 | 49.3% | 192.2 | 9.97 | 11.10 | 7.5% | 92.4% | 90.9% | 9.1% | 3.4 | 1.8 | 940.2 | 1184.0 |
+| It5 | 27.3% | 132.2 | 8.82 | 10.74 | 25.6% | 70.7% | 56.8% | 43.2% | 2.7 | 2.3 | 837.8 | 1121.8 |
+| Para | 58.0% | 160.4 | 8.46 | 5.54 | 20.9% | 78.6% | 92.3% | 7.5% | 3.2 | 3.4 | 906.9 | 747.6 |
+| ParaSettleIt5 | 23.6% | 129.2 | 8.52 | 11.31 | 23.1% | 73.2% | 54.4% | 45.6% | 2.6 | 2.4 | 797.5 | 1141.4 |
+| AlphaBeta | 20.5% | 140.9 | 8.66 | 10.58 | 14.4% | 85.3% | 47.8% | 52.2% | 2.6 | 2.5 | 834.8 | 1082.4 |
+
+#### Kluczowe wnioski
+
+**Przewaga strategii w starciu z prostszymi botami**
+
+DevPlayer osiąga bardzo wysokie współczynniki zwycięstw przeciwko It1Player (98.8%) oraz It2Player (97.5%), co potwierdza skuteczność strategii opartej na kartach rozwoju w starciu z botami o niskiej jakości decyzyjnej. Kluczowym elementem sukcesu jest niemal całkowita dominacja w premii *Największa Armia* — DevPlayer zdobywa ją w 98.9% rozgrywek przeciwko It1 oraz 99.4% przeciwko It2, podczas gdy przeciwnicy osiągają tę premię w mniej niż 1% przypadków. Dodatkowo bot zakupuje średnio 4.5–4.6 kart rozwoju na rozgrywkę, co jest znacznie wyższym wynikiem niż u przeciwników (0.6 karty).
+
+![alt text](devplayer_effectiveness.png)
+Wykres skuteczności DevPlayer w zależności od jakości przeciwnika. Dostrzegalny moment przełomowy przy It3 oraz granica skuteczności przy It4.
+
+**Punkt przełomowy: It3Player**
+
+Podobnie jak w przypadku OneResourcePlayer, It3Player stanowi punkt przełomowy dla skuteczności DevPlayer. Współczynnik zwycięstw spada dramatycznie z 97.5% (vs It2) do 69.1% (vs It3). Mimo że DevPlayer nadal dominuje w premii *Największa Armia* (91.3% vs 8.7%), nie przekłada się to już na tak wyraźną przewagę w rozgrywce.
+
+**Prawie remis z It4Player — granica skuteczności strategii**
+
+Najciekawszym momentem w analizie jest starcie DevPlayer vs It4Player, które kończy się niemal idealnym remisem: 49.3% vs 49.5% (z 12 rozgrywkami bez zwycięzcy). To pokazuje, że strategia oparta na kartach rozwoju osiąga granicę swojej skuteczności na poziomie It4. Warto zauważyć, że DevPlayer nadal utrzymuje wysoką dominację w premii *Największa Armia* (90.9% vs 9.1%), jednak It4Player kompensuje to poprzez zdecydowaną przewagę w premii *Najdłuższa Droga* (92.4% vs 7.5%) oraz wyższą produkcję zasobów (1184.0 vs 940.2). Średnia liczba tur wzrasta do 192.2, co jest najwyższą wartością w całym zestawie danych.
+
+![alt text](devplayer_dev_cards.png)
+Porównanie średniej liczby kupionych kart rozwoju przez DevPlayer i przeciwników.
+
+![alt text](devplayer_largest_army.png)
+Porównanie częstości zdobycia premii Największa Armia przez DevPlayer i przeciwników.
+
+**Zaawansowane boty całkowicie dominują strategię kartową**
+
+Przeciwko zaawansowanym botom (It5, ParaSettleIt5, AlphaBeta) DevPlayer osiąga jedynie 20–27% zwycięstw, co pokazuje, że strategia oparta wyłącznie na kartach rozwoju nie jest wystarczająca do pokonania zbalansowanych strategii. Co więcej, przeciwnicy mają średnio ponad 10 punktów zwycięstwa w momencie przegranej DevPlayer, co świadczy o zdecydowanej dominacji. Interesujące jest, że w starciu z AlphaBetaPlayer premia *Największa Armia* jest już podzielona niemal równo (47.8% vs 52.2%), co pokazuje, że zaawansowane boty potrafią efektywnie konkurować również w tym aspekcie gry.
+
+
+**#### RoadPlayer**
+
+- RoadPlayer vs it1
+- RoadPlayer vs it2
+- RoadPlayer vs it3
+- RoadPlayer vs it4
+- RoadPlayer vs it5
 - RoadPlayer vs ParaSettleIt5Player
 - RoadPlayer vs AlphaBetaPlayer
 
-## 8. Podsumowanie i wnioski
-### 8.1. Ocena realizacji celów pracy
-### 8.2. Wnioski z części badawczej
-### 8.3. Możliwości dalszego rozwoju systemu
+(wykres z tymi 3 graczami na koniec!)
+
+## 9. Podsumowanie i wnioski
+### 9.1. Ocena realizacji celów pracy
+### 9.2. Wnioski z części badawczej
+### 9.3. Możliwości dalszego rozwoju systemu
 
 ## Bibliografia
 - Catan - Game Rules https://www.catan.com/understand-catan/game-rules
