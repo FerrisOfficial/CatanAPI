@@ -25,7 +25,7 @@ auto callPlayerGuarded(const Game& game, Board::BoardState& board, IPlayer& play
     const bool boardChanged = !(before == board);
     const bool isAlphaBeta = dynamic_cast<alphaBetaPlayer*>(&player) != nullptr;
 
-    if (boardChanged && !isAlphaBeta) {
+    if (boardChanged) {
         std::ostringstream details;
         if (before.robberPosition != board.robberPosition) {
             details << "robberPosition " << unsigned(before.robberPosition) << " -> " << unsigned(board.robberPosition);
