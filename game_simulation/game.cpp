@@ -23,7 +23,6 @@ auto callPlayerGuarded(const Game& game, Board::BoardState& board, IPlayer& play
     Board::BoardState before = board;
     auto result = func();
     const bool boardChanged = !(before == board);
-    const bool isAlphaBeta = dynamic_cast<alphaBetaPlayer*>(&player) != nullptr;
 
     if (boardChanged) {
         std::ostringstream details;
