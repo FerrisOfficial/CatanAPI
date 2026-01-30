@@ -3,7 +3,7 @@
 Skrypt do wizualizacji wyników Scenariusza 1: Skalowanie jakości botów.
 
 Użycie:
-    python utils/visualize_scenario1.py --output-dir plots/
+    python utils/visualize_scenario1.py --output-dir docs/
 """
 
 import argparse
@@ -42,17 +42,19 @@ DATA = {
             'lr_pct': 52.8, 'la_pct': 99.7, 'dev_cards': 4.6, 'prod_score': 1064.8, 'random_wins': 1},
     'Road': {'win_rate': 100.0, 'avg_turns': 132.7, 'loss_vp_random': 3.22, 'loss_vp_bot': None,
              'lr_pct': 94.5, 'la_pct': 98.6, 'dev_cards': 3.6, 'prod_score': 1051.0, 'random_wins': 0},
+    'AlphaBeta': {'win_rate': 100.0, 'avg_turns': 108.7, 'loss_vp_random': 2.97, 'loss_vp_bot': None,
+                  'lr_pct': 96.2, 'la_pct': 91.8, 'dev_cards': 2.5, 'prod_score': 1168.2, 'random_wins': 0},
 }
 
 # Boty heurystyczne (do wykresów progresji)
-HEURISTIC_BOTS = ['It1', 'It2', 'It3', 'It4', 'It5']
+BOTS = ['It1', 'It2', 'It3', 'It4', 'It5', 'Para', 'ParaSettleIt5', 'OneResource', 'Dev', 'Road', 'AlphaBeta']
 
 
 def plot_progression(output_dir: Path):
     """Wykres 1: Progresja jakości botów heurystycznych"""
     fig, ax = plt.subplots(figsize=(10, 6))
     
-    bots = HEURISTIC_BOTS
+    bots = BOTS
     win_rates = [DATA[bot]['win_rate'] for bot in bots]
     random_wins = [DATA[bot]['random_wins'] for bot in bots]
     
@@ -71,79 +73,57 @@ def plot_progression(output_dir: Path):
     
     x = np.arange(len(bots))
     ax.plot(x, win_rates, 'o-', linewidth=2, markersize=8, label='Win Rate', color='#2ecc71')
-    ax.fill_between(x, ci_lower, ci_upper, alpha=0.3, color='#2ecc71', label='95% CI')
     
     ax.set_xlabel('Iteracja bota heurystycznego', fontsize=12, fontweight='bold')
     ax.set_ylabel('Współczynnik zwycięstw (%)', fontsize=12, fontweight='bold')
-    ax.set_title('Progresja skuteczności botów heurystycznych\nvs RandomPlayer', 
-                 fontsize=14, fontweight='bold')
+
     ax.set_xticks(x)
     ax.set_xticklabels(bots)
     ax.set_ylim([0, 105])
     ax.grid(True, alpha=0.3)
     ax.legend(loc='lower right')
-    
-    # Dodaj adnotacje
-    ax.annotate('Przełom:\nstrategia początkowych ustawień\n+ rozbójnik', 
-                xy=(2, 98.7), xytext=(2.5, 85),
-                arrowprops=dict(arrowstyle='->', color='red', lw=2),
-                fontsize=10, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
     
     plt.tight_layout()
-    plt.savefig(output_dir / '1_progression.png', dpi=300, bbox_inches='tight')
+    plt.savefig(output_dir / 'rp_progression.png', dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"Zapisano: {output_dir / '1_progression.png'}")
+    print(f"Zapisano: {output_dir / 'rp_progression.png'}")
 
 
-def plot_tempo_vs_effectiveness(output_dir: Path):
-    """Wykres 2: Tempo vs Skuteczność"""
-    fig, ax = plt.subplots(figsize=(10, 6))
+def plot_tempo(output_dir: Path):
+    """Wykres 2: Tempo rozgrywki"""
+    fig, ax = plt.subplots(figsize=(12, 6))
     
-    # Wszystkie boty
-    bots = list(DATA.keys())
-    win_rates = [DATA[bot]['win_rate'] for bot in bots]
+    bots = BOTS
     avg_turns = [DATA[bot]['avg_turns'] for bot in bots]
     
-    # Kolorowanie: heurystyczne vs eksperymentalne
-    colors = []
-    for bot in bots:
-        if bot in HEURISTIC_BOTS:
-            colors.append('#3498db')  # niebieski
-        else:
-            colors.append('#e74c3c')  # czerwony
+    x = np.arange(len(bots))
+    bars = ax.bar(x, avg_turns, color='#16a085', alpha=0.7, edgecolor='black', linewidth=1.5)
     
-    scatter = ax.scatter(win_rates, avg_turns, s=150, c=colors, alpha=0.7, edgecolors='black', linewidth=2)
+    # Dodaj wartości na słupkach
+    for bar, val in zip(bars, avg_turns):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height + 5,
+               f'{val:.1f}', ha='center', va='bottom', fontweight='bold')
     
-    # Dodaj etykiety
-    for i, bot in enumerate(bots):
-        ax.annotate(bot, (win_rates[i], avg_turns[i]), 
-                   xytext=(5, 5), textcoords='offset points', fontsize=9)
-    
-    ax.set_xlabel('Współczynnik zwycięstw (%)', fontsize=12, fontweight='bold')
+    ax.set_xlabel('Bot', fontsize=12, fontweight='bold')
     ax.set_ylabel('Średnia liczba tur', fontsize=12, fontweight='bold')
-    ax.set_title('Zależność między skutecznością a tempem rozgrywki', 
-                 fontsize=14, fontweight='bold')
-    ax.grid(True, alpha=0.3)
-    
-    # Legenda
-    from matplotlib.patches import Patch
-    legend_elements = [
-        Patch(facecolor='#3498db', label='Boty heurystyczne'),
-        Patch(facecolor='#e74c3c', label='Boty eksperymentalne')
-    ]
-    ax.legend(handles=legend_elements, loc='upper right')
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(bots, rotation=45, ha='right')
+    ax.grid(True, alpha=0.3, axis='y')
     
     plt.tight_layout()
-    plt.savefig(output_dir / '2_tempo_vs_effectiveness.png', dpi=300, bbox_inches='tight')
+    plt.savefig(output_dir / 'rp_tempo.png', dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"Zapisano: {output_dir / '2_tempo_vs_effectiveness.png'}")
+    print(f"Zapisano: {output_dir / 'rp_tempo.png'}")
 
 
 def plot_competency_gap(output_dir: Path):
     """Wykres 3: Przepaść kompetencyjna - spadek szans Random"""
     fig, ax = plt.subplots(figsize=(10, 6))
     
-    bots = HEURISTIC_BOTS
+    bots = BOTS
     random_wins = [DATA[bot]['random_wins'] for bot in bots]
     random_win_rate = [w / 10.0 for w in random_wins]  # z 1000 rozgrywek
     
@@ -162,8 +142,7 @@ def plot_competency_gap(output_dir: Path):
     
     ax.set_xlabel('Iteracja bota heurystycznego', fontsize=12, fontweight='bold')
     ax.set_ylabel('Współczynnik zwycięstw RandomPlayer (%)', fontsize=12, fontweight='bold')
-    ax.set_title('Spadek szans RandomPlayer z każdą iteracją', 
-                 fontsize=14, fontweight='bold')
+
     ax.set_xticks(x)
     ax.set_xticklabels(bots)
     ax.set_ylim([0, max(random_win_rate) * 1.2])
@@ -180,7 +159,7 @@ def plot_dominance(output_dir: Path):
     """Wykres 4: Dominacja - LossVP przeciwnika"""
     fig, ax = plt.subplots(figsize=(12, 6))
     
-    bots = HEURISTIC_BOTS
+    bots = BOTS
     loss_vp_bot = [DATA[bot]['loss_vp_bot'] if DATA[bot]['loss_vp_bot'] is not None else 0 
                    for bot in bots]
     
@@ -196,17 +175,16 @@ def plot_dominance(output_dir: Path):
     
     ax.set_xlabel('Iteracja bota heurystycznego', fontsize=12, fontweight='bold')
     ax.set_ylabel('Średnia liczba VP przeciwnika przy przegranej', fontsize=12, fontweight='bold')
-    ax.set_title('Dominacja botów nad RandomPlayer\n(średnia liczba VP w momencie zwycięstwa)', 
-                 fontsize=14, fontweight='bold')
+
     ax.set_xticks(x)
     ax.set_xticklabels(bots)
     ax.set_ylim([0, max(loss_vp_bot) * 1.15])
     ax.grid(True, alpha=0.3, axis='y')
     
     plt.tight_layout()
-    plt.savefig(output_dir / '4_dominance.png', dpi=300, bbox_inches='tight')
+    plt.savefig(output_dir / 'rp_dominance.png', dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"Zapisano: {output_dir / '4_dominance.png'}")
+    print(f"Zapisano: {output_dir / 'rp_dominance.png'}")
 
 
 def plot_radar_chart(output_dir: Path):
@@ -271,7 +249,7 @@ def plot_efficiency(output_dir: Path):
     sorted_data = sorted(zip(bots, efficiency), key=lambda x: x[1], reverse=True)
     bots_sorted, efficiency_sorted = zip(*sorted_data)
     
-    colors = ['#2ecc71' if bot in HEURISTIC_BOTS else '#e74c3c' for bot in bots_sorted]
+    colors = ['#2ecc71' if bot in BOTS else '#e74c3c' for bot in bots_sorted]
     
     bars = ax.barh(range(len(bots_sorted)), efficiency_sorted, color=colors, alpha=0.7, 
                    edgecolor='black', linewidth=1.5)
@@ -314,6 +292,11 @@ def main():
     
     print("Generowanie wykresu...")
     plot_progression(args.output_dir)
+    plot_dominance(args.output_dir)
+    # plot_competency_gap(args.output_dir)
+    plot_tempo(args.output_dir)
+    # plot_radar_chart(args.output_dir)
+    # plot_efficiency(args.output_dir)
     
     print(f"\nWykres zapisany w: {args.output_dir}")
 

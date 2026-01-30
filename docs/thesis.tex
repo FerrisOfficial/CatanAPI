@@ -1,8 +1,16 @@
 \documentclass[polish,inz,longabstract]{iithesis}
 
+\usepackage[utf8]{inputenc}
+\usepackage{lipsum}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{url}
 
 \polishtitle{
-    Implementacja gry planszowej Catan \newline oraz agentów AI do rozgrywki 1v1
+    Implementacja gry planszowej Catan oraz agentów AI do rozgrywki 1v1
 }
 \englishtitle{
     Implementation of the Catan board game and AI agents for 1v1 gameplay
@@ -19,11 +27,9 @@
 \chapter{Wstęp}
 \section{Wprowadzenie do tematyki gier planszowych i sztucznej inteligencji}
 
-Sztuczna inteligencja od wielu lat stanowi istotny obszar badań w kontekście gier, w szczególności gier cyfrowych, gdzie znajduje zastosowanie m.in. w projektowaniu przeciwników sterowanych komputerowo, generowaniu treści oraz personalizacji rozgrywki. W przypadku gier planszowych zakres wykorzystania algorytmów sztucznej inteligencji jest węższy, co wynika z ich analogowej natury oraz fizycznych komponentów, jednak w ostatnich latach obserwuje się dynamiczny wzrost zainteresowania tym obszarem badawczym.
+Gry planszowe stanowią jedną z najstarszych form rywalizacji intelektualnej i strategicznej pomiędzy ludźmi, sięgającą czasów starożytnych. Od czasów szachów, poprzez warcaby, aż po współczesne gry eurystyczne takie jak \textit{Catan}, \textit{Ticket to Ride} czy \textit{Agricola}, gry planszowe ewoluowały w kierunku coraz większej złożoności strategicznej i głębi mechaniki gameplayowej. Współczesne gry planszowe łączą w sobie elementy takie jak zarządzanie zasobami, podejmowanie decyzji w warunkach niepełnej informacji, interakcję wieloosobową oraz wpływ losowości na przebieg rozgrywki. Te cechy sprawiają, że gry planszowe stanowią doskonałe laboratorium do badania algorytmów decyzyjnych, strategii adaptacyjnych oraz zachowań konkurencyjnych w sformalizowanych środowiskach o mniej lub bardziej przewidywalnych regułach.
 
-Jednym z podstawowych zastosowań sztucznej inteligencji w grach planszowych jest wsparcie procesu projektowania i testowania mechanik gry. Współczesne gry planszowe, w szczególności tzw. eurogry, charakteryzują się dużą złożonością decyzyjną, licznymi zależnościami pomiędzy elementami gry oraz koniecznością zachowania balansu pomiędzy różnymi strategiami. Tradycyjne testowanie takich gier wymaga znacznych nakładów czasu i pracy ludzkich testerów, co czyni automatyczne symulacje rozgrywek atrakcyjną alternatywą.
-
-Algorytmy sztucznej inteligencji umożliwiają symulowanie tysięcy rozgrywek w krótkim czasie, analizowanie drzew decyzyjnych oraz ocenę skuteczności poszczególnych strategii. Metody te pozwalają na identyfikację niezbalansowanych mechanik, dominujących strategii oraz rzadkich, lecz istotnych scenariuszy rozgrywki, które mogłyby zostać pominięte w testach manualnych. W praktyce prowadzi to do bardziej obiektywnej analizy systemu gry i usprawnia proces iteracyjnego doskonalenia zasad.
+Sztuczna inteligencja w kontekście gier planszowych od dziesięcioleci przyciąga uwagę badaczy zajmujących się teorią gier, algorytmiką oraz uczeniem maszynowym. Klasyczne podejścia, takie jak algorytm Minimax czy alfa-beta pruning, znalazły zastosowanie w grach deterministycznych takich jak szachy. Dla gier o większej złożoności stanowej, wyższej losowości lub elementach niepełnej informacji opracowano zaawansowane metody, takie jak Monte Carlo Tree Search (MCTS). Automatyczne boty umożliwiają symulowanie tysięcy rozgrywek w krótkim czasie, analizę drzew decyzyjnych oraz ocenę skuteczności poszczególnych strategii. Dzięki temu możliwe jest identyfikowanie niezbalansowanych mechanik, dominujących sposobów gry oraz rzadkich, lecz istotnych scenariuszy, które mogłyby zostać pominięte w testach manualnych. W efekcie podejście to prowadzi do bardziej obiektywnej analizy systemu gry i usprawnia proces iteracyjnego doskonalenia zasad.
 
 \section{Gra Catan – charakterystyka i potencjał badawczy}
 
@@ -42,21 +48,31 @@ Każdy typ pola produkcyjnego na planszy odpowiada określonemu surowcowi:
 \item góry produkują rudę (\textit{Ore}).
 \end{itemize}
 
-Każdy heks produkcyjny posiada przypisaną losowo liczbę z zakresu 2–12 (z wyjątkiem 7), która odpowiada możliwym sumom wyrzuconym na dwóch sześciennych kościach. Liczby te determinują, kiedy dany heks produkuje surowce — po rzucie kośćmi wszystkie heksy oznaczone liczbą odpowiadającą wyrzuconej sumie generują zasoby dla graczy posiadających przy nich osady lub miasta [7].
-
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{board.png}
     \caption{Przykładowa plansza gry Catan}
 \end{figure}
 
-Pola pustynne nie generują zasobów i stanowią początkową lokalizację rozbójnika.
+Każdy heks produkcyjny posiada przypisaną losowo liczbę z zakresu 2–12 (z wyjątkiem 7), która odpowiada możliwym sumom wyrzuconym na dwóch sześciennych kościach. Liczby te determinują, kiedy dany heks produkuje surowce — po rzucie kośćmi wszystkie heksy oznaczone liczbą odpowiadającą wyrzuconej sumie generują zasoby dla graczy posiadających przy nich osady lub miasta [7]. Pola pustynne nie generują zasobów i stanowią początkową lokalizację rozbójnika.
 
 \textbf{Rozbójnik} to specjalna figura, która blokuje produkcję surowców z heksu, na którym się znajduje. Gdy gracz wyrzuci sumę 7 na kościach, musi przemieszczyć rozbójnika na wybrany heks (blokując jego produkcję) i może ukraść jedną kartę zasobów od gracza posiadającego osadę lub miasto przy tym heksie.
 
 Celem gry jest zdobycie \textbf{10 punktów zwycięstwa} (15 w wariancie rozgrywki 1 vs 1). Punkty te są przyznawane głównie za budowę osad (1 punkt zwycięstwa) i miast (2 punkty zwycięstwa). 
 
-Osady i miasta muszą być połączone drogami — każda nowa struktura musi być dostępna przez ciągłą sieć dróg gracza. Ponadto obowiązuje \textbf{zasada dystansu}: osady i miasta różnych graczy (oraz własne) muszą być oddalone od siebie o co najmniej dwie krawędzie.
+Osady i miasta muszą być połączone drogami — każda nowa struktura musi być d ostępna przez ciągłą sieć dróg gracza. Ponadto obowiązuje \textbf{zasada dystansu}: osady i miasta różnych graczy (oraz własne) muszą być oddalone od siebie o co najmniej dwie krawędzie.
+
+\medskip
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{building_costs.png}
+\caption{Koszty budowy struktur w grze Catan}
+\end{figure}
+
+\bigskip
+\bigbreak
+\bigbreak
+\bigbreak
 
 Każda struktura ma określony koszt budowy wyrażony w surowcach:
 \begin{itemize}
@@ -66,25 +82,19 @@ Każda struktura ma określony koszt budowy wyrażony w surowcach:
 \item \textbf{Karta rozwoju}: ruda + wełna + zboże (1+1+1).
 \end{itemize}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.8\textwidth]{building_costs.png}
-\caption{Koszty budowy struktur w grze Catan}
-\end{figure}
-
-\textbf{Karty rozwoju} stanowią dodatkowy element strategiczny gry. Po zakupie karty są losowane z talii i mogą być trzech typów: \textbf{Rycerz} (umożliwia przemieszczenie rozbójnika i kradzież zasobu od przeciwnika), \textbf{Postęp} (karty specjalne takie jak Monopol, Rok Obfitości czy Budowa Dróg) oraz \textbf{Punkty zwycięstwa} (ukryte karty dające 1 VP każda, ujawniane dopiero przy osiągnięciu zwycięstwa). Karty Rycerz mogą być zagrywane w dowolnym momencie tury, natomiast karty Postęp i Punkty zwycięstwa są zagrywane przed rzutem kośćmi.
+\textbf{Karty rozwoju} stanowią dodatkowy element strategiczny gry. Po zakupie karty są losowane z talii i mogą być trzech typów: \textbf{Rycerz} (umożliwia przemieszczenie rozbójnika i kradzież zasobu od przeciwnika), \textbf{Postęp} (karty specjalne takie jak Monopol, Rok Obfitości czy Budowa Dróg) oraz \textbf{Punkty zwycięstwa} (ukryte karty dające 1 VP każda, ujawniane dopiero przy osiągnięciu zwycięstwa). Karty Rycerz mogą być zagrywane w dowolnym momencie tury, natomiast karty Postępu i Punkty zwycięstwa są zagrywane przed rzutem kośćmi.
 
 Dodatkowymi źródłami punktów zwycięstwa są premie:
 \begin{itemize}
-\item Premia \textbf{Najdłuższa Droga} przyznawana jest graczowi posiadającemu najdłuższy nieprzerwany ciąg połączonych dróg o długości co najmniej pięciu segmentów. Premia ta może zostać odebrana przez innego gracza, jeśli zbuduje on dłuższą drogę.
-\item Premia \textbf{Największa Armia} przyznawana jest graczowi, który jako pierwszy użyje co najmniej trzech kart Rycerz i posiada ich więcej niż pozostali gracze. Podobnie jak w przypadku Najdłuższej Drogi, premia ta jest dynamiczna i może przechodzić pomiędzy graczami w trakcie rozgrywki.
+\item Premia \textbf{Najdłuższa Droga}. Przyznawana jest graczowi posiadającemu najdłuższy nieprzerwany ciąg połączonych dróg o długości co najmniej pięciu segmentów. Premia ta może zostać odebrana przez innego gracza, jeśli zbuduje on dłuższą drogę.
+\item Premia \textbf{Największa Armia}. Przyznawana jest graczowi, który jako pierwszy użyje co najmniej trzech kart Rycerz i posiada ich więcej niż pozostali gracze. Podobnie jak w przypadku Najdłuższej Drogi, premia ta jest dynamiczna i może przechodzić pomiędzy graczami w trakcie rozgrywki.
 \end{itemize}
 
 Każda z tych premii zapewnia dodatkowe \textbf{2 punkty zwycięstwa}, istotnie wpływając na strategię oraz tempo gry. W dalszej części pracy punkty zwycięstwa będą oznaczane skrótem \textbf{VP} (ang. \textit{Victory Points}). Rozgrywka toczy się w turach, a zwycięstwo następuje natychmiast po osiągnięciu wymaganej liczby punktów przez jednego z graczy.
 
-Podstawowy przebieg tury obejmuje rzut dwiema kośćmi sześciennymi, który determinuje produkcję zasobów na planszy. Gracze otrzymują surowce z tych pól, których numer odpowiada wyrzuconej sumie — osada zapewnia 1 zasób z każdego przylegającego heksu, a miasto 2 zasoby. W przypadku gdy została wyrzucona liczba 7, żaden heks nie produkuje; zamiast tego gracze posiadający więcej niż 9 kart zasobów (zgodnie z implementacją wariantu 1 vs 1) muszą odrzucić połowę (zaokrąglając w dół), a aktywny gracz przemieszcza rozbójnika na wybrany heks (blokując jego produkcję) i może ukraść jedną kartę zasobów od gracza posiadającego osadę lub miasto przy tym heksie [7].
+Podstawowy przebieg tury obejmuje rzut dwiema kośćmi sześciennymi, który determinuje produkcję zasobów na planszy. Gracze otrzymują surowce z tych pól, których numer odpowiada wyrzuconej sumie — osada zapewnia 1 zasób z każdego przylegającego heksu, a miasto 2 zasoby. W przypadku gdy została wyrzucona liczba 7, żaden heks nie produkuje zasobu. Zamiast tego gracze posiadające więcej niż 9 kart zasobów (zgodnie z regułami wariantu 1 vs 1) muszą odrzucić połowę (zaokrąglając w dół), a aktywny gracz przemieszcza rozbójnika na wybrany heks (blokując jego produkcję) i może ukraść jedną kartę zasobów od gracza posiadającego osadę lub miasto przy tym heksie [7].
 
-Następnie możliwe jest wykonywanie akcji budowy, takich jak wznoszenie dróg, osad, miast lub zakup kart rozwoju. W klasycznej wersji gry występuje również handel (z innymi graczami lub z bankiem). Handlowanie z bankiem odbywa się według standardowego kursu 4:1 (cztery dowolne zasoby za jeden wybrany), jednak gracze posiadający osadę lub miasto przy porcie mogą korzystać z lepszych kursów: port 3:1 (trzy dowolne za jeden) lub port 2:1 (dwa konkretne surowce za jeden tego samego typu).
+Następnie możliwe jest wykonywanie akcji budowy, takich jak wznoszenie dróg, osad, miast lub zakup kart rozwoju. W klasycznej wersji gry występuje również handel (z innymi graczami lub z bankiem). Handlowanie z bankiem odbywa się według standardowego kursu 4:1 (cztery dowolne zasoby za jeden wybrany), jednak gracze posiadające osadę lub miasto przy porcie mogą korzystać z lepszych kursów: port 3:1 (trzy dowolne za jeden) lub port 2:1 (dwa konkretne surowce za jeden tego samego typu).
 
 Istotnym elementem gry jest losowość wynikająca z rzutów kośćmi, która wpływa na tempo pozyskiwania zasobów, jednak decyzje strategiczne — wybór lokalizacji budowy, kierunek rozwoju infrastruktury oraz zarządzanie zasobami — mają kluczowe znaczenie dla długoterminowego sukcesu. Ta kombinacja \textbf{niepełnej informacji, losowości i planowania} sprawia, że \textit{Catan} stanowi interesujące środowisko badawcze dla analizy algorytmów decyzyjnych i strategii gry.
 
@@ -145,7 +155,7 @@ Zakres pracy obejmuje:
 \begin{itemize}
 \item implementację silnika symulacyjnego dla wariantu 1 vs 1 wraz z walidacją reguł,
 \item implementację zestawu botów oraz wspólnego interfejsu gracza,
-\item przygotowanie narzędzi do rejestracji i odtwarzania rozgrywek (replay),
+\item przygotowanie narzędzi do rejestracji i odtwarzania rozgrywek (viewer),
 \item przeprowadzenie eksperymentów porównawczych i analizę wyników.
 \end{itemize}
 
@@ -235,7 +245,7 @@ Z tego powodu kluczowe stały się wymagania niefunkcjonalne: szybkość symulac
 
 \textbf{Wariant 1 vs 1 jako kompromis badawczy.} W pracy zastosowano wariant rozgrywki dwuosobowej, w którym pominięto handel pomiędzy graczami, pozostawiając handel z bankiem oraz mechanikę portów. Uzasadnieniem jest zwiększenie kontroli eksperymentalnej: eliminacja negocjacji ogranicza elementy trudne do jednoznacznego modelowania i powtórzenia w symulacjach, a jednocześnie zachowuje kluczowe mechaniki decyzyjne: zarządzanie zasobami, decyzje przestrzenne (drogi/osady/miasta), losowość wynikającą z rzutów kośćmi oraz interakcję poprzez rozbójnika i rywalizację o premie.
 
-\textbf{Pakowana reprezentacja stanu gry.} Rdzeń systemu stanowi struktura \texttt{Board::BoardState}, która przechowuje kompletny stan rozgrywki (heksy, węzły, krawędzie, bank oraz gracze). Zastosowano pakowanie informacji w typach liczbowych (\texttt{uint16_t}, \texttt{uint32_t}, \texttt{uint64_t}) m.in. dla:
+\textbf{Pakowana reprezentacja stanu gry.} Rdzeń systemu stanowi struktura \newline \texttt{Board::BoardState}, która przechowuje kompletny stan rozgrywki (heksy, węzły, krawędzie, bank oraz gracze). Zastosowano pakowanie informacji w typach liczbowych (\texttt{uint16\_t}, \texttt{uint32\_t}, \texttt{uint64\_t}) m.in. dla:
 \begin{itemize}
 \item heksów (liczba, zasób, liczniki produkcji dla obu graczy),
 \item węzłów (typ budowli, właściciel, sąsiedztwo heksów i krawędzi, port),
@@ -279,7 +289,7 @@ Takie spektrum botów uzasadnia się potrzebą uzyskania zarówno prostych punkt
 
 \textbf{Parametryzacja heurystyk i trening.} W celu oddzielenia „pomysłu na ocenę” od doboru konkretnych wag, zaimplementowano gracza parametryzowanego (\texttt{ParaPlayer}), który wczytuje współczynniki z pliku konfiguracyjnego. Umożliwia to automatyzację strojenia (np. poprzez skrypt uruchamiający serie gier i selekcję parametrów na podstawie win-rate), a także ułatwia raportowanie eksperymentów: zmiana strategii może być opisana zmianą konfiguracji, bez modyfikacji kodu źródłowego.
 
-\textbf{Diagnostyka: rejestracja i odtwarzanie rozgrywek.} Dla potrzeb analizy oraz debugowania opracowano moduł \texttt{Dumper}, zapisujący przebieg gry do formatu JSONL (stan początkowy, rzuty kośćmi, zastosowane akcje, stany na początku i końcu tury). Uzupełnieniem jest narzędzie \texttt{utils/replay_viewer.py}, które potrafi odtworzyć i zwizualizować rozgrywkę na podstawie logu. Uzasadnieniem tego elementu jest praktyczna obserwacja, że w projektach łączących złożoną logikę reguł i boty decyzyjne sama poprawność testów nie wystarcza — konieczne są narzędzia pozwalające prześledzić przebieg rozgrywki i szybko zidentyfikować, czy błąd wynika z silnika, czy z polityki decyzyjnej.
+\textbf{Diagnostyka: rejestracja i odtwarzanie rozgrywek.} Dla potrzeb analizy oraz debugowania opracowano moduł \texttt{Dumper}, zapisujący przebieg gry do formatu JSONL (stan początkowy, rzuty kośćmi, zastosowane akcje, stany na początku i końcu tury). Uzupełnieniem jest narzędzie \texttt{utils/replay\_viewer.py}, które potrafi odtworzyć i zwizualizować rozgrywkę na podstawie logu. Uzasadnieniem tego elementu jest praktyczna obserwacja, że w projektach łączących złożoną logikę reguł i boty decyzyjne sama poprawność testów nie wystarcza — konieczne są narzędzia pozwalające prześledzić przebieg rozgrywki i szybko zidentyfikować, czy błąd wynika z silnika, czy z polityki decyzyjnej.
 
 \textbf{Walidacja poprawności poprzez testy.} Silnik został objęty zestawem testów jednostkowych i integracyjnych opartych o GoogleTest. Szczególną rolę pełnią testy weryfikujące poprawność generowania akcji oraz mechanizmu cofania (\texttt{undoLastAction}) dla różnych typów akcji. Jest to bezpośrednio uzasadnione tym, że nawet subtelne błędy reguł mogłyby przekładać się na błędne wnioski w części porównawczej botów.
 
@@ -370,22 +380,6 @@ W części badawczej pracy kluczowe jest uruchamianie dużej liczby symulacji, a
 
 Powyższe wymagania uzasadniają kluczową zasadę projektową przyjętą w pracy: \textbf{jedno źródło prawdy dla reguł} — boty operują wyłącznie na stanie i zbiorze akcji wygenerowanych przez silnik, a interpretacja i wykonanie akcji odbywa się centralnie w jednej implementacji.
 
-\section{Ograniczenia wersji 1 vs 1}
-
-Wariant 1 vs 1 zastosowany w pracy jest świadomie uproszczony w tych miejscach, które utrudniają powtarzalne eksperymenty lub wprowadzają elementy negocjacyjne trudne do sensownego modelowania dla botów.
-
-Najważniejsze ograniczenia i konsekwencje wariantu:
-
-1. \textbf{Brak handlu pomiędzy graczami.} Zachowano handel z bankiem oraz mechanikę portów (4:1, 3:1, 2:1), co nadal wymusza planowanie ekonomiczne, ale eliminuje negocjacje.
-
-2. \textbf{Zmodyfikowany próg zwycięstwa.} Rozgrywka kończy się po osiągnięciu 15 punktów zwycięstwa (VP) w wariancie 1 vs 1. W implementacji wynik uwzględnia premie za najdłuższą drogę i największą armię.
-
-3. \textbf{Ograniczenia czasowe rozgrywki.} Wprowadzono górny limit liczby tur jako zabezpieczenie przed bardzo długimi lub „zakleszczonymi” grami w eksperymentach masowych.
-
-4. \textbf{Reguły rozbójnika i odrzucania zasobów — dopasowanie do implementacji.} W przypadku wyrzucenia 7 aktywowana jest faza odrzucania zasobów oraz faza rozbójnika. W implementacji próg odrzucania wynosi „ponad 9” kart zasobów, a liczba odrzucanych kart to połowa posiadanych (zaokrąglona w dół). Ograniczenie to stabilizuje symulacje w wariancie 1 vs 1 i jest spójne z logiką silnika.
-
-5. \textbf{Ograniczenie niepełnej informacji.} System modeluje stan w sposób w pełni obserwowalny dla botów (dostęp do całego \texttt{BoardState}). Jest to uzasadnione celem pracy (porównanie strategii w kontrolowanych warunkach) i upraszcza implementację.
-
 \section{Model stanu gry i akcji}
 
 Model domenowy zaprojektowano tak, aby stan gry był możliwie zwarty oraz aby operacje na nim były jednoznaczne i testowalne. Rdzeń stanowi struktura \texttt{Board::BoardState}, a wszystkie decyzje i zdarzenia w grze są kodowane jako \texttt{Action::PackedAction}.
@@ -439,9 +433,9 @@ Rozdział 3 opisuje uzasadnienie przyjętych decyzji projektowych. Poniżej prze
 
 Projekt jest rozwijany w języku \textbf{C++17} (ustawienie standardu w pliku konfiguracyjnym CMake). Całość budowana jest z użyciem \textbf{CMake}, a zależność do frameworku testowego jest pobierana i konfigurowana automatycznie przez mechanizm \texttt{FetchContent}.
 
-Testy zostały zaimplementowane w oparciu o \textbf{GoogleTest/GMock} (pobierane jako \texttt{v1.14.0}) i uruchamiane przez CTest (\texttt{gtest_discover_tests}). Dzięki temu testy są wykrywane automatycznie po kompilacji, a pipeline testowy jest spójny niezależnie od platformy.
+Testy zostały zaimplementowane w oparciu o \textbf{GoogleTest/GMock} (pobierane jako \texttt{v1.14.0}) i uruchamiane przez CTest (\texttt{gtest\_discover\_tests}). Dzięki temu testy są wykrywane automatycznie po kompilacji, a pipeline testowy jest spójny niezależnie od platformy.
 
-W projekcie dostępna jest opcjonalna konfiguracja diagnostyczna \texttt{ENABLE_ASAN}, która dodaje flagi AddressSanitizer przy kompilatorach GNU/Clang, co ułatwia wykrywanie błędów pamięci w trakcie rozwoju.
+W projekcie dostępna jest opcjonalna konfiguracja diagnostyczna \texttt{ENABLE\_ASAN}, która dodaje flagi AddressSanitizer przy kompilatorach GNU/Clang, co ułatwia wykrywanie błędów pamięci w trakcie rozwoju.
 
 Do analizy przebiegu rozgrywek wykorzystywany jest zapis zdarzeń w formacie \textbf{JSONL} (logger w C++), a do odtwarzania i wizualizacji logów przygotowano narzędzie w \textbf{Python} (interfejs Tkinter). Pozwala to odseparować lekki, wydajny runtime symulacji od narzędzi analitycznych.
 
@@ -451,7 +445,7 @@ Do analizy przebiegu rozgrywek wykorzystywany jest zapis zdarzeń w formacie \te
 Struktura repozytorium bezpośrednio odzwierciedla podział na silnik symulacji, implementacje botów, moduł uruchomieniowy oraz testy:
 
 \begin{itemize}
-\item katalog \texttt{game_simulation/} zawiera implementację rdzenia gry: stan planszy i jego modyfikacje (\texttt{board.*}), generator akcji (\texttt{board_generate_actions.cpp}) oraz logikę przebiegu rozgrywki (\texttt{game.*}),
+\item katalog \texttt{game\_simulation} zawiera implementację rdzenia gry: stan planszy i jego modyfikacje (\texttt{board.*}), generator akcji (\texttt{board\_generate\_actions.cpp}) oraz logikę przebiegu rozgrywki (\texttt{game.*}),
 \item katalog \texttt{players/} zawiera wspólny interfejs gracza (\texttt{player.hpp}) i konkretne strategie botów (m.in. losowy, iteracyjne heurystyki, alpha-beta, gracze wyspecjalizowani),
 \item katalog \texttt{runs/} zawiera program uruchomieniowy (\texttt{run.cpp}) do odpalania symulacji z linii poleceń,
 \item katalog \texttt{utils/} zawiera narzędzia pomocnicze (m.in. logger rozgrywek w JSONL i narzędzia analityczne),
@@ -461,24 +455,24 @@ Struktura repozytorium bezpośrednio odzwierciedla podział na silnik symulacji,
 Z perspektywy systemu budowania istotne są trzy elementy:
 
 \begin{itemize}
-\item biblioteka \texttt{game_simulation}, która kompiluje rdzeń gry, wybrane boty i logger (współdzielony kod dla testów oraz programu uruchomieniowego),
-\item program \texttt{run} (w \texttt{runs/}), linkowany z \texttt{game_simulation} i rozszerzony o dodatkowe implementacje botów, które mają być dostępne w trybie uruchomieniowym,
-\item zestaw binarek testowych (w \texttt{tests/}), linkowanych z \texttt{gtest_main}, \texttt{gmock} oraz \texttt{game_simulation}.
+\item biblioteka \texttt{game\_simulation}, która kompiluje rdzeń gry, wybrane boty i logger (współdzielony kod dla testów oraz programu uruchomieniowego),
+\item program \texttt{run} (w \texttt{runs/}), linkowany z \texttt{game\_simulation} i rozszerzony o dodatkowe implementacje botów, które mają być dostępne w trybie uruchomieniowym,
+\item zestaw binarek testowych (w \texttt{tests/}), linkowanych z \texttt{gtest\_main}, \texttt{gmock} oraz \texttt{game\_simulation}.
 \end{itemize}
 
-Logika sterująca przebiegiem gry (fazy, kolejność wywołań API botów) jest zaimplementowana w \texttt{Game} (\texttt{game_simulation/game.*}), natomiast modyfikacje stanu są skupione w \texttt{Board::BoardState} (\texttt{game_simulation/board.*}). Decyzje botów są przekazywane do silnika wyłącznie jako wartości typu \texttt{Action::PackedAction}.
+Logika sterująca przebiegiem gry (fazy, kolejność wywołań API botów) jest zaimplementowana w \texttt{Game} (\texttt{game\_simulation/game.*}), natomiast modyfikacje stanu są skupione w \texttt{Board::BoardState} (\texttt{game\_simulation/board.*}). Decyzje botów są przekazywane do silnika wyłącznie jako wartości typu \texttt{Action::PackedAction}.
 
 
 \section{Implementacja planszy i elementów gry}
 
 Wariant planszy gry jest modelowany jako graf o stałej topologii, jednak w implementacji nie występują dynamiczne struktury grafowe. Zamiast tego zastosowano tablice o rozmiarach zdefiniowanych w pliku stałych (\texttt{consts.hpp}), a powiązania są przechowywane bezpośrednio w pakowanych rekordach elementów planszy.
 
-Stan planszy jest częścią struktury \texttt{Board::BoardState} (\texttt{game_simulation/board.hpp}) i składa się z trzech tablic:
+Stan planszy jest częścią struktury \texttt{Board::BoardState} (\texttt{game\_simulation/board.hpp}) i składa się z trzech tablic:
 
 \begin{itemize}
-\item \texttt{hexes[HEX_COUNT]} (heksy) typu \texttt{Board::Hex::PackedHex} (\texttt{uint16_t}),
-\item \texttt{nodes[NODE_COUNT]} (węzły) typu \texttt{Board::Node::PackedNode} (\texttt{uint64_t}),
-\item \texttt{edges[EDGE_COUNT]} (krawędzie) typu \texttt{Board::Edge::PackedEdge} (\texttt{uint32_t}).
+\item \texttt{hexes[HEX\_COUNT]} (heksy) typu \texttt{Board::Hex::PackedHex} (\texttt{uint16\_t}),
+\item \texttt{nodes[NODE\_COUNT]} (węzły) typu \texttt{Board::Node::PackedNode} (\texttt{uint64\_t}),
+\item \texttt{edges[EDGE\_COUNT]} (krawędzie) typu \texttt{Board::Edge::PackedEdge} (\texttt{uint32\_t}).
 \end{itemize}
 
 Pakowanie pól zostało opisane jawnie w komentarzach w pliku nagłówkowym i jest realizowane przez zestaw funkcji \texttt{pack*}/\texttt{unpack*}.
@@ -491,7 +485,7 @@ Heks (\texttt{PackedHex}) koduje:
 \item wartości produkcji przypisane do graczy w bitach 7–12 (po 3 bity na gracza).
 \end{itemize}
 
-Wartości produkcji w heksie nie są „wynikiem rzutu”, lecz licznikami mówiącymi, ile osad/miast danego gracza jest podłączonych do heksu. Dzięki temu w fazie produkcji zasobów (\texttt{handleRollDice} w \texttt{game_simulation/board.cpp}) możliwe jest rozdzielenie zasobów bez ponownego analizowania sąsiedztw węzłów.
+Wartości produkcji w heksie nie są „wynikiem rzutu”, lecz licznikami mówiącymi, ile osad/miast danego gracza jest podłączonych do heksu. Dzięki temu w fazie produkcji zasobów (\texttt{handleRollDice} w \texttt{game\_simulation/board.cpp}) możliwe jest rozdzielenie zasobów bez ponownego analizowania sąsiedztw węzłów.
 
 Węzeł (\texttt{PackedNode}) koduje:
 
@@ -515,7 +509,7 @@ Stała topologia jest inicjalizowana w konstruktorze \texttt{BoardState} poprzez
 
 \section{System akcji i cofania ruchów}
 
-Wszystkie interakcje botów z silnikiem są ujednolicone do pojedynczego typu \texttt{Action::PackedAction} (\texttt{uint64_t}) zdefiniowanego w \texttt{game_simulation/actions.hpp}. Akcja jest wartością liczbową, której pola są kodowane bitowo; układ (od najmłodszych bitów) ma postać:
+Wszystkie interakcje botów z silnikiem są ujednolicone do pojedynczego typu \texttt{Action::PackedAction} (\texttt{uint64\_t}) zdefiniowanego w \texttt{game\_simulation/actions.hpp}. Akcja jest wartością liczbową, której pola są kodowane bitowo; układ (od najmłodszych bitów) ma postać:
 
 \begin{itemize}
 \item typ akcji: bity 0–4,
@@ -524,9 +518,9 @@ Wszystkie interakcje botów z silnikiem są ujednolicone do pojedynczego typu \t
 \item argumenty \texttt{arg1}, \texttt{arg2}, \texttt{arg3} (po 8 bitów): bity 32–55.
 \end{itemize}
 
-W pliku nagłówkowym zdefiniowano zestaw funkcji \texttt{packType}/\texttt{unpackType}, \texttt{packPlayerID}/\texttt{unpackPlayerID}, \texttt{packResource}/\texttt{unpackResource} oraz \texttt{packArg*}/\texttt{unpackArg*}. W efekcie akcje są łatwe do tworzenia i interpretacji zarówno w botach, jak i w silniku.
+W pliku nagłówkowym zdefiniowano zestaw funkcji \texttt{packType}/\texttt{unpackType}, \ \newline \texttt{packPlayerID}/\texttt{unpackPlayerID}, \ \texttt{packResource}/\texttt{unpackResource} oraz \texttt{packArg*}/\texttt{unpackArg*}. W efekcie akcje są łatwe do tworzenia i interpretacji zarówno w botach, jak i w silniku.
 
-Centralnym miejscem wykonania akcji jest metoda \texttt{Board::BoardState::applyAction()} (\texttt{game_simulation/board.cpp}). Funkcja rozpakowuje typ i identyfikator gracza, a następnie wywołuje odpowiedni handler (\texttt{handleBuildRoad}, \texttt{handleTradeBank}, \texttt{handleRollDice}, itd.). Po wykonaniu akcji jej finalna postać jest dopisywana do historii \texttt{actionQueue}.
+Centralnym miejscem wykonania akcji jest metoda \texttt{Board::BoardState::applyAction()} (\texttt{game\_simulation/board.cpp}). Funkcja rozpakowuje typ i identyfikator gracza, a następnie wywołuje odpowiedni handler (\texttt{handleBuildRoad}, \texttt{handleTradeBank}, \texttt{handleRollDice}, itd.). Po wykonaniu akcji jej finalna postać jest dopisywana do historii \texttt{actionQueue}.
 
 Istotną cechą implementacji jest to, że w pewnych przypadkach silnik \textit{uzupełnia akcję} o dodatkową informację potrzebną do cofania. Przykłady:
 
@@ -540,7 +534,7 @@ Cofanie realizuje metoda \texttt{Board::BoardState::undoLastAction()}, która po
 
 \section{Zarządzanie stanem gry}
 
-Kompletny stan rozgrywki jest przechowywany w strukturze \texttt{Board::BoardState} (\texttt{game_simulation/board.hpp}). Oprócz planszy (heksy/węzły/krawędzie) zawiera ona m.in.:
+Kompletny stan rozgrywki jest przechowywany w strukturze \texttt{Board::BoardState} (\texttt{game\_simulation/board.hpp}). Oprócz planszy (heksy/węzły/krawędzie) zawiera ona m.in.:
 
 \begin{itemize}
 \item \texttt{robberPosition} (aktualne położenie rozbójnika),
@@ -552,7 +546,7 @@ Kompletny stan rozgrywki jest przechowywany w strukturze \texttt{Board::BoardSta
 
 Równość stanu (\texttt{operator==}) została zdefiniowana jako porównanie wszystkich pól stanu, włącznie z \texttt{actionQueue}. Jest to wykorzystywane m.in. jako narzędzie diagnostyczne w warstwie sterującej rozgrywką.
 
-Warstwa \texttt{Game} (\texttt{game_simulation/game.*}) odpowiada za kolejność faz oraz komunikację z botami. W konstruktorze \texttt{Game} boty otrzymują wskaźnik do \texttt{boardState}, aby mogły odczytywać stan. Jednocześnie silnik zabezpiecza się przed niepożądaną, bezpośrednią modyfikacją stanu przez bota: wszystkie kluczowe wywołania metod bota są wykonywane przez funkcję osłonową, która kopiuje \texttt{BoardState} przed wywołaniem i porównuje go po powrocie. Wykrycie zmiany stanu skutkuje przerwaniem rozgrywki wyjątkiem, co chroni poprawność symulacji.
+Warstwa \texttt{Game} (\texttt{game\_simulation/game.*}) odpowiada za kolejność faz oraz komunikację z botami. W konstruktorze \texttt{Game} boty otrzymują wskaźnik do \texttt{boardState}, aby mogły odczytywać stan. Jednocześnie silnik zabezpiecza się przed niepożądaną, bezpośrednią modyfikacją stanu przez bota: wszystkie kluczowe wywołania metod bota są wykonywane przez funkcję osłonową, która kopiuje \texttt{BoardState} przed wywołaniem i porównuje go po powrocie. Wykrycie zmiany stanu skutkuje przerwaniem rozgrywki wyjątkiem, co chroni poprawność symulacji.
 
 Opcjonalnie \texttt{Game} może zapisywać przebieg rozgrywki przez komponent \texttt{Dumper}. Metoda \texttt{applyActionLogged()} stosuje akcję do stanu (\texttt{BoardState::applyAction}) oraz rejestruje zdarzenie w logu, co umożliwia późniejsze odtworzenie i analizę rozgrywki w narzędziach pomocniczych.
 
@@ -579,7 +573,7 @@ Wybór JSONL ma uzasadnienie praktyczne: zapis jest strumieniowy, łatwy do prze
 
 \section{Odtwarzanie i wizualizacja (replay viewer)}
 
-Do odtwarzania rozgrywek przygotowano narzędzie \texttt{utils/replay_viewer.py}, które wczytuje log JSONL i wizualizuje stan gry w kolejnych krokach. Aplikacja została napisana w języku Python z użyciem biblioteki \texttt{tkinter}, co pozwala na uruchomienie jej bez zależności zewnętrznych [12].
+Do odtwarzania rozgrywek przygotowano narzędzie \texttt{utils/replay\_viewer.py}, które wczytuje log JSONL i wizualizuje stan gry w kolejnych krokach. Aplikacja została napisana w języku Python z użyciem biblioteki \texttt{tkinter}, co pozwala na uruchomienie jej bez zależności zewnętrznych [12].
 
 Odtwarzacz jest wykorzystywany do:
 
@@ -634,14 +628,14 @@ W połączeniu z logowaniem do JSONL oraz odtwarzaczem (rozdział 5) testy tworz
 
 \chapter{Projekt i implementacja botów}
 
-Celem niniejszego rozdziału jest opis zaprojektowanych i zaimplementowanych graczy automatycznych (botów), które zostały wykorzystane do badań porównawczych w dalszej części pracy. Boty różnią się stopniem złożoności strategii decyzyjnej – od gracza w pełni losowego, pełniącego rolę punktu odniesienia, po boty heurystyczne rozwijane iteracyjnie poprzez stopniowe wzbogacanie funkcji oceny stanu gry.
+W rozdziale przedstawiono zaprojektowanych i zaimplementowanych graczy automatycznych (boty), które zostały wykorzystane do badań porównawczych w dalszej części pracy. Boty różnią się stopniem złożoności strategii decyzyjnej – od gracza w pełni losowego, pełniącego rolę punktu odniesienia, po boty heurystyczne rozwijane iteracyjnie poprzez stopniowe wzbogacanie funkcji oceny stanu gry. Dodatkowo zaprezentowano bota parametrycznego, którego strategia opiera się na tej samej strukturze heurystycznej, lecz sterowana jest zestawem konfigurowalnych parametrów, umożliwiających łatwą modyfikację zachowania oraz eksperymenty z dostrajaniem strategii.
 
 Architektura botów została zaprojektowana w oparciu o wzorzec projektowy \textbf{Strategy}. Silnik gry współpracuje z botami poprzez wspólny interfejs gracza, natomiast konkretne implementacje strategii decyzyjnej są enkapsulowane w klasach poszczególnych botów. Umożliwia to wymienne stosowanie różnych algorytmów podejmowania decyzji bez konieczności modyfikacji logiki silnika, a także ułatwia prowadzenie eksperymentów porównawczych pomiędzy strategiami [14].
 
 
 \section{Gracz losowy (baseline)}
 
-Najprostszym zaimplementowanym graczem automatycznym jest \textbf{gracz losowy}, który stanowi punkt odniesienia (baseline) dla wszystkich pozostałych botów. Jego głównym celem nie jest osiąganie wysokich wyników, lecz dostarczenie \textbf{minimalnego poziomu kompetencji}, względem którego można mierzyć skuteczność bardziej zaawansowanych strategii.
+Najprostszym zaimplementowanym graczem automatycznym jest \textbf{gracz losowy}, który stanowi punkt odniesienia dla wszystkich pozostałych botów. Jego głównym celem nie jest osiąganie wysokich wyników, lecz dostarczenie \textbf{minimalnego poziomu kompetencji}, względem którego można mierzyć skuteczność bardziej zaawansowanych strategii.
 
 \subsection{Założenia projektowe}
 
@@ -661,7 +655,7 @@ Bot ten nie posiada pamięci długoterminowej ani mechanizmu uczenia – każda 
 Pomimo swojej prostoty, gracz losowy pełni istotną funkcję w pracy:
 
 \begin{itemize}
-\item umożliwia weryfikację poprawności działania silnika gry (czy gra „dochodzi do końca” bez błędów),
+\item umożliwia weryfikację poprawności działania silnika gry (czy gra dobiega do końca bez błędów),
 \item pozwala określić \textbf{dolną granicę skuteczności} strategii,
 \item stanowi punkt odniesienia przy ocenie, czy dana heurystyka faktycznie wnosi wartość decyzyjną.
 \end{itemize}
@@ -682,81 +676,31 @@ W praktyce gracz losowy:
 Pomimo tego, dzięki losowości rzutów kośćmi, bot ten jest w stanie okazjonalnie wygrać pojedyncze rozgrywki, co dodatkowo podkreśla znaczenie przeprowadzania \textbf{dużej liczby symulacji} w analizie wyników.
 
 
-\section{Boty heurystyczne}
+\subsection{Boty heurystyczne}
 
-Proces projektowania botów heurystycznych przebiegał iteracyjnie. Każda kolejna wersja bota rozszerzała funkcję oceny o nowe elementy, obserwowane jako istotne podczas analizy rozgrywek poprzednich wersji. Takie podejście umożliwia analizę wpływu poszczególnych elementów strategii na skuteczność rozgrywki oraz pozwala na obserwację, w jakim stopniu nawet proste heurystyki poprawiają jakość decyzji względem losowego wyboru akcji.
+Boty heurystyczne rozwijane były iteracyjnie: każda kolejna wersja rozszerza poprzednią o nowe elementy strategii. Dzięki temu można ocenić wpływ poszczególnych mechanizmów na skuteczność oraz obserwować, jak nawet proste heurystyki poprawiają decyzje względem losowego wyboru akcji.
 
-\subsection{it1 – heurystyka punktów zwycięstwa}
+\subsubsection{it1 -- priorytet punktów zwycięstwa}
 
-Pierwsza wersja bota heurystycznego (it1) opiera się na najbardziej oczywistym kryterium: \textbf{maksymalizacji przyrostu punktów zwycięstwa}. Akcje prowadzące bezpośrednio do zdobycia punktów (budowa osady lub miasta) otrzymują najwyższą ocenę.
+It1 wybiera akcje według \textbf{stałej hierarchii priorytetów}: najpierw budowa miasta, potem osady, drogi, karty rozwoju, na końcu handel i inne. W obrębie każdej kategorii wybór jest \textbf{losowy}. Bot nie handluje z bankiem, nie optymalizuje ustawień początkowych ani rozbójnika. Strategia jest prosta i krótkowzroczna --- maksymalizuje natychmiastowy przyrost punktów, nie uwzględniając przyszłej produkcji ani pozycji na planszy.
 
-Strategia ta jest prosta, lecz krótkowzroczna – nie uwzględnia przyszłej produkcji zasobów ani kontroli przestrzeni na planszy.
+\subsubsection{it2 -- handel z bankiem i cel zakupu}
 
-\subsection{it2 – zarządzanie zasobami i handel z bankiem}
+It2 rozszerza it1 o \textbf{aktywne wykorzystanie handlu z bankiem}. Wykrywa kontrolowane porty (2:1, 3:1, 4:1) i ocenia, \textbf{do którego celu zakupu jest najbliżej po uwzględnieniu możliwych wymian} --- tzn.\ ile brakujących surowców pozostaje po optymalnym ``wydaniu'' nadwyżek. Cel wybierany jest nie na podstawie tego, co da się kupić od razu, lecz tego, do czego po handlu jest się najbliżej. Bot może odłożyć budowę drogi i najpierw handlować, jeśli po wymianie będzie mógł zbudować osadę lub miasto. Hierarchia: miasto i osada (natychmiast) $\rightarrow$ handel w kierunku wybranego celu $\rightarrow$ droga $\rightarrow$ karta rozwoju $\rightarrow$ koniec tury.
 
-Druga iteracja bota wprowadza fundamentalną zmianę: \textbf{aktywne wykorzystanie handlu z bankiem} do optymalizacji ścieżki do zakupu struktur.
+\subsubsection{it3 -- ustawienia początkowe i rozbójnik}
 
-Bot wykrywa kontrolowane porty (2:1 specyficzne, 3:1 generyczne, 4:1 standardowy bank) i wykorzystuje je do przekształcania nadwyżek surowców w brakujące zasoby. Kluczowym mechanizmem jest ocena \textbf{osiągalności celu po uwzględnieniu handlu} poprzez obliczenie, ile surowców pozostanie do zdobycia nawet po optymalnej wymianie nadwyżek.
+It3 dodaje \textbf{świadomą fazę początkową} oraz \textbf{celowe ustawianie rozbójnika}. Ustawienia początkowe oceniane są według produkcji (z naciskiem na surowce ważne we wczesnej grze), różnorodności zasobów i dostępu do portów. Drugie ustawienie dobierane jest tak, aby \textbf{uzupełniać braki} po pierwszym --- bot dąży do pokrycia wszystkich typów surowców. Przy ruchu rozbójnikiem bot wybiera heks, który \textbf{maksymalnie ogranicza produkcję przeciwnika} przy \textbf{minimalnym wpływie na własną}. W fazie głównej zachowuje logikę it2 (handel i cele zakupu).
 
-Bot wybiera cel zakupu nie na podstawie tego, co może kupić natychmiast, lecz \textbf{do czego jest najbliżej po serii transakcji}. Może świadomie zrezygnować z budowy drogi, jeśli po wymianie zasobów będzie w stanie zbudować osadę lub miasto. Handel jest rozważany przed akcjami niższego priorytetu (drogi, karty rozwoju), co pozwala systematycznie gromadzić zasoby do celów wysokowartościowych.
+\subsubsection{it4 -- karty rozwoju i deterministyczny wybór budowy}
 
-Hierarchia priorytetów:
-\begin{verbatim}
-Miasto/Osada (natychmiast) → Handel (w kierunku celu) → Droga → Karta rozwoju → Koniec tury
-\end{verbatim}
+It4 wprowadza \textbf{inteligentne używanie kart rozwoju} oraz \textbf{deterministyczny wybór lokalizacji} zamiast losowego rozstrzygania remisów. Dla każdego typu karty (Rycerz, Monopol, Rozwój itd.) stosowana jest odrębna logika: Rycerze --- blokada przeciwnika i premia Największa Armia, karty zasobowe --- pod kątem odblokowania budowy miasta lub osady, karty VP --- jako bezpośredni zysk punktowy. Uwzględniane jest \textbf{ryzyko przed rzutem} (7): unika się akcji, które mocno powiększają rękę przed rzutem. Budowa (miasto, osada, droga) wybierana jest deterministycznie na podstawie \textbf{potencjału produkcyjnego} i użyteczności sieci dróg; priorytety dostosowują się do fazy gry.
 
-\subsection{it3 – optymalizacja fazy początkowej}
+\subsubsection{it5 -- ocena pozycji i jednokrokowy lookahead}
 
-Trzecia iteracja bota wprowadza dwie istotne zmiany: \textbf{świadomą strategię ustawień początkowych} oraz mechanizm aktywnego ograniczania rozwoju przeciwnika poprzez wykorzystanie rozbójnika.
+It5 uzupełnia it4 o \textbf{jednokrokową symulację} (\emph{one-step lookahead}) i \textbf{zunifikowaną ocenę pozycji}. Zamiast sztywnych priorytetów bot dla każdej rozważanej akcji deterministycznej: stosuje ją do kopii stanu, liczy wartość funkcji oceny pozycji, cofa akcję --- i wybiera akcję dającą \textbf{najwyższą ocenę}. Decyzja opiera się więc na \textbf{rzeczywistym wpływie na stan gry}, a nie na samym typie akcji. Najpierw rozważane są budowy miasta i osady (wybór najlepszej lokalizacji), potem drogi i handel; dodatkowo premiowane są ruchy, które \textbf{odblokowują} w następnym kroku budowę miasta lub osady.
 
-Ocena węzłów początkowych opiera się na \textbf{ważonej produkcji zasobów}, w której większe znaczenie przypisane jest surowcom kluczowym dla wczesnej ekspansji. Dodatkowo bot silnie premiuje \textbf{różnorodność zasobów}, unikając sytuacji, w których jedna osada produkuje głównie ten sam surowiec.
-
-Drugie ustawienie początkowe dobierane jest w sposób komplementarny względem pierwszego. Bot analizuje, których surowców brakuje w początkowej konfiguracji i preferuje lokalizacje uzupełniające te deficyty, dążąc do możliwie pełnego pokrycia wszystkich typów zasobów.
-
-Istotnym elementem strategii jest \textbf{świadome wykorzystanie rozbójnika jako narzędzia kontroli}. Bot wybiera heksy, których blokada powoduje maksymalne ograniczenie produkcji przeciwnika przy jednoczesnym minimalnym wpływie na własne zasoby. Unikane jest blokowanie pustych pól oraz własnych obszarów produkcyjnych.
-
-W fazie głównej gry bot it3 zachowuje mechanizmy zarządzania zasobami wprowadzone w iteracji it2.
-
-\subsection{it4 – inteligentne użycie kart rozwoju i selekcja deterministyczna}
-
-Czwarta iteracja bota rozszerza wcześniejsze strategie o \textbf{zaawansowane zarządzanie kartami rozwoju} oraz wprowadza \textbf{deterministyczny wybór najlepszej akcji budowy}, zastępując losowe rozstrzyganie remisów stosowane w poprzednich wersjach.
-
-Dla każdego typu karty rozwoju zaimplementowana została odrębna logika decyzyjna. Karty typu Rycerz wykorzystywane są przede wszystkim do ograniczania produkcji przeciwnika oraz budowania przewagi w rywalizacji o premię \textit{Największa Armia}. Karty zapewniające dostęp do zasobów analizowane są pod kątem tego, czy umożliwiają realizację istotnych celów rozwojowych, takich jak budowa miasta lub osady. Karty punktów zwycięstwa traktowane są jako bezpośrednie wzmocnienie pozycji punktowej.
-
-Istotnym elementem strategii jest uwzględnianie \textbf{ryzyka przed rzutem kośćmi}. Akcje prowadzące do znacznego zwiększenia liczby zasobów na ręce są oceniane ostrożnie, aby ograniczyć ryzyko strat w przypadku wyrzucenia liczby 7. Z kolei działania niewpływające na wielkość ręki uznawane są za bezpieczniejsze w tym kontekście.
-
-W zakresie budowy bot dokonuje deterministycznego wyboru lokalizacji na podstawie \textbf{potencjału produkcyjnego} oraz użyteczności strategicznej. Preferowane są węzły zapewniające wysoką i elastyczną produkcję zasobów, szczególnie w środkowej fazie gry, natomiast budowa dróg oceniana jest pod kątem możliwości otwierania kolejnych opcji rozwoju.
-
-Strategia it4 adaptuje swoje priorytety do fazy rozgrywki, stopniowo przesuwając nacisk z rozwoju infrastruktury na bezpośrednie zdobywanie punktów zwycięstwa w miarę zbliżania się do końca gry.
-
-\subsection{it5 – heurystyka zbalansowana ze symulacją pozycji}
-
-Piąta iteracja bota (it5) stanowi rozwinięcie podejścia heurystycznego poprzez wprowadzenie \textbf{lokalnej symulacji skutków akcji} (ang. \textit{one-step lookahead}) oraz bardziej zbalansowanej oceny pozycji. W przeciwieństwie do wcześniejszych botów, które w dużej mierze opierały się na statycznych rankingach priorytetów lub prostych punktacjach, it5 podejmuje decyzję na podstawie \textbf{porównania jakości stanu gry przed i po wykonaniu rozważanej akcji}.
-
-Podstawowym mechanizmem jest funkcja oceny pozycji \texttt{evaluate_position}, która zwraca skalarną wartość opisującą „siłę” aktualnego stanu z perspektywy bota. W każdej turze bot generuje listę akcji legalnych, a następnie dla każdej z nich wykonuje cykl:
-
-\begin{itemize}
-\item tymczasowe zastosowanie akcji do stanu gry (\texttt{applyAction}),
-\item obliczenie wartości oceny nowego stanu,
-\item cofnięcie akcji (\texttt{undoLastAction}),
-\item wybór akcji dającej najwyższy wynik.
-\end{itemize}
-
-W praktyce tworzy to prosty, lecz efektywny schemat selekcji: \textbf{akcje są porównywane nie po typie, lecz po realnym wpływie na stan gry}, co poprawia jakość decyzji szczególnie w sytuacjach, gdzie kilka ruchów ma podobny „priorytet” (np. alternatywne budowy dróg lub transakcje z bankiem).
-
-Logika wyboru akcji ma strukturę wieloetapową:
-
-1. \textbf{Natychmiastowa budowa struktur punktujących} – jeżeli możliwa jest budowa \textbf{miasta} lub \textbf{osady}, bot symuluje dostępne warianty i wybiera najlepszy wprost na podstawie oceny pozycji. Zapewnia to zgodność z nadrzędnym celem gry (zdobywanie punktów zwycięstwa), przy jednoczesnym wyborze wariantu maksymalizującego globalną jakość stanu.
-
-2. \textbf{Ocena akcji wspierających rozwój} – w przypadku braku możliwości natychmiastowej budowy, bot analizuje deterministyczne akcje typu \textbf{budowa drogi} oraz \textbf{handel z bankiem}. Dodatkowo premiowane są działania, które \textbf{odblokowują w kolejnym kroku} możliwość budowy miasta lub osady (np. poprzez uzupełnienie brakujących zasobów).
-
-3. \textbf{Zakup karty rozwoju jako heurystyka awaryjna} – zakup karty rozwoju nie jest symulowany ze względu na losowość talii, lecz oceniany heurystycznie w zależności od fazy gry oraz relacji punktów zwycięstwa bota do przeciwnika. Opcja ta jest preferowana jedynie w sytuacjach braku korzystnych akcji deterministycznych.
-
-4. \textbf{Fallback do strategii it4} – jeżeli najlepszą ocenioną akcją okazuje się zakończenie tury bez poprawy sytuacji, bot powraca do logiki it4, aby uniknąć pasywnego stylu gry w stanach, w których wcześniejsze heurystyki potrafią znaleźć konstruktywne posunięcie.
-
-Rozwinięty został również mechanizm \textbf{odrzucania kart przy wyrzuceniu 7}. it5 nie usuwa zasobów losowo, lecz najpierw identyfikuje najbardziej prawdopodobny cel rozwoju (miasto, osada, droga lub karta rozwoju), a następnie odrzuca te surowce, które są \textbf{najmniej istotne dla jego realizacji}. Zasoby krytyczne dla wybranego celu są chronione, natomiast odrzucane są przede wszystkim nadwyżki.
-
-W rezultacie it5 łączy zalety wcześniejszych iteracji (deterministyczna selekcja oraz rozsądne priorytety) z większą świadomością konsekwencji podejmowanych decyzji wynikającą z lokalnej symulacji stanu. Strategia ta pozostaje relatywnie lekka obliczeniowo, a jednocześnie znacząco poprawia jakość decyzji w porównaniu do czysto regułowych heurystyk.
+Zakup karty rozwoju nie jest symulowany (losowość talii) i oceniany heurystycznie. Gdy najlepszą opcją jest zakończenie tury bez poprawy, bot \textbf{zawraca do logiki it4}. Przy wyrzuceniu 7 it5 \textbf{nie odrzuca losowo}: ustala najbliższy cel (miasto, osada, droga, karta), po czym odrzuca surowce najmniej potrzebne do tego celu, chroniąc zasoby krytyczne. It5 łączy deterministyczny wybór i sensowne priorytety z oceną konsekwencji ruchu przy niewielkim koszcie obliczeniowym.
 
 \section{Bot wykorzystujący algorytm alpha-beta}
 
@@ -776,6 +720,7 @@ Drzewo decyzyjne budowane przez algorytm składa się z kolejnych stanów plansz
 Ze względu na dużą liczbę potencjalnych akcji, bot stosuje mechanizmy redukujące rozgałęzienie drzewa:
 
 1. \textbf{Filtrowanie akcji deterministycznych} – do przeszukiwania wybierane są głównie akcje o przewidywalnych skutkach, natomiast akcje silnie losowe są w większości pomijane.
+
 2. \textbf{Selekcja najlepszych kandydatów} – akcje są wstępnie oceniane heurystycznie, sortowane i ograniczane do stałej liczby (14), przy czym zawsze gwarantowana jest obecność akcji \texttt{EndTurn}.
 
 Dodatkowo stosowane jest porządkowanie ruchów (move ordering), co zwiększa skuteczność obcinania alpha-beta poprzez wcześniejsze rozpatrywanie najbardziej obiecujących decyzji.
@@ -786,10 +731,10 @@ Rdzeniem bota jest klasyczny algorytm minimax z obcinaniem alpha-beta, zaimpleme
 
 \begin{itemize}
 \item jeżeli osiągnięto maksymalną głębokość przeszukiwania (depth = 0), zwracana jest wartość funkcji oceny pozycji,
-\item w przeciwnym razie generowane są legalne akcje dla aktualnego gracza (następnie jest filtrowanie i sortowanie),
+\item w przeciwnym razie generowane są legalne akcje dla aktualnego gracza, które następnie podlegają filtrowaniu i sortowaniu.
 \item dla każdej akcji tworzona jest kopia stanu planszy i symulowane jest wykonanie akcji,
 \item jeśli akcja to \texttt{EndTurn}, automatycznie wywoływana jest symulacja oczekiwanych rzutów kością,
-\item jeśli ruch należy do bota (maximizing), wybierana jest akcja maksymalizująca ocenę, aktualizowane jest \texttt{alpha}, a przeszukiwanie przerywane jest gdy \texttt{alpha >= beta} (beta cutoff),
+\item jeśli ruch należy do bota (maximizing), wybierana jest akcja maksymalizująca ocenę, aktualizowane jest \texttt{alpha}, a przeszukiwanie przerywane jest gdy \newline \texttt{alpha >= beta} (beta cutoff),
 \item jeśli ruch należy do przeciwnika (minimizing), wybierana jest akcja minimalizująca ocenę, aktualizowane jest \texttt{beta}, a przeszukiwanie przerywane jest gdy \texttt{alpha >= beta} (alpha cutoff).
 \end{itemize}
 
@@ -797,7 +742,7 @@ Parametry \texttt{alpha} i \texttt{beta} reprezentują odpowiednio najlepszą wa
 
 \subsection{Funkcja oceny pozycji i fazy gry}
 
-Ocena stanu gry realizowana jest przez funkcję heurystyczną \texttt{evaluate_position_stage()}, której struktura zależy od aktualnej fazy rozgrywki (wczesnej, środkowej lub późnej). Faza gry określana jest na podstawie maksymalnej liczby VP uzyskanych przez graczy oraz numeru tury.
+Ocena stanu gry realizowana jest przez funkcję heurystyczną \texttt{evaluate\_position\_stage()}, której struktura zależy od aktualnej fazy rozgrywki (wczesnej, środkowej lub późnej). Faza gry określana jest na podstawie maksymalnej liczby VP uzyskanych przez graczy oraz numeru tury.
 
 We wczesnej fazie gry funkcja oceny kładzie większy nacisk na rozwój ekonomiczny, w szczególności na produkcję zasobów oraz potencjał dalszej ekspansji osadniczej. W fazie środkowej wagi poszczególnych składników są bardziej zrównoważone, natomiast w końcowej fazie gry dominującym czynnikiem staje się bezpośrednia realizacja punktów zwycięstwa, a znaczenie produkcji zasobów ulega względnemu zmniejszeniu.
 
@@ -829,14 +774,14 @@ Kluczowym elementem implementacji AlphaBetaPlayer jest \textbf{automatyczna symu
 \item Określa typ struktury (osada lub miasto), gdzie miasta mają mnożnik produkcji równy 2, a osady 1,
 \item Sprawdza wszystkie sąsiednie heksy produkcyjne (pomijając pustynie i morza),
 \item Dla każdego heksa pobiera liczbę \textbf{pipsów} (odzwierciedlającą prawdopodobieństwo wystąpienia danej liczby na kostkach),
-\item Oblicza oczekiwaną produkcję dla danego typu zasobu jako \texttt{(pips × multiplier) / 12}, gdzie dzielenie przez 12 normalizuje wartość do oczekiwanej produkcji na turę.
+\item Oblicza oczekiwaną produkcję dla danego typu zasobu jako \newline \texttt{(pips × multiplier) / 12}, gdzie dzielenie przez 12 normalizuje wartość do oczekiwanej produkcji na turę.
 \end{itemize}
 
-3. \textbf{Dodawanie zasobów do planszy}: Funkcja dodaje obliczone oczekiwane zasoby do aktualnych zasobów gracza w kopii stanu planszy. Dzięki temu kolejne poziomy drzewa przeszukiwania uwzględniają \textbf{realistyczny stan zasobów po rzucie kością}, co znacząco poprawia jakość oceny pozycji.
+3. \textbf{Dodawanie zasobów do planszy}: Funkcja dodaje obliczone oczekiwane zasoby do aktualnych zasobów gracza w kopii stanu planszy.
 
-Mechanizm ten wykorzystuje uproszczony model probabilistyczny: zamiast symulować wszystkie możliwe wyniki rzutów kością (co wymagałoby rozgałęzienia drzewa na wiele węzłów losowych), algorytm oblicza \textbf{wartość oczekiwaną produkcji} na podstawie rozkładu prawdopodobieństwa rzutów. Rozwiązanie to znacząco redukuje złożoność obliczeniową, jednocześnie pozwalając algorytmowi na uwzględnienie produkcji zasobów w symulacji przyszłych stanów, co jest kluczowe dla dokładnej oceny długoterminowych konsekwencji decyzji.
+Mechanizm ten wykorzystuje uproszczony model probabilistyczny: zamiast symulować wszystkie możliwe wyniki rzutów kością (co prowadziłoby do znacznego rozgałęzienia drzewa), algorytm oblicza \textbf{wartość oczekiwaną produkcji} na podstawie rozkładu prawdopodobieństwa rzutów.
 
-Bez tego mechanizmu algorytm oceniałby pozycje na podstawie aktualnych zasobów, ignorując fakt, że gracze otrzymają dodatkowe zasoby w następnej turze, co prowadziłoby do suboptymalnych decyzji, szczególnie w sytuacjach, gdzie oczekiwana produkcja może znacząco wpłynąć na dostępność opcji budowy w kolejnych turach.
+Bez zastosowania tego podejścia algorytm oceniałby pozycje wyłącznie na podstawie aktualnych zasobów, pomijając fakt ich przyrostu w następnej turze. To mogłoby prowadzić do suboptymalnych decyzji, szczególnie w sytuacjach, gdy oczekiwana produkcja wpływa na dostępność dalszych opcji budowy.
 
 \subsection{Heurystyki uzupełniające i mechanizmy awaryjne}
 
@@ -868,7 +813,7 @@ Priorytetowy surowiec wybierany jest automatycznie na podstawie parametrów plan
 \item liczba heksów z danym surowcem (różnorodność źródeł).
 \end{itemize}
 
-Na tej podstawie konstruowany jest wynik punktowy z wagami: port 2:1 na silnym węźle (+60 za każdy pips), produkcja z najlepszego węzła (+40 za pips), łączna suma pipsów (+50 za pips) oraz liczba heksów (+10). Dodatkowo wprowadzono minimalne rozstrzyganie remisów na korzyść cegły i drewna (+20) z uwagi na ich rolę w budowie dróg.
+Na podstawie powyższych cech obliczana jest łączna ocena atrakcyjności każdego surowca. Preferowane są surowce zapewniające wysoką i stabilną produkcję, szczególnie w połączeniu z dostępem do portu 2:1. Dodatkowo uwzględniana jest ogólna dostępność surowca na planszy oraz jego znaczenie dla wczesnego rozwoju infrastruktury.
 
 \subsection{Ustawienie początkowe: wymuszenie portu 2:1}
 
@@ -880,7 +825,7 @@ Najważniejszym elementem strategii OneResourcePlayer jest faza początkowa. Bot
 
 Jeżeli wśród legalnych akcji nie ma możliwości uzyskania portu 2:1 dla najlepszego surowca (np. z uwagi na ograniczenia legalnych ustawień), bot podejmuje próbę znalezienia \textbf{jakiegokolwiek} portu 2:1 dostępnego w danym układzie i dostosowuje wybór priorytetowego surowca. Dopiero w ostateczności wybiera pierwszą legalną akcję.
 
-Drugie ustawienie początkowe również preferuje surowiec priorytetowy (wysokie pipsy, +60 za każdy pips), ale dodatkowo wprowadza heurystykę uzupełniania braków — premiowane są węzły dostarczające \textbf{innych} surowców, których bot nie miał w pierwszej osadzie (+10 za każdy nowy typ), aby ograniczyć ryzyko całkowitego zablokowania rozwoju.
+Drugie ustawienie początkowe również preferuje surowiec priorytetowy, ale dodatkowo wprowadza heurystykę uzupełniania braków — premiowane są węzły dostarczające innych surowców, których bot nie miał w pierwszej osadzie, aby ograniczyć ryzyko całkowitego zablokowania rozwoju.
 
 \subsection{Logika tury: specjalizacja i konwersja zasobów}
 
@@ -943,7 +888,7 @@ Strategia RoadPlayer jest \textbf{wrażliwa na ograniczenia przestrzenne planszy
 
 W ramach projektu zaimplementowano również klasę gracza parametryzowanego (\texttt{ParaPlayer}), w której funkcja oceny i priorytety decyzyjne są sterowane zestawem wag wczytywanych z pliku konfiguracyjnego. Takie podejście umożliwia oddzielenie logiki wyboru akcji (struktury heurystyki) od doboru wartości parametrów.
 
-Do strojenia parametrów wykorzystano skrypty treningowe (\texttt{utils/train_para_player.py} oraz \texttt{utils/train_para_setit5_player.py}), które realizują prosty algorytm ewolucyjny: zachowanie najlepszych osobników (elitism) oraz generowanie kolejnych kandydatów przez mutacje Gaussowskie wybranych wag. Kandydackie konfiguracje są oceniane na podstawie estymowanego współczynnika zwycięstw w serii gier przeciwko ustalonemu przeciwnikowi, uruchamianych przez program \texttt{run} z włączonym przełączaniem stron (\texttt{--switch}).
+Do strojenia parametrów wykorzystano skrypty treningowe (\texttt{utils/train\_para\_player.py} oraz \texttt{utils/train\_para\_setit5\_player.py}), które realizują prosty algorytm ewolucyjny: zachowanie najlepszych osobników (elitism) oraz generowanie kolejnych kandydatów przez mutacje Gaussowskie wybranych wag. Kandydackie konfiguracje są oceniane na podstawie estymowanego współczynnika zwycięstw w serii gier przeciwko ustalonemu przeciwnikowi, uruchamianych przez program \texttt{run} z włączonym przełączaniem stron (\texttt{--switch}).
 
 W praktyce podejście to pełni w pracy dwie role: (1) umożliwia automatyczne dostrajanie wag heurystyk bez ręcznej kalibracji oraz (2) stanowi przykład metody optymalizacji strategii opartej na wynikach rozgrywek, kompatybilnej z deterministycznym silnikiem symulacyjnym.
 
@@ -954,11 +899,12 @@ W praktyce podejście to pełni w pracy dwie role: (1) umożliwia automatyczne d
 Wszystkie eksperymenty zostały przeprowadzone zgodnie z następującym protokołem:
 
 \begin{itemize}
-\item \textbf{Liczba rozgrywek}: Każda para botów rozegrała \textbf{1000 rozgrywek}, co zapewnia statystyczną istotność wyników.
+\item \textbf{Liczba rozgrywek}: Każda para botów rozegrała \textbf{1000 rozgrywek}, co zapewnia statystyczną istotność wyników. Jeżeli w trakcie rozgrywki żaden z graczy nie osiągnął warunku zwycięstwa po ustalonej maksymalnej liczbie tur, partia była uznawana za nierozegraną.
 \end{itemize}
 
 \begin{itemize}
-\item \textbf{Eliminacja efektu miejsca}: W celu wyeliminowania wpływu kolejności ustawień początkowych (gracz rozpoczynający ma niewielką przewagę), zastosowano mechanizm \textbf{przełączania miejsc} (\texttt{--switch}). W każdej parze rozgrywek gracze zamieniają się miejscami, co zapewnia sprawiedliwe porównanie niezależne od pozycji startowej.
+\item \textbf{Eliminacja efektu miejsca}: W celu wyeliminowania wpływu kolejności ustawień początkowych (gracz rozpoczynający posiada niewielką przewagę) włączono \textbf{naprzemienne ustawienie stron} (\texttt{--switch}). W każdej parze rozgrywek gracze zamieniają się miejscami, co zapewnia sprawiedliwe porównanie niezależne od pozycji startowej.
+
 \end{itemize}
 
 \begin{itemize}
@@ -969,216 +915,510 @@ Wszystkie eksperymenty zostały przeprowadzone zgodnie z następującym protoko�
 
 W celu kompleksowej oceny skuteczności botów wprowadzono następujące metryki:
 
-\textbf{Metryki podstawowe:}
+\textbf{Metryki podstawowe}
 \begin{itemize}
 \item \textbf{Procent wygranych rozgrywek}: Win Rate
-\item \textbf{Średnia liczba tur do zwycięstwa}: Avg Turns
+\item \textbf{Średnia liczba tur do końca gry}: Avg Turns
 \item \textbf{Średnia liczba punktów przeciwnika przy przegranej}: LossVP
 \end{itemize}
 
 \textbf{Metryki dodatkowe}
 \begin{itemize}
 \item Procent nierozegranych rozgrywek: NW (No Winner)
-\item Częstość zdobycia premii Najdłuższa Droga i Największa Armia: Longest road\% i Largest army\%
+\item Częstość zdobycia premii Najdłuższa Droga i Największa Armia: \\ Longest Road\% (LR\%) i Largest Army\% (LA\%)
 \item Średnia liczba zakupionych kart rozwoju: Avg DevCards
 \item Średnia produkcja zasobów: ProdScore
 \end{itemize}
 
 \section{Scenariusze testowe}
 
-\subsection{Scenariusz 1: Skalowanie jakości botów}
+\subsubsection{Scenariusz 1: Porównanie z graczem losowym}
 
-W pierwszym scenariuszu kolejne iteracje botów oraz wybrane strategie wyspecjalizowane porównano z graczem losowym, który pełni rolę punktu odniesienia (baseline). Takie zestawienie pozwala bezpośrednio ocenić wpływ wzbogacania heurystyk na skuteczność, tempo rozgrywki oraz zdolność botów do deterministycznego domykania partii.
+W pierwszym scenariuszu \textbf{wszystkie boty} (kolejne iteracje, wersje parametryczne i strategie wyspecjalizowane) porównano z graczem losowym pełniącym rolę punktu odniesienia (baseline). Takie zestawienie pozwala bezpośrednio ocenić wpływ wzbogacania heurystyk na skuteczność, tempo rozgrywki oraz zdolność botów do deterministycznego domykania partii.
 
-\subsection{Podsumowanie danych}
+\subsubsection{Podsumowanie danych}
 
-| Bot | Win Rate vs Random | NW\% | Avg Turns | LossVP (Random) | LossVP (Bot) | Longest Road\% (Bot) | Largest Army\% (Bot) | Avg DevCards | ProdScore |
-|-----|-------------------|-----|-----------|-----------------|--------------|---------------|---------------|--------------|-----------|
-| It1 | 56.0\% | 7.6\% | 448.5 | 6.81 | 7.51 | 51.2\% | 58.9\% | 3.0 | 730.4 |
-| It2 | 73.3\% | 3.6\% | 381.0 | 6.23 | 8.48 | 64.4\% | 62.0\% | 3.0 | 864.3 |
-| It3 | 98.7\% | 0.3\% | 180.3 | 3.98 | 11.50 | 83.7\% | 91.9\% | 3.2 | 1003.2 |
-| It4 | 96.9\% | 1.6\% | 192.6 | 3.64 | 9.80 | 94.6\% | 86.7\% | 3.0 | 1190.3 |
-| It5 | 100.0\% | 0.0\% | 115.3 | 3.21 | – | 71.5\% | 98.5\% | 3.7 | 1096.4 |
-| Para | 99.5\% | 0.0\% | 125.1 | 3.34 | 4.80 | 90.2\% | 25.9\% | 9.9 | 1267.8 |
-| ParaSettleIt5 | 100.0\% | 0.0\% | 111.0 | 3.21 | – | 68.3\% | 98.8\% | 3.7 | 1111.5 |
-| OneResourcePlayer | 99.8\% | 0.0\% | 159.9 | 3.79 | 11.50 | 82.0\% | 92.4\% | 2.9 | 1117.0 |
-| DevPlayer | 99.8\% | 0.1\% | 166.1 | 4.00 | 12.00 | 52.8\% | 99.7\% | 4.6 | 1064.8 |
-| RoadPlayer | 100.0\% | 0.0\% | 132.7 | 3.22 | – | 94.5\% | 98.6\% | 3.6 | 1051.0 |
+\begin{table}[h]
+\centering
+\caption{Porównanie wyników w parach botów}
+\medskip
+\label{tab:pairwise-summary}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}
+\hline
+Opponent & Win Rate vs Random & NW\% & Avg Turns & LossVP (Random) & LossVP (Bot) & Longest Road\% (Bot) & Largest Army\% (Bot) & Avg DevCards & ProdScore \\
+\hline
+It1 & 56.0\% & 7.6\% & 448.5 & 6.81 & 7.51 & 51.2\% & 58.9\% & 3.0 & 730.4 \\
+\hline
+It2 & 73.3\% & 3.6\% & 381.0 & 6.23 & 8.48 & 64.4\% & 62.0\% & 3.0 & 864.3 \\
+\hline
+It3 & 98.7\% & 0.3\% & 180.3 & 3.98 & 11.50 & 83.7\% & 91.9\% & 3.2 & 1003.2 \\
+\hline
+It4 & 96.9\% & 1.6\% & 192.6 & 3.64 & 9.80 & 94.6\% & 86.7\% & 3.0 & 1190.3 \\
+\hline
+It5 & 100.0\% & 0.0\% & 115.3 & 3.21 & -- & 71.5\% & 98.5\% & 3.7 & 1096.4 \\
+\hline
+Para & 99.5\% & 0.0\% & 125.1 & 3.34 & 4.80 & 90.2\% & 25.9\% & 9.9 & 1267.8 \\
+\hline
+ParaSettleIt5 & 100.0\% & 0.0\% & 111.0 & 3.21 & -- & 68.3\% & 98.8\% & 3.7 & 1111.5 \\
+\hline
+OneResourcePlayer & 99.8\% & 0.0\% & 159.9 & 3.79 & 11.50 & 82.0\% & 92.4\% & 2.9 & 1117.0 \\
+\hline
+DevPlayer & 99.8\% & 0.1\% & 166.1 & 4.00 & 12.00 & 52.8\% & 99.7\% & 4.6 & 1064.8 \\
+\hline
+RoadPlayer & 100.0\% & 0.0\% & 132.7 & 3.22 & -- & 94.5\% & 98.6\% & 3.6 & 1051.0 \\
+\hline
+AlphaBeta & 100.0\% & 0.0\% & 108.7 & 2.97 & -- & 96.2\% & 91.8\% & 2.5 & 1168.2 \\
+\hline
+\end{tabular}%
+}
+\end{table}
 
-\subsection{Kluczowe wnioski}
-\begin{itemize}
-\item Nieliniowy charakter progresji jakości
-\end{itemize}
+\subsubsection{Kluczowe wnioski}
 
-Wzrost skuteczności botów heurystycznych nie ma charakteru liniowego. Iteracje It1 i It2 prowadzą do stopniowej poprawy współczynnika zwycięstw (56\% -> 73\%), natomiast It3 powoduje jakościowy skok skuteczności do 98.7\%. Przekroczenie tego progu kompetencyjnego wynika z wprowadzenia strategii optymalnych ustawień początkowych, zapewniających lepsze pozycje startowe, oraz aktywnego wykorzystania rozbójnika do blokowania produkcji przeciwnika. Od tego momentu bot przejmuje kontrolę nad przebiegiem rozgrywki, a kolejne iteracje (It4, It5) stabilizują tę dominację, osiągając 96–100\% zwycięstw.
+\textbf{Nieliniowy charakter progresji jakości}
+
+Wzrost skuteczności botów heurystycznych nie ma charakteru liniowego. Iteracje It1 i It2 prowadzą do stopniowej poprawy współczynnika zwycięstw (56\% $\rightarrow$ 73\%), natomiast It3 powoduje jakościowy skok skuteczności do 98.7\%. Przekroczenie tego progu kompetencyjnego wynika z wprowadzenia strategii optymalnych ustawień początkowych, zapewniających lepsze pozycje startowe, oraz aktywnego wykorzystania rozbójnika do blokowania produkcji przeciwnika. Od tego momentu bot przejmuje kontrolę nad przebiegiem rozgrywki, a kolejne iteracje stabilizują tę dominację, osiągając 96--100\% zwycięstw.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{image.png}
-\caption{Skalowanie jakości botów względem RandomPlayer}
+\includegraphics[width=0.8\textwidth]{rp_progression.png}
+\caption{Skuteczność kolejnych botów przeciwko graczowi losowemu.}
 \end{figure}
 
-\begin{itemize}
-\item Zależność jakości strategii od tempa gry
-\end{itemize}
+\textbf{Zależność tempa od jakości strategii}
 
-Wraz ze wzrostem jakości botów obserwowany jest istotny spadek średniej liczby tur. It1 rozgrywa partie trwające średnio 448 tur, It3 skraca je do około 180 tur, natomiast It5 do około 115 tur. Lepsze boty nie tylko wygrywają częściej, lecz także szybciej, co świadczy o większej efektywności decyzyjnej i zdolności do domykania gry.
+Analiza średniej liczby tur pokazuje wyraźną korelację między jakością strategii a tempem rozgrywki. Wczesne iteracje botów (It1, It2) charakteryzują się bardzo długimi rozgrywkami --- odpowiednio 448.5 i 381.0 tur. Jest to konsekwencja niskiej skuteczności tych botów oraz braku zdolności do deterministycznego domykania partii, co prowadzi do przedłużających się rozgrywek, w których losowy przeciwnik ma realne szanse na zwycięstwo.
 
-\begin{itemize}
-\item Metryka LossVP
-\end{itemize}
+Przełom następuje wraz z wprowadzeniem It3, gdzie średnia liczba tur spada dramatycznie do 180.3, co stanowi redukcję o ponad 50\% w stosunku do It2. Ta zmiana jest bezpośrednio związana z jakościowym skokiem skuteczności --- bot przejmuje kontrolę nad rozgrywką i efektywnie kończy partie, nie pozwalając przeciwnikowi na przedłużanie rozgrywki.
 
-Analiza średniej liczby punktów zwycięstwa przegranego gracza (LossVP) pokazuje istotne różnice jakościowe pomiędzy botami. Dla It1 i It2 gracz losowy przegrywa, osiągając ponad 6 VP, natomiast od It3 wartość ta spada do około 3–4 VP. Oznacza to, że boty wyższej jakości nie tylko wygrywają, lecz także skutecznie ograniczają rozwój przeciwnika. Wysokie wartości LossVP po stronie botów wyspecjalizowanych (Dev, OneResource) wskazują na większą wariancję ich strategii.
+Kolejne iteracje (It4, It5) oraz zaawansowane boty (Para, ParaSettleIt5, AlphaBeta) utrzymują szybkie tempo rozgrywki, osiągając średnią liczbę tur w zakresie 108--193. Szczególnie wyróżnia się AlphaBetaPlayer z najkrótszą średnią liczbą tur (108.7), co potwierdza, że algorytmy przeszukiwania drzewa gry są w stanie najszybciej identyfikować optymalne ścieżki prowadzące do zwycięstwa.
 
-\begin{itemize}
-\item Metryki dodatkowe
-\end{itemize}
+Warto zauważyć, że niektóre strategie wyspecjalizowane (OneResourcePlayer: 159.9 tur, DevPlayer: 166.1 tur) wykazują nieco wolniejsze tempo niż zaawansowane boty heurystyczne. Jest to związane z ich jednostronnym podejściem strategicznym, które może prowadzić do dłuższych rozgrywek, gdy specjalizacja nie jest wystarczająco efektywna.
 
-Metryki dodatkowe jednoznacznie wskazują na istnienie odmiennych strategii botów. Wraz ze wzrostem iteracji rośnie częstość zdobywania premii Najdłuższej Drogi oraz Największej Armii, co świadczy o coraz efektywniejszym wykorzystaniu kart rozwoju. Boty It1–It2 uzyskują Najdłuższą Drogę w około 50–64\% gier, natomiast od It3 wartość ta wzrasta do 68–94\%. RoadPlayer, zgodnie ze swoją specjalizacją, zdobywa tę premię w 94.5\% rozgrywek.
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{rp_tempo.png}
+\caption{Zależność tempa rozgrywki od jakości strategii}
+\end{figure}
 
-Analogicznie, premia Największej Armii jest osiągana przez boty It1–It2 w około 59–62\% gier, podczas gdy boty It3 i wyższe w ponad 86\% przypadków. DevPlayer niemal zawsze uzyskuje tę premię (99.7\%), co jest bezpośrednim efektem strategii intensywnego zakupu kart rozwoju.
+\textbf{Metryka LossVP}
 
-Jako dodatkową informację warto zauważyć, że boty It1 i It2 kończą odpowiednio 7.6\% i 3.6\% rozgrywek bez zwycięzcy (timeout po 1000 turach). To wskazuje na niewystarczającą agresywność strategii. Od iteracji It3 zjawisko to praktycznie zanika (0–0.3\%), co potwierdza, że boty wyższej jakości podejmują bardziej deterministyczne decyzje i konsekwentnie domykają rozgrywkę.
+Metryka LossVP (Bot) mierzy średnią liczbę punktów zwycięstwa przeciwnika w momencie, gdy bot przegrywa rozgrywkę. Wyższa wartość tej metryki oznacza, że bot przegrywa w późniejszych fazach gry, gdy przeciwnik zdążył już zgromadzić znaczącą liczbę punktów, co może wskazywać na bardziej wyrównaną rozgrywkę.
 
-\subsection{Scenariusz 2: Porównanie iteracyjnych heurystyk}
+Analiza wyników pokazuje interesujący wzorzec: wczesne iteracje (It1, It2) przegrywają przy stosunkowo niskich wartościach VP przeciwnika (7.51 i 8.48), co sugeruje, że przegrywają one w różnych fazach rozgrywki, często wcześnie. Wraz z poprawą jakości botów, wartości LossVP (Bot) rosną --- It3 osiąga 11.50, a It4 9.80. To wskazuje, że bardziej zaawansowane boty przegrywają rzadziej, ale gdy już to robią, przeciwnik zdążył osiągnąć wyższy poziom rozwoju.
 
-W scenariuszu 2 zestawiono iteracje botów heurystycznych w układzie „każdy z każdym” w celu weryfikacji, czy kolejne modyfikacje heurystyk prowadzą do poprawy wyników również w bezpośrednim starciu z innymi wersjami (a nie wyłącznie przeciwko RandomPlayer).
+Szczególnie interesujące są wyniki dla strategii wyspecjalizowanych: DevPlayer osiąga najwyższą wartość LossVP (Bot) wynoszącą 12.00, podczas gdy OneResourcePlayer również osiąga 11.50. To sugeruje, że gdy te strategie przegrywają, dzieje się to w późniejszych fazach rozgrywki, gdy przeciwnik zdążył już rozwinąć swoją infrastrukturę.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{rp_dominance.png}
+\caption{Średnia liczba VP przeciwnika przy przegranej}
+\end{figure}
+
+\textbf{Metryki dodatkowe}
+
+Analiza dodatkowych metryk pozwala na głębsze zrozumienie charakterystyki strategii poszczególnych botów oraz mechanizmów ich działania.
+
+\textbf{Premie strategiczne:} Współczynniki zdobycia premii \textit{Najdłuższa Droga} i \textit{Największa Armia} pokazują wyraźne różnice w podejściu strategicznym. Boty heurystyczne (It3-It5) osiągają wysokie wartości dla obu premii (71-95\% dla Najdłuższej Drogi, 87-99\% dla Największej Armii), co wskazuje na zbalansowane podejście. ParaPlayer wyróżnia się bardzo wysokim współczynnikiem Najdłuższej Drogi (90.2\%), ale niskim dla Największej Armii (25.9\%), co jest związane z jego strategią ekspansji terytorialnej kosztem kart rozwoju. DevPlayer pokazuje odwrotny wzorzec - dominuje w Największej Armii (99.7\%), ale osiąga jedynie 52.8\% dla Najdłuższej Drogi, co odzwierciedla jego specjalizację w strategii kartowej.
+
+\textbf{Karty rozwoju:} Średnia liczba zakupionych kart rozwoju waha się od 2.5 (AlphaBeta) do 9.9 (ParaPlayer). ParaPlayer wyróżnia się zdecydowanie najwyższą wartością, co jest konsekwencją jego strategii opartej na eksploracji różnych opcji decyzyjnych. Większość botów heurystycznych utrzymuje wartość w zakresie 2.9-3.7 kart na rozgrywkę, podczas gdy DevPlayer, zgodnie ze swoją specjalizacją, osiąga 4.6 kart.
+
+\textbf{Produkcja zasobów:} Metryka ProdScore pokazuje wyraźną progresję wraz z poprawą jakości botów. It1 osiąga 730.4, podczas gdy It4 osiąga najwyższą wartość wśród botów heurystycznych (1190.3). ParaPlayer osiąga najwyższą wartość w całym zestawie (1267.8), co potwierdza skuteczność jego zbalansowanego podejścia strategicznego. AlphaBetaPlayer osiąga 1168.2, co jest wartością wyższą niż większość botów heurystycznych, co wskazuje na efektywne wykorzystanie zasobów przez algorytm przeszukiwania drzewa gry.
+
+Wszystkie te metryki łącznie pokazują, że poprawa jakości botów przekłada się nie tylko na wyższy współczynnik zwycięstw, ale również na bardziej efektywne wykorzystanie mechanizmów strategicznych dostępnych w grze, co prowadzi do szybszych i bardziej deterministycznych rozgrywek.
+
+\subsection{Scenariusz 2: Analiza iteracyjnego rozwoju heurystyk}
+
+[TODO: do poprawy]
+
+W scenariuszu 2 zestawiono iteracje botów heurystycznych w układzie „poprzednik-następnik” w celu weryfikacji, czy kolejne modyfikacje heurystyk prowadzą do poprawy wyników również w bezpośrednim starciu z innymi wersjami (a nie wyłącznie przeciwko RandomPlayer). Oznaczenia: A - pierwszy bot starcia, B - drugi.
 
 \subsection{Podsumowanie danych}
 
-| Para | Bot A | Bot B | Win Rate A | Win Rate B | Avg Turns | LossVP A | LossVP B | Longest road\% A | Longest road\% B | Largest Army\% A | Largest Army\% B | DevCards A | DevCards B | ProdScore A | ProdScore B |
-|------|-------|-------|------------|------------|-----------|----------|----------|--------------|--------------|--------------|--------------|------------|------------|-------------|-------------|
-| It1 vs It2 | It1 | It2 | 35.8\% | 61.9\% | 339.8 | 6.24 | 7.96 | 37.4\% | 62.6\% | 45.8\% | 52.3\% | 2.3 | 2.6 | 589.1 | 832.1 |
-| It2 vs It3 | It2 | It3 | 5.8\% | 93.6\% | 181.9 | 5.06 | 11.28 | 31.4\% | 68.5\% | 5.8\% | 91.1\% | 0.9 | 3.2 | 400.5 | 1017.3 |
-| It3 vs It4 | It3 | It4 | 32.4\% | 66.0\% | 184.4 | 9.11 | 9.89 | 24.6\% | 75.4\% | 52.5\% | 46.3\% | 2.5 | 2.5 | 817.7 | 1127.4 |
-| It4 vs It5 | It4 | It5 | 25.7\% | 74.2\% | 134.2 | 9.54 | 11.04 | 82.0\% | 17.8\% | 11.4\% | 88.6\% | 1.7 | 3.4 | 958.1 | 1070.6 |
-| It1 vs It5 | It1 | It5 | 0.1\% | 99.9\% | 114.9 | 3.58 | 14.00 | 14.0\% | 73.5\% | 1.1\% | 98.2\% | 0.6 | 3.7 | 266.5 | 1096.8 |
+\begin{table}[h]
+\centering
+\caption{Porównanie wyników w parach botów}
+\medskip
+\label{tab:pairwise-summary}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccccccc}
+\hline
+Pair &
+Win\% A & Win\% B &
+Avg Turns &
+LossVP A & LossVP B &
+LR\% A & LR\% B &
+LA\% A & LA\% B &
+DevCards A & DevCards B &
+ProdScore A & ProdScore B \\
+\hline
+It1 vs It2 & 35.8\% & 61.9\% & 339.8 & 6.24 & 7.96 & 37.4\% & 62.6\% & 45.8\% & 52.3\% & 2.3 & 2.6 & 589.1 & 832.1 \\
+It2 vs It3 & 5.8\% & 93.6\% & 181.9 & 5.06 & 11.28 & 31.4\% & 68.5\% & 5.8\% & 91.1\% & 0.9 & 3.2 & 400.5 & 1017.3 \\
+It3 vs It4 & 32.4\% & 66.0\% & 184.4 & 9.11 & 9.89 & 24.6\% & 75.4\% & 52.5\% & 46.3\% & 2.5 & 2.5 & 817.7 & 1127.4 \\
+It4 vs It5 & 25.7\% & 74.2\% & 134.2 & 9.54 & 11.04 & 82.0\% & 17.8\% & 11.4\% & 88.6\% & 1.7 & 3.4 & 958.1 & 1070.6 \\
+It1 vs It5 & 0.1\% & 99.9\% & 114.9 & 3.58 & 14.00 & 14.0\% & 73.5\% & 1.1\% & 98.2\% & 0.6 & 3.7 & 266.5 & 1096.8 \\
+\hline
+\end{tabular}%
+}
+\end{table}
+
 
 \subsection{Kluczowe wnioski}
 
 Wyniki wskazują na monotoniczną poprawę w układzie iteracyjnym: w każdej z rozpatrywanych par nowsza iteracja uzyskuje wyższy współczynnik zwycięstw niż iteracja wcześniejsza. Największy skok jakościowy dotyczy przejścia It2 → It3 (w parze It2 vs It3 It3 wygrywa 93.6\% rozgrywek), co jest spójne z obserwacjami ze scenariusza 1.
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{scenario2_1.png}
+\caption{Porównanie wyników par botów w scenariuszu 2}
+\end{figure}
+
 Wraz ze wzrostem jakości botów skraca się również średnia długość rozgrywki. Różnice są szczególnie widoczne dla przejścia It2 → It3, natomiast dla późniejszych wersji (It3–It5) tempo stabilizuje się na poziomie około 130–185 tur.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{../plots/scenario2_1_pairwise_comparison.png}
-\caption{Porównanie wyników par botów w scenariuszu 2}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.8\textwidth]{image-1.png}
+\includegraphics[width=0.8\textwidth]{scenario2_2.png}
 \caption{Porównanie średniej liczby tur w scenariuszu 2}
 \end{figure}
 
-\subsection{Scenariusz 3: AlphaBetaPlayer}
+\subsubsection{Scenariusz 3: AlphaBetaPlayer}
 
-[TODO]
+Scenariusz 3 weryfikuje skuteczność AlphaBetaPlayer --- algorytmu wykorzystującego przeszukiwanie drzewa gry z przycinaniem alfa-beta --- przeciwko różnym poziomom przeciwników. AlphaBetaPlayer bazuje na It5Player, ale wzbogaca go o przeszukiwanie na głębokości 3 z zaawansowaną funkcją oceny pozycji, która adaptuje się do fazy gry (wczesna/średnia/późna). Algorytm wykorzystuje filtrowanie akcji (maksymalnie 14 najlepszych akcji według heurystyki) oraz symuluje oczekiwane rzuty kostką przy kończeniu tury.
 
-\subsection{Scenariusz 4: Boty parametryczne i specjalistyczne}
+\subsubsection{Podsumowanie danych}
 
-Scenariusz czwarty weryfikuje skuteczność strategii wyspecjalizowanych przeciwko różnym poziomom przeciwników. W szczególności analizuje, w jakich warunkach specjalizacja w jeden aspekt rozgrywki (np. jeden surowiec) jest efektywna oraz identyfikuje granicę skuteczności strategii wyspecjalizowanych.
+\begin{table}[h]
+\centering
+\caption{Wyniki AlphaBetaPlayer vs przeciwnicy (Win Rate, tempo, premie)}
+\medskip
+\label{tab:scenario3-main}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
+\hline
+Opponent & Win Rate (AB) & Avg Turns & LossVP (AB) & LossVP (Opp) & LR\% (AB) & LR\% (Opp) & LA\% (AB) & LA\% (Opp) \\
+\hline
+It1 & 99.9\% & 105.0 & 10.00 & 3.38 & 96.3\% & 2.7\% & 92.4\% & 3.9\% \\
+\hline
+It2 & 99.5\% & 107.7 & 10.20 & 3.46 & 90.6\% & 8.7\% & 91.6\% & 3.3\% \\
+\hline
+It3 & 94.6\% & 118.8 & 11.43 & 7.36 & 82.1\% & 17.8\% & 77.1\% & 22.3\% \\
+\hline
+It4 & 80.6\% & 127.4 & 9.30 & 8.56 & 57.8\% & 42.2\% & 76.6\% & 22.6\% \\
+\hline
+It5 & 57.8\% & 113.0 & 8.40 & 9.94 & 77.3\% & 22.3\% & 32.2\% & 67.8\% \\
+\hline
+Para & 83.7\% & 119.0 & 9.33 & 4.94 & 78.1\% & 21.8\% & 75.3\% & 23.9\% \\
+\hline
+ParaSettleIt5 & 54.2\% & 111.2 & 10.33 & 10.55 & 75.4\% & 24.1\% & 30.3\% & 69.3\% \\
+\hline
+\end{tabular}%
+}
+\end{table}
 
-\subsection{OneResourcePlayer}
+\begin{table}[h]
+\centering
+\caption{Wyniki AlphaBetaPlayer vs przeciwnicy (karty rozwoju, produkcja)}
+\medskip
+\label{tab:scenario3-dev-prod}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+Opponent & AvgDevCards (AB) & AvgDevCards (Opp) & ProdScore (AB) & ProdScore (Opp) \\
+\hline
+It1 & 2.4 & 0.6 & 1175.6 & 262.3 \\
+\hline
+It2 & 2.5 & 0.5 & 1180.0 & 274.4 \\
+\hline
+It3 & 2.5 & 1.8 & 1163.8 & 607.4 \\
+\hline
+It4 & 2.6 & 1.9 & 1110.6 & 869.9 \\
+\hline
+It5 & 2.1 & 2.8 & 1063.6 & 953.9 \\
+\hline
+Para & 2.4 & 2.4 & 1084.5 & 504.2 \\
+\hline
+ParaSettleIt5 & 2.0 & 2.9 & 1032.5 & 996.2 \\
+\hline
+\end{tabular}%
+}
+\end{table}
 
-OneResourcePlayer reprezentuje strategię wyspecjalizowaną, która maksymalizuje korzyści z 
-jednego, wybranego surowca poprzez zajęcie portu 2:1 oraz koncentrację rozwoju 
-infrastruktury wokół tego surowca. Eksperyment weryfikuje hipotezę, czy taka specjalizacja 
-może być skuteczna przeciwko różnym poziomom przeciwników.
+\subsubsection{Kluczowe wnioski}
 
-\subsection{Podsumowanie danych}
+\textbf{Monotoniczny spadek skuteczności}
 
-| Przeciwnik | Win Rate | Avg Turns | LossVP (OR) | LossVP (Opp) | LR\% (OR) | LR\% (Opp) | LA\% (OR) | LA\% (Opp) | ProdScore (OR) | ProdScore (Opp) |
-|------------|----------|-----------|-------------|--------------|----------|-----------|----------|-----------|----------------|-----------------|
-| It1 | 98.3\% | 160.1 | 9.00 | 4.37 | 82.9\% | 14.7\% | 89.2\% | 8.9\% | 1117.3 | 321.2 |
-| It2 | 95.5\% | 161.1 | 9.82 | 4.93 | 72.8\% | 26.1\% | 89.3\% | 8.8\% | 1115.0 | 387.6 |
-| It3 | 56.8\% | 148.6 | 8.43 | 9.36 | 43.4\% | 56.5\% | 51.9\% | 47.6\% | 968.4 | 854.7 |
-| It4 | 36.4\% | 146.6 | 8.23 | 10.09 | 22.2\% | 77.8\% | 46.9\% | 51.8\% | 859.0 | 1119.4 |
-| It5 | 19.0\% | 116.9 | 7.24 | 11.21 | 39.0\% | 55.8\% | 12.1\% | 87.8\% | 745.2 | 1065.1 |
-| Para | 34.8\% | 127.8 | 7.73 | 6.14 | 32.2\% | 67.2\% | 60.6\% | 33.5\% | 795.7 | 962.1 |
-| ParaSettleIt5 | 18.2\% | 113.2 | 7.19 | 11.24 | 38.9\% | 54.7\% | 11.1\% | 88.7\% | 735.0 | 1089.8 |
-| AlphaBeta | 11.9\% | 139.1 | 6.91 | 11.15 | 13.6\% | 85.9\% | 19.9\% | 80.1\% | 648.7 | 1054.4 |
-
-\subsection{Kluczowe wnioski}
-
-\textbf{Przepaść skuteczności — strategia działa tylko przeciwko słabym botom}
-
-Wyniki pokazują dramatyczny spadek skuteczności strategii monosurowcowej wraz z poprawą jakości przeciwnika. OneResourcePlayer osiąga wysokie współczynniki zwycięstw przeciwko It1Player (98.3\%) oraz It2Player (95.5\%), jednak jego skuteczność gwałtownie spada przeciwko It3Player (56.8\%), osiągając jedynie około 11–36\% przeciwko zaawansowanym botom (It4, It5, ParaSettleIt5, AlphaBeta).
-
-Istotna jest obserwacja, że It3Player również stanowi punkt przełomowy. Spadek współczynnika zwycięstw z 95.5\% (vs It2) do 56.8\% (vs It3) pokazuje, że wprowadzenie strategii ustawień początkowych oraz aktywnego wykorzystania rozbójnika w It3 wystarcza, aby zneutralizować przewagę wynikającą ze specjalizacji w jeden surowiec. To potwierdza, że strategie wyspecjalizowane są skuteczne tylko w określonych warunkach — przeciwko słabszym przeciwnikom, którzy nie potrafią efektywnie wykorzystać mechanizmów strategicznych dostępnych w grze.
+Wyniki pokazują wyraźny, monotoniczny spadek współczynnika zwycięstw AlphaBeta wraz ze wzrostem siły przeciwnika: od dominacji przeciwko słabym botom (99.9\% vs It1, 99.5\% vs It2), przez silną przewagę przeciwko średnim przeciwnikom (94.6\% vs It3, 80.6\% vs It4), aż po niemal wyrównane starcia z najsilniejszymi botami (57.8\% vs It5, 54.2\% vs ParaSettleIt5). Szczególnie interesujące jest to, że AlphaBeta osiąga lepsze wyniki przeciwko ParaPlayer (83.7\%) niż przeciwko It5Player (57.8\%), co sugeruje, że strategia eksploracyjna ParaPlayer jest mniej efektywna przeciwko algorytmom przeszukiwania drzewa niż wyspecjalizowane heurystyki It5.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{image-3.png}
+\includegraphics[width=0.8\textwidth]{ab_win_rate_progression.png}
+\caption{Skuteczność AlphaBetaPlayer w zależności od jakości przeciwnika}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{ab_tempo.png}
+\caption{Tempo rozgrywki AlphaBeta vs różni przeciwnicy}
+\end{figure}
+
+\textbf{Tempo rozgrywki}
+
+Średnia liczba tur rośnie wraz ze wzrostem siły przeciwnika (od 105.0 tur vs It1 do 127.4 tur vs It4), co odzwierciedla bardziej wyrównaną rozgrywkę. Jednak przeciwko najsilniejszym przeciwnikom (It5: 113.0 tur, ParaSettleIt5: 111.2 tur) tempo nieco przyspiesza, co może wskazywać na bardziej agresywne podejście AlphaBeta w sytuacjach, gdy przewaga jest minimalna.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{ab_largest_army.png}
+\caption{Częstotliwość zdobycia premii Największa Armia.}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{ab_longest_road.png}
+\caption{Częstotliwość zdobycia w premii Najdłuższa Droga.}
+\end{figure}
+
+\textbf{Dominacja w premiach strategicznych}
+
+AlphaBeta utrzymuje dominację w premii \emph{Najdłuższa Droga} przeciwko większości przeciwników (96.3\% vs It1, 90.6\% vs It2, 82.1\% vs It3), ale przewaga ta maleje wraz ze wzrostem siły przeciwnika. Przeciwko It4Player AlphaBeta osiąga jedynie 57.8\% wykorzystania tej premii, co pokazuje, że bardziej zaawansowane boty potrafią skutecznie rywalizować również w obszarze ekspansji terytorialnej.
+
+Szczególnie interesujący jest wzorzec dla premii \emph{Największa Armia}: AlphaBeta dominuje przeciwko słabym i średnim przeciwnikom (92.4\% vs It1, 91.6\% vs It2, 77.1\% vs It3), ale traci przewagę przeciwko najsilniejszym botom (32.2\% vs It5, 30.3\% vs ParaSettleIt5). To sugeruje, że It5Player i ParaSettleIt5 mają bardziej efektywne strategie wykorzystania kart rozwoju, które pozwalają im przejąć kontrolę nad tą premią w późniejszych fazach rozgrywki.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{ab_production.png}
+\caption{Porównanie produkcji zasobów AlphaBeta vs przeciwnicy.}
+\end{figure}
+
+\textbf{Produkcja zasobów}
+
+AlphaBeta utrzymuje przewagę produkcyjną przeciwko wszystkim przeciwnikom, ale różnica maleje wraz ze wzrostem siły przeciwnika. Przeciwko It1Player różnica wynosi 913.3 punktów (1175.6 vs 262.3), podczas gdy przeciwko ParaSettleIt5 różnica spada do zaledwie 36.3 punktów (1032.5 vs 996.2). To pokazuje, że bardziej zaawansowane boty potrafią efektywnie konkurować również w obszarze produkcji zasobów.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{ab_dominance.png}
+\caption{Średnia liczba VP gracza przy przegranej}
+\end{figure}
+
+\textbf{Dominacja mierzona przez LossVP}
+
+Metryka LossVP pokazuje interesujący wzorzec: przeciwko słabym przeciwnikom AlphaBeta przegrywa tylko w bardzo późnych fazach gry (LossVP przeciwnika: 10.00 vs It1, 10.20 vs It2), podczas gdy przeciwnicy przegrywają wcześnie (LossVP AlphaBeta: 3.38 vs It1, 3.46 vs It2). Wraz ze wzrostem siły przeciwnika różnica ta maleje, a przeciwko najsilniejszym botom (It5, ParaSettleIt5) wartości LossVP są niemal identyczne, co potwierdza wyrównany charakter tych starć.
+
+\textbf{Granica skuteczności algorytmów przeszukiwania}
+
+Wyniki pokazują, że AlphaBetaPlayer z głębokością przeszukiwania 3 osiąga skuteczność na poziomie około 55--58\% przeciwko najlepszym heurystykom (It5, ParaSettleIt5). Dalsza poprawa wymagałaby zwiększenia głębokości przeszukiwania (co wiąże się z wykładniczym wzrostem złożoności obliczeniowej) lub ulepszenia funkcji oceny pozycji. Jednocześnie wyniki pokazują, że nawet przy ograniczonej głębokości przeszukiwania algorytm jest w stanie skutecznie konkurować z najlepszymi heurystykami, co potwierdza wartość podejścia opartego na przeszukiwaniu drzewa gry.
+
+
+\subsubsection{Scenariusz 4: Strategie wyspecjalizowane}
+
+Scenariusz czwarty weryfikuje skuteczność strategii wyspecjalizowanych przeciwko różnym poziomom przeciwników. W szczególności analizuje, w jakich warunkach specjalizacja w jeden aspekt rozgrywki (np. jeden surowiec, karty rozwoju, najdłuższa droga) jest efektywna oraz identyfikuje granicę skuteczności strategii skoncentrowanych na jednym celu.
+
+\subsubsection{OneResourcePlayer}
+
+OneResourcePlayer reprezentuje strategię wyspecjalizowaną, która maksymalizuje korzyści z jednego, wybranego surowca poprzez zajęcie portu 2:1 oraz koncentrację rozwoju infrastruktury wokół tego surowca. Eksperyment weryfikuje hipotezę, czy taka specjalizacja może być skuteczna przeciwko różnym poziomom przeciwników.
+
+\subsubsection{Podsumowanie danych}
+
+\begin{table}[h]
+\centering
+\caption{Podsumowanie wyników OneResourcePlayer}
+\medskip
+\label{tab:pairwise-summary}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
+\hline
+Opponent & Win Rate & Avg Turns & LossVP (OR) & LossVP (Opp) & LR\% (OR) & LR\% (Opp) & LA\% (OR) & LA\% (Opp) \\
+\hline
+It1 & 98.3\% & 160.1 & 9.00 & 4.37 & 82.9\% & 14.7\% & 89.2\% & 8.9\% \\
+\hline
+It2 & 95.5\% & 161.1 & 9.82 & 4.93 & 72.8\% & 26.1\% & 89.3\% & 8.8\% \\
+\hline
+It3 & 56.8\% & 148.6 & 8.43 & 9.36 & 43.4\% & 56.5\% & 51.9\% & 47.6\% \\
+\hline
+It4 & 36.4\% & 146.6 & 8.23 & 10.09 & 22.2\% & 77.8\% & 46.9\% & 51.8\% \\
+\hline
+It5 & 19.0\% & 116.9 & 7.24 & 11.21 & 39.0\% & 55.8\% & 12.1\% & 87.8\% \\
+\hline
+Para & 34.8\% & 127.8 & 7.73 & 6.14 & 32.2\% & 67.2\% & 60.6\% & 33.5\% \\
+\hline
+ParaSettleIt5 & 18.2\% & 113.2 & 7.19 & 11.24 & 38.9\% & 54.7\% & 11.1\% & 88.7\% \\
+\hline
+AlphaBeta & 11.1\% & 111.1 & 6.93 & 10.60 & 14.6\% & 85.2\% & 23.2\% & 76.8\% \\
+\hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Kluczowe wnioski}
+
+\textbf{Strategia działa tylko przeciwko słabym botom}
+
+Wyniki pokazują dramatyczny spadek skuteczności strategii monosurowcowej wraz z poprawą jakości przeciwnika. OneResourcePlayer osiąga wysokie współczynniki zwycięstw przeciwko It1Player (98.3\%) oraz It2Player (95.5\%), jednak jego skuteczność gwałtownie spada przeciwko It3Player (56.8\%), osiągając jedynie około 11--36\% przeciwko zaawansowanym botom (It4, It5, ParaSettleIt5, AlphaBeta).
+
+Istotna jest obserwacja, że It3Player stanowi punkt przełomowy. Spadek współczynnika zwycięstw z 95.5\% (vs It2) do 56.8\% (vs It3) pokazuje, że wprowadzenie strategii ustawień początkowych oraz aktywnego wykorzystania rozbójnika w It3 wystarcza, aby zneutralizować przewagę wynikającą ze specjalizacji w jeden surowiec. To potwierdza, że strategie wyspecjalizowane są skuteczne tylko w określonych warunkach - przeciwko słabszym przeciwnikom, którzy nie potrafią efektywnie wykorzystać mechanizmów strategicznych dostępnych w grze.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{orBot.png}
 \caption{Skuteczność strategii monosurowcowej w zależności od jakości przeciwnika}
 \end{figure}
 
-\textbf{Zaawansowane boty całkowicie dominują}
+[TODO: skuteczność powraca dla para]
 
-Zaawansowane boty (It5, ParaSettleIt5, AlphaBeta) całkowicie dominują strategię 
-monosurowcową, osiągając współczynniki zwycięstw powyżej 80–88\%. To potwierdza, że zbalansowane strategie są bardziej skuteczne niż jednostronna specjalizacja w 
-długoterminowej perspektywie.
-
-\subsection{DevPlayer}
+\subsubsection{DevPlayer}
 
 DevPlayer reprezentuje strategię opartą na priorytetowym skupieniu się na zakupie kart rozwoju oraz szybkim osiąganiu związanych z nimi bonusów, takich jak premia \textit{Największa Armia} oraz karty punktów zwycięstwa. Eksperyment weryfikuje hipotezę, czy taka strategia pośrednia może stanowić skuteczną alternatywę dla klasycznej ekspansji terytorialnej przeciwko różnym poziomom przeciwników.
 
-\subsection{Podsumowanie danych}
+\subsubsection{Podsumowanie danych}
 
-| Przeciwnik | Win Rate DevPlayer | Avg Turns | LossVP DevPlayer | LossVP Przeciwnik | Longest Road\% Dev | Longest Road\% Opp | Largest Army\% Dev | Largest Army\% Opp | Avg DevCards Dev | Avg DevCards Opp | ProdScore Dev | ProdScore Opp |
-|------------|-------------------|-----------|-----------------|------------------|------------------|------------------|------------------|------------------|-----------------|-----------------|---------------|---------------|
-| It1 | 98.8\% | 164.4 | 11.00 | 4.57 | 52.6\% | 36.1\% | 98.9\% | 1.0\% | 4.5 | 0.6 | 1067.2 | 322.6 |
-| It2 | 97.5\% | 163.0 | 11.56 | 5.20 | 39.4\% | 53.7\% | 99.4\% | 0.6\% | 4.6 | 0.6 | 1083.6 | 373.3 |
-| It3 | 69.1\% | 171.9 | 10.08 | 10.40 | 20.6\% | 79.2\% | 91.3\% | 8.7\% | 3.4 | 1.6 | 1035.4 | 925.2 |
-| It4 | 49.3\% | 192.2 | 9.97 | 11.10 | 7.5\% | 92.4\% | 90.9\% | 9.1\% | 3.4 | 1.8 | 940.2 | 1184.0 |
-| It5 | 27.3\% | 132.2 | 8.82 | 10.74 | 25.6\% | 70.7\% | 56.8\% | 43.2\% | 2.7 | 2.3 | 837.8 | 1121.8 |
-| Para | 58.0\% | 160.4 | 8.46 | 5.54 | 20.9\% | 78.6\% | 92.3\% | 7.5\% | 3.2 | 3.4 | 906.9 | 747.6 |
-| ParaSettleIt5 | 23.6\% | 129.2 | 8.52 | 11.31 | 23.1\% | 73.2\% | 54.4\% | 45.6\% | 2.6 | 2.4 | 797.5 | 1141.4 |
-| AlphaBeta | 20.5\% | 140.9 | 8.66 | 10.58 | 14.4\% | 85.3\% | 47.8\% | 52.2\% | 2.6 | 2.5 | 834.8 | 1082.4 |
+\subsubsection{Podsumowanie danych}
 
-\subsection{Kluczowe wnioski}
+\begin{table}[h]
+\centering
+\caption{Podsumowanie wyników DevPlayer}
+\medskip
+\label{tab:pairwise-summary}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}
+\hline
+Opponent & Win Rate & Avg Turns & LossVP (Dev) & LossVP (Opp) & LR\% (Dev) & LR\% (Opp) & LA\% (Dev) & LA\% (Opp) & Avg DevC Dev & Avg DevC Opp \\
+\hline
+It1 & 98.8\% & 164.4 & 11.00 & 4.57 & 52.6\% & 36.1\% & 98.9\% & 1.0\% & 4.5 & 0.6 \\
+\hline
+It2 & 97.5\% & 163.0 & 11.56 & 5.20 & 39.4\% & 53.7\% & 99.4\% & 0.6\% & 4.6 & 0.6 \\
+\hline
+It3 & 68.1\% & 172.1 & 10.44 & 10.22 & 23.2\% & 76.5\% & 90.7\% & 9.3\% & 3.4 & 1.7 \\
+\hline
+It4 & 45.8\% & 183.2 & 10.16 & 11.05 & 8.1\% & 91.9\% & 90.8\% & 9.2\% & 3.4 & 1.8 \\
+\hline
+It5 & 24.9\% & 129.0 & 8.61 & 10.96 & 23.6\% & 72.4\% & 59.8\% & 40.2\% & 2.6 & 2.4 \\
+\hline
+Para & 58.0\% & 160.4 & 8.46 & 5.54 & 20.9\% & 78.6\% & 92.3\% & 7.5\% & 3.2 & 3.4 \\
+\hline
+ParaSettleIt5 & 23.6\% & 129.2 & 8.52 & 11.31 & 23.1\% & 73.2\% & 54.4\% & 45.6\% & 2.6 & 2.4 \\
+\hline
+AlphaBeta & 18.3\% & 122.6 & 4.64 & 10.56 & 8.2\% & 91.6\% & 74.3\% & 25.7\% & 2.9 & 2.0 \\
+\hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Kluczowe wnioski}
 
 \textbf{Przewaga strategii w starciu z prostszymi botami}
 
-DevPlayer osiąga bardzo wysokie współczynniki zwycięstw przeciwko It1Player (98.8\%) oraz It2Player (97.5\%), co potwierdza skuteczność strategii opartej na kartach rozwoju w starciu z botami o niskiej jakości decyzyjnej. Kluczowym elementem sukcesu jest niemal całkowita dominacja w premii \textit{Największa Armia} — DevPlayer zdobywa ją w 98.9\% rozgrywek przeciwko It1 oraz 99.4\% przeciwko It2, podczas gdy przeciwnicy osiągają tę premię w mniej niż 1\% przypadków. Dodatkowo bot zakupuje średnio 4.5–4.6 kart rozwoju na rozgrywkę, co jest znacznie wyższym wynikiem niż u przeciwników (0.6 karty).
+DevPlayer osiąga bardzo wysokie współczynniki zwycięstw przeciwko It1Player (98.8\%) oraz It2Player (97.5\%), co potwierdza skuteczność strategii opartej na kartach rozwoju w starciu z botami o niskiej jakości decyzyjnej. Kluczowym elementem sukcesu jest niemal całkowita dominacja w premii \textit{Największa Armia} - DevPlayer zdobywa ją w 98.9\% rozgrywek przeciwko It1 oraz 99.4\% przeciwko It2, podczas gdy przeciwnicy osiągają tę premię w mniej niż 1\% przypadków. Dodatkowo bot zakupuje średnio 4.5--4.6 kart rozwoju na rozgrywkę, co jest znacznie wyższym wynikiem niż u przeciwników (0.6 karty).
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\textwidth]{devplayer_effectiveness.png}
-\caption{Skuteczność DevPlayer w zależności od przeciwnika}
+\caption{Skuteczność DevPlayer w zależności od jakości przeciwnika}
 \end{figure}
 
 \textbf{Punkt przełomowy: It3Player}
 
-Podobnie jak w przypadku OneResourcePlayer, It3Player stanowi punkt przełomowy dla skuteczności DevPlayer. Współczynnik zwycięstw spada dramatycznie z 97.5\% (vs It2) do 69.1\% (vs It3). Mimo że DevPlayer nadal dominuje w premii \textit{Największa Armia} (91.3\% vs 8.7\%), nie przekłada się to już na tak wyraźną przewagę w rozgrywce.
+Podobnie jak w przypadku OneResourcePlayer, It3Player stanowi punkt przełomowy dla skuteczności DevPlayer. Współczynnik zwycięstw spada dramatycznie z 97.5\% (vs It2) do 68.1\% (vs It3). Mimo że DevPlayer nadal dominuje w premii \textit{Największa Armia} (90.7\% vs 9.3\%), nie przekłada się to już na tak wyraźną przewagę w rozgrywce.
 
-\textbf{Prawie remis z It4Player — granica skuteczności strategii}
+\textbf{Prawie remis z It4Player - granica skuteczności strategii}
 
-Najciekawszym momentem w analizie jest starcie DevPlayer vs It4Player, które kończy się niemal idealnym remisem: 49.3\% vs 49.5\% (z 12 rozgrywkami bez zwycięzcy). To pokazuje, że strategia oparta na kartach rozwoju osiąga granicę swojej skuteczności na poziomie It4. Warto zauważyć, że DevPlayer nadal utrzymuje wysoką dominację w premii \textit{Największa Armia} (90.9\% vs 9.1\%), jednak It4Player kompensuje to poprzez zdecydowaną przewagę w premii \textit{Najdłuższa Droga} (92.4\% vs 7.5\%) oraz wyższą produkcję zasobów (1184.0 vs 940.2). Średnia liczba tur wzrasta do 192.2, co jest najwyższą wartością w całym zestawie danych.
+Najciekawszym momentem w analizie jest starcie DevPlayer vs It4Player, które kończy się niemal idealnym remisem: 45.8\% vs 53.8\% (z 4 rozgrywkami bez zwycięzcy). To pokazuje, że strategia oparta na kartach rozwoju osiąga granicę swojej skuteczności na poziomie It4. Warto zauważyć, że DevPlayer nadal utrzymuje wysoką dominację w premii \textit{Największa Armia} (90.8\% vs 9.2\%), jednak It4Player kompensuje to poprzez zdecydowaną przewagę w premii \textit{Najdłuższa Droga} (91.9\% vs 8.1\%) oraz wyższą produkcję zasobów (1201.8 vs 929.1). Średnia liczba tur wzrasta do 183.2, co jest najwyższą wartością w całym zestawie danych.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\textwidth]{devplayer_dev_cards.png}
-\caption{Średnia liczba kart rozwoju kupowanych przez DevPlayer}
+\caption{Średnia liczba kupionych kart rozwoju przez DevPlayer i przeciwników}
 \end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\textwidth]{devplayer_largest_army.png}
-\caption{Częstość zdobycia premii Największa Armia przez DevPlayer}
+\caption{Częstość zdobycia premii Największa Armia przez DevPlayer i przeciwników}
 \end{figure}
 
-\textbf{Zaawansowane boty całkowicie dominują strategię kartową}
+Przedstawione wykresy pozwalają lepiej zrozumieć sposób działania strategii DevPlayer. Pierwszy wykres pokazuje, że DevPlayer konsekwentnie kupuje więcej kart rozwoju niż przeciwnicy - przeciwko It1 i It2 osiąga średnio 4.5--4.6 kart na rozgrywkę, podczas gdy przeciwnicy jedynie 0.6 karty. Jednak wraz ze wzrostem jakości przeciwnika różnica ta maleje: przeciwko It3--It4 DevPlayer kupuje 3.4 karty, a przeciwnicy już 1.7--1.8 kart. Szczególnie interesujące jest starcie z ParaPlayer, gdzie przeciwnik faktycznie kupuje więcej kart (3.4) niż DevPlayer (3.2), co pokazuje, że zaawansowane boty potrafią efektywnie włączyć strategię kartową do swojej zbalansowanej taktyki.
 
-Przeciwko zaawansowanym botom (It5, ParaSettleIt5, AlphaBeta) DevPlayer osiąga jedynie 20–27\% zwycięstw, co pokazuje, że strategia oparta wyłącznie na kartach rozwoju nie jest wystarczająca do pokonania zbalansowanych strategii. Co więcej, przeciwnicy mają średnio ponad 10 punktów zwycięstwa w momencie przegranej DevPlayer, co świadczy o zdecydowanej dominacji. Interesujące jest, że w starciu z AlphaBetaPlayer premia \textit{Największa Armia} jest już podzielona niemal równo (47.8\% vs 52.2\%), co pokazuje, że zaawansowane boty potrafią efektywnie konkurować również w tym aspekcie gry.
+Drugi wykres pokazuje, że mimo częstego zdobywania przez DevPlayer premii Największa Armia przeciwko większości przeciwników, przewaga w tym aspekcie nie przekłada się bezpośrednio na proporcjonalny współczynnik zwycięstw. W starciach z It5 oraz ParaSettleIt5 odsetek zdobywania tej premii spada odpowiednio do 59.8\% i 54.4\%, co wskazuje, że bardziej zaawansowane boty potrafią skutecznie rywalizować również w obszarze strategii kartowej. Co więcej, przeciwko AlphaBetaPlayer dominacja DevPlayer w premii \textit{Największa Armia} ponownie wzrasta do 74.3\%, co sugeruje, że algorytm przeszukiwania drzewa gry ma inne priorytety strategiczne niż iteracyjne heurystyki.
 
+\subsubsection{RoadPlayer}
 
-\subsection{RoadPlayer}
+RoadPlayer reprezentuje strategię opartą na aktywnym rozbudowaniu sieci dróg oraz zdobyciu premii \textit{Najdłuższa Droga} (2 punkty zwycięstwa). Eksperyment weryfikuje hipotezę, czy taka strategia może stanowić efektywną alternatywę dla klasycznego podejścia opartego na szybkim rozwoju osad i miast przeciwko różnym poziomom przeciwników.
 
-RoadPlayer jest botem wyspecjalizowanym w zdobyciu premii \textit{Najdłuższa Droga} i tym samym stanowi punkt odniesienia dla strategii silnie ukierunkowanych na jeden aspekt rozgrywki. Wyniki porównania RoadPlayer z RandomPlayer oraz wartości metryk dotyczących premii Najdłuższa Droga i Największa Armia przedstawiono w scenariuszu 1 (tabela porównawcza botów względem RandomPlayer).
+\subsubsection{Podsumowanie danych}
 
-[TODO]
+\begin{table}[h]
+\centering
+\caption{Podsumowanie wyników RoadPlayer}
+\medskip
+\label{tab:pairwise-summary}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}
+\hline
+Opponent & Win Rate & Avg Turns & LossVP (Road) & LossVP (Opp) & LR\% (Road) & LR\% (Opp) & LA\% (Road) & LA\% (Opp) & Avg DevC (Road) & Avg DevC (Opp) \\
+\hline
+It1 & 100.0\% & 131.2 & 0.00 & 3.58 & 95.9\% & 3.9\% & 96.7\% & 2.6\% & 3.5 & 0.7 \\
+\hline
+It2 & 99.2\% & 134.2 & 11.57 & 3.96 & 90.8\% & 9.2\% & 96.3\% & 3.1\% & 3.6 & 0.6 \\
+\hline
+It3 & 86.7\% & 136.1 & 9.68 & 8.23 & 74.3\% & 25.7\% & 79.6\% & 20.3\% & 3.0 & 1.8 \\
+\hline
+It4 & 68.2\% & 140.2 & 9.54 & 9.42 & 48.3\% & 51.7\% & 75.8\% & 24.1\% & 2.9 & 2.0 \\
+\hline
+It5 & 47.5\% & 118.9 & 9.06 & 10.40 & 77.1\% & 21.8\% & 33.5\% & 66.5\% & 2.2 & 2.8 \\
+\hline
+Para & 74.2\% & 134.9 & 8.99 & 5.14 & 71.0\% & 28.8\% & 79.1\% & 20.2\% & 2.7 & 3.2 \\
+\hline
+ParaSettleIt5 & 43.9\% & 118.3 & 9.01 & 10.84 & 78.3\% & 21.0\% & 28.3\% & 71.7\% & 2.1 & 2.9 \\
+\hline
+AlphaBeta & 33.7\% & 114.0 & 10.07 & 5.47 & 38.5\% & 61.5\% & 52.2\% & 47.8\% & 2.4 & 2.3 \\
+\hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Kluczowe wnioski}
+
+\textbf{Spadek skuteczności strategii drogowej}
+
+RoadPlayer osiąga doskonałe wyniki przeciwko prostym botom (100\% vs It1, 99.2\% vs It2), ale skuteczność gwałtownie spada wraz ze wzrostem poziomu przeciwnika. Strategia ta okazuje się skuteczna tylko przeciwko słabszym botom, tracąc przewagę wobec zaawansowanych przeciwników (47.5\% vs It5, 43.9\% vs ParaSettleIt5, 33.7\% vs AlphaBeta).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{road_effectiveness.png}
+\caption{Skuteczność RoadPlayer w zależności od jakości przeciwnika}
+\end{figure}
+
+\textbf{Punkt przełomowy: It4Player}
+
+RoadPlayer pokazuje dramatyczny spadek skuteczności między It3Player a It4Player - z 86.7\% do 68.2\% (spadek o 18.5 punktów procentowych). Przeciwko It5Player strategia osiąga jedynie 47.5\% zwycięstw, co oznacza, że przegrywa częściej niż wygrywa. To pokazuje, że strategia drogowa, podobnie jak strategia monosurowcowa, jest skuteczna tylko przeciwko słabszym botom, jednak działa dłużej - Road wygrywa vs It4 (68.2\%), podczas gdy OneResource wygrywa (36.4\%).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{road_longest_road.png}
+\caption{Częstość zdobycia premii Najdłuższa Droga przez RoadPlayer i przeciwników}
+\end{figure}
+
+\textbf{Najdłuższa Droga}
+
+Szczególnie istotna jest obserwacja wyników dotyczących premii Najdłuższa Droga. RoadPlayer wygrywa 47.5\% rozgrywek przeciwko It5Player, mimo że osiąga 77.1\% wykorzystania Najdłuższej Drogi. Z kolei przeciwko It4Player RoadPlayer wygrywa 68.2\%, mimo że osiąga 48.3\% wykorzystania Najdłuższej Drogi (It4Player ma 51.7\%). To pokazuje, że sama premia Najdłuższa Droga nie gwarantuje zwycięstwa - potrzebne są również osady, miasta oraz efektywne wykorzystanie innych mechanizmów gry, takich jak Największa Armia. It5Player wygrywa dzięki lepszej produkcji zasobów (ProdScore: 1044.1 vs 946.5) oraz lepszemu wykorzystaniu Największej Armii (66.5\% vs 33.5\%), co pokazuje, że zbalansowane strategie są bardziej skuteczne niż jednostronna specjalizacja.
+
+\subsubsection{Podsumowanie Scenariusza 4: Porównanie strategii wyspecjalizowanych}
+
+Analiza wyników wszystkich trzech strategii wyspecjalizowanych (OneResourcePlayer, DevPlayer, RoadPlayer) pokazuje wyraźne wzorce w ich skuteczności przeciwko różnym poziomom przeciwników. Wszystkie trzy strategie osiągają wysokie współczynniki zwycięstw przeciwko słabym botom (It1--It2: 95--100\%), jednak tracą skuteczność przeciwko zaawansowanym botom (It4+: 11--68\%). 
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{scenario4_all.png}
+\caption{Porównanie skuteczności strategii wyspecjalizowanych}
+\end{figure}
+
+RoadPlayer okazuje się najbardziej skuteczną strategią wyspecjalizowaną - osiąga 86.7\% zwycięstw przeciwko It3Player oraz 68.2\% przeciwko It4Player, podczas gdy OneResourcePlayer osiąga odpowiednio 56.8\% i 36.4\%, a DevPlayer 69.1\% i 49.3\%. Wyniki te wskazują, że strategia drogowa jest bardziej elastyczna niż strategia monosurowcowa czy strategia oparta na kartach rozwoju. Jest to związane z tym, że rozbudowa dróg pełni w Catanie kluczową rolę - nie tylko umożliwia zdobycie premii \textit{Najdłuższa Droga}, ale również generuje nowe lokalizacje dla osad, które przynoszą zarówno punkty zwycięstwa, jak i dodatkową produkcję zasobów. 
+
+Drugim najlepszym graczem w tym zestawieniu jest DevPlayer. Strategia tego bota opiera się na priorytetowym wydawaniu zasobów na karty rozwoju kosztem budowy miast i osad. Należy zauważyć, że karty ``Punkt Zwycięstwa'' stanowią jedynie 20\% talii (5 kart na 25), natomiast 52\% stanowią karty Rycerza. DevPlayer, realizując swoją wąskoukierunkowaną taktykę, kontynuuje zakup kart rozwoju nawet po osiągnięciu znaczącej przewagi w kartach Rycerza, podczas gdy zbalansowany bot ograniczyłby dalsze inwestycje w tym obszarze. Skutkuje to słabszym rozwojem gospodarczym. Z powyższej analizy można wywnioskować, że spośród dwóch dodatkowych premii premia \textit{Najdłuższa Droga} okazuje się bardziej opłacalna strategicznie.
+
+OneResourcePlayer wykazuje najsłabsze wyniki spośród trzech strategii wyspecjalizowanych. Strategia monosurowcowa, mimo że zapewnia przewagę w postaci portu 2:1 oraz skoncentrowanej produkcji jednego zasobu, okazuje się zbyt jednowymiarowa - zaawansowani przeciwnicy skutecznie wykorzystują rozbójnika do blokowania kluczowych pól produkcyjnych, a przewaga w jednym surowcu nie kompensuje niedoborów w pozostałych obszarach gry. Wyniki te pokazują, że dywersyfikacja źródeł zasobów oraz elastyczność strategiczna są kluczowe w starciu z zaawansowanymi przeciwnikami.
+
+Wszystkie trzy strategie wykazują przepaść kompetencyjną między It3Player a It4Player, co potwierdza, że wprowadzenie strategii ustawień początkowych oraz aktywnego wykorzystania rozbójnika w It3 wystarcza, aby zneutralizować przewagę wynikającą z jednostronnej specjalizacji. Przeciwko zaawansowanym botom (It5, ParaSettleIt5, AlphaBeta) żadna ze strategii wyspecjalizowanych nie osiąga współczynnika zwycięstw powyżej 50\%, co jednoznacznie potwierdza, że \textbf{zbalansowane strategie są bardziej skuteczne niż jednostronna specjalizacja w długoterminowej perspektywie}.
+
 
 \chapter{Podsumowanie i wnioski}
 \section{Ocena realizacji celów pracy}

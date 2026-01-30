@@ -3,7 +3,7 @@
 Skrypt do wizualizacji wyników DevPlayer: Skuteczność w zależności od jakości przeciwnika.
 
 Użycie:
-    python utils/visualize_devplayer.py --output-dir plots/
+    python utils/visualize_devplayer.py --output-dir docs/
 """
 
 import argparse
@@ -25,24 +25,24 @@ DEVPLAYER_DATA = {
     'It2': {'win_rate': 97.5, 'avg_turns': 163.0, 'loss_vp_dev': 11.56, 'loss_vp_opp': 5.20,
             'lr_pct_dev': 39.4, 'lr_pct_opp': 53.7, 'la_pct_dev': 99.4, 'la_pct_opp': 0.6,
             'dev_cards_dev': 4.6, 'dev_cards_opp': 0.6, 'prod_score_dev': 1083.6, 'prod_score_opp': 373.3},
-    'It3': {'win_rate': 69.1, 'avg_turns': 171.9, 'loss_vp_dev': 10.08, 'loss_vp_opp': 10.40,
-            'lr_pct_dev': 20.6, 'lr_pct_opp': 79.2, 'la_pct_dev': 91.3, 'la_pct_opp': 8.7,
-            'dev_cards_dev': 3.4, 'dev_cards_opp': 1.6, 'prod_score_dev': 1035.4, 'prod_score_opp': 925.2},
-    'It4': {'win_rate': 49.3, 'avg_turns': 192.2, 'loss_vp_dev': 9.97, 'loss_vp_opp': 11.10,
-            'lr_pct_dev': 7.5, 'lr_pct_opp': 92.4, 'la_pct_dev': 90.9, 'la_pct_opp': 9.1,
-            'dev_cards_dev': 3.4, 'dev_cards_opp': 1.8, 'prod_score_dev': 940.2, 'prod_score_opp': 1184.0},
-    'Para': {'win_rate': 60.3, 'avg_turns': 159.3, 'loss_vp_dev': 8.47, 'loss_vp_opp': 5.41,
+    'It3': {'win_rate': 68.1, 'avg_turns': 172.1, 'loss_vp_dev': 10.44, 'loss_vp_opp': 10.22,
+            'lr_pct_dev': 23.2, 'lr_pct_opp': 76.5, 'la_pct_dev': 90.7, 'la_pct_opp': 9.3,
+            'dev_cards_dev': 3.4, 'dev_cards_opp': 1.7, 'prod_score_dev': 1031.3, 'prod_score_opp': 922.0},
+    'It4': {'win_rate': 45.8, 'avg_turns': 183.2, 'loss_vp_dev': 10.16, 'loss_vp_opp': 11.05,
+            'lr_pct_dev': 8.1, 'lr_pct_opp': 91.9, 'la_pct_dev': 90.8, 'la_pct_opp': 9.2,
+            'dev_cards_dev': 3.4, 'dev_cards_opp': 1.8, 'prod_score_dev': 929.1, 'prod_score_opp': 1201.8},
+    'It5': {'win_rate': 24.9, 'avg_turns': 129.0, 'loss_vp_dev': 8.61, 'loss_vp_opp': 10.96,
+            'lr_pct_dev': 23.6, 'lr_pct_opp': 72.4, 'la_pct_dev': 59.8, 'la_pct_opp': 40.2,
+            'dev_cards_dev': 2.6, 'dev_cards_opp': 2.4, 'prod_score_dev': 809.0, 'prod_score_opp': 1133.4},
+    'Para': {'win_rate': 58.0, 'avg_turns': 160.4, 'loss_vp_dev': 8.46, 'loss_vp_opp': 5.54,
              'lr_pct_dev': 20.9, 'lr_pct_opp': 78.6, 'la_pct_dev': 92.3, 'la_pct_opp': 7.5,
              'dev_cards_dev': 3.2, 'dev_cards_opp': 3.4, 'prod_score_dev': 906.9, 'prod_score_opp': 747.6},
-    'It5': {'win_rate': 27.3, 'avg_turns': 132.2, 'loss_vp_dev': 8.82, 'loss_vp_opp': 10.74,
-            'lr_pct_dev': 25.6, 'lr_pct_opp': 70.7, 'la_pct_dev': 56.8, 'la_pct_opp': 43.2,
-            'dev_cards_dev': 2.7, 'dev_cards_opp': 2.3, 'prod_score_dev': 837.8, 'prod_score_opp': 1121.8},
     'ParaSettleIt5': {'win_rate': 23.6, 'avg_turns': 129.2, 'loss_vp_dev': 8.52, 'loss_vp_opp': 11.31,
                       'lr_pct_dev': 23.1, 'lr_pct_opp': 73.2, 'la_pct_dev': 54.4, 'la_pct_opp': 45.6,
                       'dev_cards_dev': 2.6, 'dev_cards_opp': 2.4, 'prod_score_dev': 797.5, 'prod_score_opp': 1141.4},
-    'AlphaBeta': {'win_rate': 20.5, 'avg_turns': 140.9, 'loss_vp_dev': 8.66, 'loss_vp_opp': 10.58,
-                  'lr_pct_dev': 14.4, 'lr_pct_opp': 85.3, 'la_pct_dev': 47.8, 'la_pct_opp': 52.2,
-                  'dev_cards_dev': 2.6, 'dev_cards_opp': 2.5, 'prod_score_dev': 834.8, 'prod_score_opp': 1082.4},
+    'AlphaBeta': {'win_rate': 18.3, 'avg_turns': 122.6, 'loss_vp_dev': 4.64, 'loss_vp_opp': 10.56,
+                  'lr_pct_dev': 8.2, 'lr_pct_opp': 91.6, 'la_pct_dev': 74.3, 'la_pct_opp': 25.7,
+                  'dev_cards_dev': 2.9, 'dev_cards_opp': 2.0, 'prod_score_dev': 747.3, 'prod_score_opp': 1195.7}
 }
 
 # Kolejność przeciwników (od najsłabszego do najsilniejszego)
@@ -59,36 +59,12 @@ def plot_devplayer_effectiveness(output_dir: Path):
     # Wykres liniowy
     x = np.arange(len(opponents))
     line = ax.plot(x, win_rates, 'o-', linewidth=3, markersize=10, 
-                   color='#3498db', label='DevPlayer Win Rate', 
-                   markerfacecolor='#3498db', markeredgecolor='white', markeredgewidth=2)
+                   color='#f39c12', label='DevPlayer Win Rate', 
+                   markerfacecolor="#cd840f", markeredgecolor='white', markeredgewidth=2)
     
     # Linia referencyjna na poziomie 50% (remis)
-    ax.axhline(y=50.0, color='#e74c3c', linestyle='--', linewidth=2, 
+    ax.axhline(y=50.0, color='grey', linestyle='--', linewidth=2, 
                alpha=0.7, label='Linia remisu (50%)')
-    
-    # Zaznacz punkt przełomowy (It3)
-    it3_idx = opponents.index('It3')
-    ax.plot(it3_idx, win_rates[it3_idx], 's', markersize=10, 
-            color='#f39c12', markeredgecolor='black', markeredgewidth=2,
-            zorder=5, label='Punkt przełomowy (It3)')
-    ax.annotate('Punkt przełomowy:\nIt3 neutralizuje\nstrategię kartową',
-                xy=(it3_idx, win_rates[it3_idx]), 
-                xytext=(it3_idx + 0.5, win_rates[it3_idx] + 15),
-                arrowprops=dict(arrowstyle='->', color='#f39c12', lw=2.5),
-                fontsize=10, bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8),
-                ha='left', fontweight='bold')
-    
-    # Zaznacz punkt remisu (It4)
-    it4_idx = opponents.index('It4')
-    ax.plot(it4_idx, win_rates[it4_idx], 'D', markersize=10, 
-            color='#9b59b6', markeredgecolor='black', markeredgewidth=2,
-            zorder=5, label='Punkt remisu (It4)')
-    ax.annotate('Granica skuteczności:\nIt4 - prawie remis\n(49.3% vs 49.5%)',
-                xy=(it4_idx, win_rates[it4_idx]), 
-                xytext=(it4_idx - 0.5, win_rates[it4_idx] - 20),
-                arrowprops=dict(arrowstyle='->', color='#9b59b6', lw=2.5),
-                fontsize=10, bbox=dict(boxstyle='round', facecolor='lavender', alpha=0.8),
-                ha='right', fontweight='bold')
     
     # Dodaj wartości na punktach
     for i, (opp, wr) in enumerate(zip(opponents, win_rates)):
@@ -98,9 +74,6 @@ def plot_devplayer_effectiveness(output_dir: Path):
     # Konfiguracja osi
     ax.set_xlabel('Przeciwnik', fontsize=13, fontweight='bold')
     ax.set_ylabel('Współczynnik zwycięstw DevPlayer (%)', fontsize=13, fontweight='bold')
-    ax.set_title('Skuteczność DevPlayer w zależności od jakości przeciwnika\n' +
-                 'Strategia oparta na kartach rozwoju', 
-                 fontsize=15, fontweight='bold', pad=15)
     ax.set_xticks(x)
     ax.set_xticklabels(opponents, rotation=0, ha='center')
     ax.set_ylim([0, 105])
@@ -140,15 +113,12 @@ def plot_largest_army_comparison(output_dir: Path):
                        fontweight='bold', fontsize=8)
     
     # Linia referencyjna na poziomie 50%
-    ax.axhline(y=50.0, color='gray', linestyle='--', linewidth=1.5, 
+    ax.axhline(y=50.0, color='gray', linestyle='--', linewidth=2, 
                alpha=0.5, label='Linia remisu (50%)')
     
     # Konfiguracja osi
     ax.set_xlabel('Przeciwnik', fontsize=13, fontweight='bold')
     ax.set_ylabel('Częstość zdobycia premii Największa Armia (%)', fontsize=13, fontweight='bold')
-    ax.set_title('Porównanie dominacji w premii Największa Armia\n' +
-                 'DevPlayer vs różni przeciwnicy', 
-                 fontsize=15, fontweight='bold', pad=15)
     ax.set_xticks(x)
     ax.set_xticklabels(opponents, rotation=0, ha='center')
     ax.set_ylim([0, 105])
@@ -190,9 +160,6 @@ def plot_dev_cards_comparison(output_dir: Path):
     # Konfiguracja osi
     ax.set_xlabel('Przeciwnik', fontsize=13, fontweight='bold')
     ax.set_ylabel('Średnia liczba kupionych kart rozwoju', fontsize=13, fontweight='bold')
-    ax.set_title('Porównanie liczby kupionych kart rozwoju\n' +
-                 'DevPlayer vs różni przeciwnicy', 
-                 fontsize=15, fontweight='bold', pad=15)
     ax.set_xticks(x)
     ax.set_xticklabels(opponents, rotation=0, ha='center')
     ax.set_ylim([0, max(max(dev_cards_dev), max(dev_cards_opp)) * 1.2])
