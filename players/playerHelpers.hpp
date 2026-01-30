@@ -1,13 +1,13 @@
 #pragma once
 
+#include "game_simulation/actions.hpp"
+#include "game_simulation/board.hpp"
+#include "game_simulation/consts.hpp"
+#include "game_simulation/player.hpp"
+
 #include <array>
 #include <cstdint>
-#include "../game_simulation/board.hpp"
-#include "../game_simulation/player.hpp"
-#include "../game_simulation/actions.hpp"
-#include "../game_simulation/consts.hpp"
 
-// Forward declarations
 enum class PlayerId : uint8_t;
 
 namespace PlayerHelpers {

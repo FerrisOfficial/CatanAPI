@@ -1,10 +1,9 @@
 #pragma once
 
-#include "../itPlayers/it5Player.hpp"
+#include "itPlayers/it5Player.hpp"
 
 #include <array>
 
-// DevPlayer: It5 but heavily prioritizes buying development cards.
 struct DevPlayer : public It5Player {
     DevPlayer() : It5Player() {}
     virtual ~DevPlayer() = default;

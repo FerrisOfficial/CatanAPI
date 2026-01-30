@@ -1,11 +1,13 @@
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include <iostream>
+#include "game_simulation/actions.hpp"
+#include "game_simulation/board.hpp"
+#include "game_simulation/consts.hpp"
+#include "game_simulation/player.hpp"
+
 #include <algorithm>
-#include "board.hpp"
-#include "consts.hpp"
-#include "player.hpp"
-#include "actions.hpp"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <iostream>
+
 using ::testing::UnorderedElementsAre;
 
 using namespace Board;

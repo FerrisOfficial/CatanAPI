@@ -1,9 +1,8 @@
 #pragma once
 
-#include "../itPlayers/it5Player.hpp"
-#include "../game_simulation/consts.hpp"
+#include "game_simulation/consts.hpp"
+#include "itPlayers/it5Player.hpp"
 
-// It3: It2 turn logic + smarter setup + smarter robber.
 struct OneResourcePlayer : public It5Player {
     OneResourcePlayer() : It5Player() {}
     virtual ~OneResourcePlayer() = default;

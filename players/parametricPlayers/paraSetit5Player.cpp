@@ -1,8 +1,7 @@
-#include "paraSetit5Player.hpp"
-
 #include "game_simulation/board.hpp"
-#include "utils/randomDevice.hpp"
+#include "paraSetit5Player.hpp"
 #include "playerHelpers.hpp"
+#include "utils/randomDevice.hpp"
 
 #include <algorithm>
 #include <array>

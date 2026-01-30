@@ -1,8 +1,9 @@
+#include "game_simulation/board.hpp"
+#include "game_simulation/game.hpp"
+#include "game_simulation/player.hpp"
+#include "players/randomPlayer.hpp"
+
 #include <gtest/gtest.h>
-#include "../game_simulation/game.hpp"
-#include "../players/player.hpp"
-#include "../players/randomPlayer.hpp"
-#include "../game_simulation/board.hpp"
 
 // Test RandomPlayer as a concrete IPlayer implementation
 TEST(PlayerTest, RandomPlayerInitialization) {

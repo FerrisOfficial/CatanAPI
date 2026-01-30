@@ -1,3 +1,16 @@
+#include <algorithm>
+#include <chrono>
+#include <exception>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <optional>
+#include <cstdint>
+
 #include "game_simulation/game.hpp"
 #include "players/randomPlayer.hpp"
 #include "players/itPlayers/it1Player.hpp"
@@ -14,19 +27,6 @@
 #include "players/oneTacticPlayers/cityRushPlayer.hpp"
 #include "players/playerHelpers.hpp"
 #include "utils/randomDevice.hpp"
-
-#include <iostream>
-#include <iomanip>
-#include <memory>
-#include <string>
-#include <exception>
-#include <chrono>
-#include <sstream>
-#include <vector>
-#include <algorithm>
-#include <fstream>
-#include <optional>
-#include <cstdint>
 
 namespace {
 using PlayerHelpers::effective_vp;
@@ -118,8 +118,8 @@ void print_usage(const char* exe) {
         << "  it3 It3Player\n"
         << "  it4 It4Player\n"
         << "  it5 It5Player\n"
-        << "  para ParaPlayer (params from ./players/paraPlayer.cfg; override via CATAN_PARA_CFG)\n"
-        << "  psit5 ParaSettleIt5Player (It5 + param init placement from ./players/paraSetit5Player.cfg; override via CATAN_PARA_SETIT5_CFG)\n"
+        << "  para ParaPlayer (params from ./players/parametricPlayers/paraPlayer.cfg; override via CATAN_PARA_CFG)\n"
+        << "  psit5 ParaSettleIt5Player (It5 + param init placement from ./players/parametricPlayers/paraSetit5Player.cfg; override via CATAN_PARA_SETIT5_CFG)\n"
         << "  ab  AlphaBetaPlayer\n"
         << "  or  OneResourcePlayer\n"
         << "  dev DevPlayer (heavily prioritizes development cards)\n"
@@ -773,9 +773,7 @@ int main(int argc, char** argv) {
                   << ", avgRoad=" << avgRoadB << "\n";
     }
 
-    // Preserve the original single-value output for scripts (single-game runs).
-    // For multi-game runs, printing just "winner=..." is ambiguous (it would mean last game only),
-    // so use explicit names.
+
     if (opt.games == 1) {
         std::cout << "winner=" << winner_name << "\n";
         std::cout << "turns=" << lastTurns << "\n";

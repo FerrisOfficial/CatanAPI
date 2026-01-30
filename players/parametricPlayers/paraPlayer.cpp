@@ -1,6 +1,5 @@
-#include "paraPlayer.hpp"
-
 #include "game_simulation/board.hpp"
+#include "paraPlayer.hpp"
 #include "utils/randomDevice.hpp"
 
 #include <algorithm>

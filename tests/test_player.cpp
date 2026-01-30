@@ -1,8 +1,9 @@
-#include <gtest/gtest.h>
-#include "player.hpp"
-#include "consts.hpp"
-#include "randomPlayer.hpp"
 #include "game_simulation/actions.hpp"
+#include "game_simulation/consts.hpp"
+#include "game_simulation/player.hpp"
+#include "players/randomPlayer.hpp"
+
+#include <gtest/gtest.h>
 
 using namespace Player;
 

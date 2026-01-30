@@ -1,3 +1,5 @@
+#include "game_simulation/packedBank.hpp"
+#include "game_simulation/player.hpp"
 #include "utils/dumper.hpp"
 
 #include <array>
@@ -5,9 +7,6 @@
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
-
-#include "game_simulation/player.hpp"
-#include "game_simulation/packedBank.hpp"
 
 namespace {
 

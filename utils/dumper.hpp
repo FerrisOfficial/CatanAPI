@@ -1,15 +1,15 @@
 #pragma once
 
-#include <cstdint>
+#include "game_simulation/actions.hpp"
+#include "game_simulation/board.hpp"
+#include "game_simulation/consts.hpp"
+
 #include <array>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <string_view>
-
-#include "game_simulation/actions.hpp"
-#include "game_simulation/board.hpp"
-#include "game_simulation/consts.hpp"
 
 class Dumper {
 public:

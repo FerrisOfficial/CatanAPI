@@ -1,3 +1,14 @@
+#include <chrono>
+#include <cstring>
+#include <exception>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include "game_simulation/game.hpp"
 #include "players/randomPlayer.hpp"
 #include "players/itPlayers/it1Player.hpp"
@@ -12,16 +23,6 @@
 #include "players/oneTacticPlayers/devPlayer.hpp"
 #include "players/roadPlayer.hpp"
 #include "players/oneTacticPlayers/cityRushPlayer.hpp"
-
-#include <chrono>
-#include <exception>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <memory>
-#include <sstream>
-#include <string>
-#include <vector>
 
 namespace {
 std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
@@ -164,8 +165,38 @@ void print_order_summary(std::ostream& os,
 }
 } // namespace
 
-int main() {
-    const size_t gamesPerOrder = 1000;
+int main(int argc, char* argv[]) {
+    size_t gamesPerOrder = 1000;  // default value
+
+    // Parse command-line arguments
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+            std::cout << "Usage: " << argv[0] << " [options]\n"
+                      << "Options:\n"
+                      << "  --help, -h          Show this help message\n"
+                      << "  --games N           Number of games per order (default: 1000)\n"
+                      << "\n"
+                      << "This program runs FISE (First/Second Influence on Success Evaluation) experiments\n"
+                      << "to analyze how seat order affects win rates between different AI players.\n";
+            return 0;
+        } else if (strcmp(argv[i], "--games") == 0) {
+            if (i + 1 < argc) {
+                try {
+                    gamesPerOrder = std::stoul(argv[++i]);
+                } catch (const std::exception&) {
+                    std::cerr << "Error: Invalid value for --games: " << argv[i] << "\n";
+                    return 1;
+                }
+            } else {
+                std::cerr << "Error: --games requires a value\n";
+                return 1;
+            }
+        } else {
+            std::cerr << "Error: Unknown option: " << argv[i] << "\n"
+                      << "Use --help for usage information\n";
+            return 1;
+        }
+    }
 
     const std::vector<std::string> flags = {
         "rp", "it1", "it2", "it3", "it4", "it5",

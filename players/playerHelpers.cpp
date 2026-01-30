@@ -1,7 +1,6 @@
+#include "game_simulation/board.hpp"
+#include "game_simulation/player.hpp"
 #include "playerHelpers.hpp"
-
-#include "../game_simulation/board.hpp"
-#include "../game_simulation/player.hpp"
 
 #include <algorithm>
 #include <limits>

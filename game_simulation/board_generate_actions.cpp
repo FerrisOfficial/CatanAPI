@@ -1,10 +1,11 @@
-#include "board.hpp"
 #include "actions.hpp"
+#include "board.hpp"
 #include "consts.hpp"
 #include "player.hpp"
-#include <vector>
-#include <iostream>
+
 #include <algorithm>
+#include <iostream>
+#include <vector>
 
 namespace Board {
 

@@ -4,9 +4,6 @@
 #include <cstdint>
 #include "consts.hpp"
 
-// Packed bank representation (resources + development cards)
-// Uses same bit widths as Player::PackedPlayer for compatibility.
-
 namespace Bank {
 
 using PackedBank = uint64_t;

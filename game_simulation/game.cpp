@@ -1,12 +1,11 @@
 #include "game.hpp"
+#include "players/oneTacticPlayers/alphaBetaPlayer.hpp"
+#include "utils/dumper.hpp"
 #include "utils/randomDevice.hpp"
 
 #include <algorithm>
 #include <sstream>
 #include <stdexcept>
-
-#include "utils/dumper.hpp"
-#include "../players/oneTacticPlayers/alphaBetaPlayer.hpp"
 
 namespace {
 

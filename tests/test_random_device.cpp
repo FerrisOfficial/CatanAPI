@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "../utils/randomDevice.hpp"
+
+#include "utils/randomDevice.hpp"
 
 TEST(RandomDeviceTest, UniformU32RangeWithinBounds) {
     for (int i = 0; i < 1000; ++i) {
@@ -30,7 +31,7 @@ TEST(RandomDeviceTest, DifferentCallsProduceDifferentResults) {
     for (int i = 0; i < 100; ++i) {
         results.insert(RandomDevice::uniform_u32(1000));
     }
-    // Expecting at least 90 unique results out of 100 calls
+
     EXPECT_GE(results.size(), 80u);
 }
 
@@ -41,7 +42,7 @@ TEST(RandomDeviceTest, RollDicesDistribution) {
         int roll = RandomDevice::rollDices();
         rollCounts[roll]++;
     }
-    // Check that each possible roll (2-12) occurred at least once
+
     for (int roll = 2; roll <= 12; ++roll) {
         EXPECT_GT(rollCounts[7], rollCounts[2]);
         EXPECT_GT(rollCounts[7], rollCounts[3]);

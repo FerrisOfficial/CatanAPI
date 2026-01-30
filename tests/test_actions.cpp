@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "actions.hpp"
+
+#include "game_simulation/actions.hpp"
 
 using namespace Action;
 

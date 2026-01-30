@@ -1,8 +1,9 @@
+#include "game_simulation/actions.hpp"
+#include "game_simulation/board.hpp"
+#include "game_simulation/consts.hpp"
+#include "game_simulation/player.hpp"
+
 #include <gtest/gtest.h>
-#include "board.hpp"
-#include "consts.hpp"
-#include "player.hpp"
-#include "actions.hpp"
 
 using namespace Board;
 

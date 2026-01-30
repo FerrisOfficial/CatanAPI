@@ -1,8 +1,8 @@
-#include "board.hpp"
 #include "actions.hpp"
-#include "utils/randomDevice.hpp"
+#include "board.hpp"
 #include "consts.hpp"
 #include "packedBank.hpp"
+#include "utils/randomDevice.hpp"
 
 
 namespace Board {

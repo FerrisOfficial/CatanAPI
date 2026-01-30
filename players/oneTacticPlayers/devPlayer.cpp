@@ -1,5 +1,4 @@
 #include "devPlayer.hpp"
-
 #include "playerHelpers.hpp"
 
 #include <algorithm>

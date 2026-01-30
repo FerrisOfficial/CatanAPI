@@ -1,10 +1,9 @@
 #pragma once
 
-#include "../itPlayers/it5Player.hpp"
-
 #include <array>
 
-// CityRushPlayer: prioritize grain/ore in initial placements and rush city upgrades.
+#include "itPlayers/it5Player.hpp"
+
 struct CityRushPlayer : public It5Player {
     CityRushPlayer() : It5Player() {}
     virtual ~CityRushPlayer() = default;

@@ -1,8 +1,8 @@
 #include "cityRushPlayer.hpp"
 #include "playerHelpers.hpp"
 
-#include <array>
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <vector>
 

@@ -1,6 +1,5 @@
-#include "roadPlayer.hpp"
-
 #include "playerHelpers.hpp"
+#include "roadPlayer.hpp"
 
 #include <algorithm>
 #include <array>

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "packedBank.hpp"
+
+#include "game_simulation/packedBank.hpp"
 
 using namespace Bank;
 

@@ -1,10 +1,9 @@
 #pragma once
 
-#include "itPlayers/it5Player.hpp"
-
 #include <array>
 
-// RoadPlayer: early placement de-prioritizes ore; midgame focuses on building one long continuous road.
+#include "itPlayers/it5Player.hpp"
+
 struct RoadPlayer : public It5Player {
     RoadPlayer() : It5Player() {}
     virtual ~RoadPlayer() = default;

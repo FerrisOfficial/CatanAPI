@@ -1,8 +1,9 @@
-#include "gtest/gtest.h"
-#include "game_simulation/board.hpp"
 #include "game_simulation/actions.hpp"
-#include "game_simulation/player.hpp"
+#include "game_simulation/board.hpp"
 #include "game_simulation/packedBank.hpp"
+#include "game_simulation/player.hpp"
+#include "gtest/gtest.h"
+
 #include <array>
 
 using namespace Board;
