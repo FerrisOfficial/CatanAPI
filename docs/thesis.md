@@ -1,7 +1,7 @@
 ## Streszczenie
 Praca składa się z dwóch zasadniczych części. Pierwszym celem pracy jest zaprojektowanie oraz implementacja silnika gry planszowej Catan w wersji dwuosobowej (1 vs 1) w języku C++. Implementacja została wykonana z naciskiem na wydajność oraz elastyczność, w szczególności poprzez efektywną reprezentację stanu gry, system aplikowania i cofania akcji oraz modelowanie obiektów występujących w grze. Poprawność działania silnika została zweryfikowana za pomocą rozbudowanego zestawu testów jednostkowych i integracyjnych.
 
-Drugim celem pracy, o charakterze badawczym, jest implementacja oraz porównanie botów wykorzystujących różne strategie rozgrywki. Przedstawiono różne typy graczy automatycznych, obejmujące graczy losowych, heurystycznych, wykorzystujących przeszukiwanie drzewa gry oraz strategie oparte na algorytmach ewolucyjnych. Skuteczność poszczególnych botów została oceniona na podstawie przeprowadzonych eksperymentów i analizy uzyskanych wyników.
+Drugim celem pracy, o charakterze badawczym, jest implementacja oraz porównanie botów wykorzystujących różne strategie rozgrywki. Przedstawiono kilka typów graczy automatycznych, w tym graczy losowych, heurystycznych, gracza wykorzystującego algorytm przeszukiwania drzewa gry oraz gracza opartego na algorytmie genetycznym. Skuteczność poszczególnych botów została oceniona na podstawie przeprowadzonych eksperymentów i analizy uzyskanych wyników.
 
 Dodatkowo opracowano moduł rejestracji i odtwarzania rozgrywek, umożliwiający szczegółowe prześledzenie przebiegu gry pomiędzy wybranymi botami krok po kroku. Moduł ten wspiera analizę zachowania graczy automatycznych, ułatwia debugowanie silnika gry oraz stanowi narzędzie pomocnicze w procesie porównywania strategii.
 
@@ -823,13 +823,33 @@ Przy konieczności odrzucania kart w wyniku wyrzucenia liczby 7 bot w pierwszej 
 Strategia RoadPlayer jest **wrażliwa na ograniczenia przestrzenne planszy**. Skuteczne blokowanie kluczowych węzłów przez przeciwnika lub przerwanie ciągłości sieci znacząco obniża jej skuteczność. Ponadto jednostronna koncentracja na infrastrukturze drogowej może prowadzić do utraty tempa zdobywania punktów zwycięstwa, szczególnie w starciu z botami preferującymi rozwój ekonomiczny i budowę miast. Wyniki uzyskane przez RoadPlayer potwierdzają, że silna specjalizacja w jednym aspekcie gry nie gwarantuje przewagi nad strategiami zbalansowanymi.
 
 
-### 7.5. Bot oparty na algorytmie genetycznym
+### 7.5. Boty oparte na algorytmie genetycznym
 
-W ramach projektu zaimplementowano również klasę gracza parametryzowanego (`ParaPlayer`), w której funkcja oceny i priorytety decyzyjne są sterowane zestawem wag wczytywanych z pliku konfiguracyjnego. Takie podejście umożliwia oddzielenie logiki wyboru akcji (struktury heurystyki) od doboru wartości parametrów.
+#### ParaPlayer
 
-Do strojenia parametrów wykorzystano skrypty treningowe (`utils/train_para_player.py` oraz `utils/train_para_setit5_player.py`), które realizują prosty algorytm ewolucyjny: zachowanie najlepszych osobników (elitism) oraz generowanie kolejnych kandydatów przez mutacje Gaussowskie wybranych wag. Kandydackie konfiguracje są oceniane na podstawie estymowanego współczynnika zwycięstw w serii gier przeciwko ustalonemu przeciwnikowi, uruchamianych przez program `run` z włączonym przełączaniem stron (`--switch`).
+W ramach projektu zaimplementowano klasę gracza parametryzowanego (`ParaPlayer`), w której funkcja oceny i priorytety decyzyjne są sterowane zestawem wag wczytywanych z pliku konfiguracyjnego (`players/paraPlayer.cfg`). Takie podejście umożliwia oddzielenie logiki wyboru akcji od doboru wartości parametrów.
 
-W praktyce podejście to pełni w pracy dwie role: (1) umożliwia automatyczne dostrajanie wag heurystyk bez ręcznej kalibracji oraz (2) stanowi przykład metody optymalizacji strategii opartej na wynikach rozgrywek, kompatybilnej z deterministycznym silnikiem symulacyjnym.
+Bot wykorzystuje liniową funkcję oceny pozycji (VP, produkcja, deficyty surowców, ręka, najdłuższa droga, karty rozwoju, wskaźniki „można zbudować”), premie i kary za typ akcji oraz osobną heurystykę rozbójnika i ustawień początkowych. Wybór akcji polega na ocenie każdej legalnej akcji (symulacja jednego ruchu), z opcjonalnym *lookahead* o jeden krok dla najlepszych *M* akcji. Przy odrzucaniu kart bot wybiera cel (miasto, osada, droga, karta) i odrzuca surowce o najniższej wadze dla tego celu. Plik konfiguracyjny zawiera dziesiątki parametrów (policy, eval, prod, action, robber, init, discard); wartości domyślne są zbliżone do It5 i nadpisywane przez trening.
+
+Skrypt `utils/train_para_player.py` realizuje ewolucję: **kurikulum** przeciwników (rp, it1, …, it5) z testem bramkowym, w każdej generacji **elita** plus mutanty (mutacja Gaussa `N(0, σ)·(|v|+1)`), fitness = procent zwycięstw w grach (`run` z `CATAN_PARA_CFG`), opcjonalna weryfikacja nowego najlepszego i zapis do `paraPlayer.cfg`, łagodna zmiana σ przy poprawie i przy braku poprawy.
+
+![Proces trenowania ParaPlayer](ProcesTrenowaniaParaPlayer.png)
+
+Rysunek przedstawia przebieg treningu przeciwko It5 (oś odciętych: generacja 0–120, oś rzędnych: najlepszy % zwycięstw). W pierwszych generacjach wynik rośnie do ok. 4–5%, potem występuje skok (ok. 18–25) do ok. 17–20% i wzrost do ok. 22% w okolicach generacji 35–45; po ok. 45. generacji krzywa wypłaszcza się na poziomie ok. 22–22,5%. Ilustruje to typową zbieżność ewolucyjną: szybka poprawa, potem plateau, gdy dalsze mutacje rzadko dają przewagę nad silnym przeciwnikiem. Otrzymany poziom ok. 22,5% vs It5 stanowi osiągnięty w eksperymencie szczyt skuteczności ParaPlayer.
+
+W praktyce podejście to pełni dwie role: (1) automatyczne dostrajanie wag heurystyk oraz (2) przykład optymalizacji strategii na podstawie wyników rozgrywek, kompatybilnej z deterministycznym silnikiem symulacyjnym.
+
+#### ParaSettleIt5Player
+
+ParaSettleIt5Player jest hybrydą: dziedziczy po It5Player i korzysta z logiki It5 we wszystkich fazach gry **z wyjątkiem ustawień początkowych**. Tylko wybór pierwszej i drugiej osady oraz drogi jest parametryzowany i sterowany plikiem konfiguracyjnym (`players/paraSetit5Player.cfg`, zmienna `CATAN_PARA_SETIT5_CFG` przy treningu). Dzięki temu trenowana jest wyłącznie heurystyka ustawień początkowych przy stałej, sprawdzonej strategii It5 w dalszej części rozgrywki.
+
+Plik konfiguracyjny zawiera mniejszy zestaw parametrów niż ParaPlayer: **policy** (temperatura, ε, top‑k), **prod** (wagi surowców i portów w ocenie produkcji węzła) oraz **init** (skala produkcji, premie za różnorodność, porty i komplementarność drugiej osady, kara duplikatów, premia za stopień węzła przy drodze). Ocena węzła przy ustawieniu jest taka jak w ParaPlayer (produkcja przeskalowana + premie/kary), wybór akcji placementu — ε‑zachłanny lub softmax/top‑k.
+
+Skrypt `utils/train_para_setit5_player.py` realizuje ewolucję parametrów w tym samym schemacie co trening ParaPlayer (elita + mutacje Gaussa, fitness = % zwycięstw w grach z `--switch`, opcjonalne successive halving i weryfikacja), przy kurikulum złożonym np. z przeciwnika It5.
+
+![Proces trenowania ParaSettleIt5](ProcesTrenowaniaParaSetIt5.png)
+
+Rysunek przedstawia przebieg treningu ParaSettleIt5 przeciwko It5 (oś odciętych: generacja 0–120, oś rzędnych: najlepszy % zwycięstw). Wynik startuje na ok. 6–7% i w pierwszych 40 generacjach rośnie szybko (ok. 18–20% w gen. 10, ok. 28–30% w gen. 20, ok. 45% w gen. 40). Potem tempo spada; próg 50% zostaje przekroczony w okolicach generacji 70–75, a ok. 90. generacji krzywa wypłaszcza się na poziomie ok. 54–55%. Oznacza to, że wytrenowany ParaSettleIt5 osiąga **ponad 50% zwycięstw** przeciwko It5 i staje się od niego skuteczniejszy. Mniejsza przestrzeń parametrów (tylko ustawienia początkowe) ułatwia zbieżność ewolucji w porównaniu z pełnym ParaPlayer, który w analogicznym eksperymencie ustabilizował się na ok. 22,5% vs It5.
 
 ## 8. Eksperymenty i analiza wyników
 
@@ -878,9 +898,10 @@ W pierwszym scenariuszu **wszystkie boty** (kolejne iteracje, wersje parametrycz
 | OneResourcePlayer | 99.8% | 0.0% | 159.9 | 3.79 | 11.50 | 82.0% | 92.4% | 2.9 | 1117.0 |
 | DevPlayer | 99.8% | 0.1% | 166.1 | 4.00 | 12.00 | 52.8% | 99.7% | 4.6 | 1064.8 |
 | RoadPlayer | 100.0% | 0.0% | 132.7 | 3.22 | – | 94.5% | 98.6% | 3.6 | 1051.0 |
+| CityRushPlayer | 100.0% | 0.0% | 116.1 | 3.23 | – | 72.7% | 97.7% | 3.5 | 1076.1 |
 | AlphaBeta | 100.0% | 0.0% | 108.7 | 2.97 | – | 96.2% | 91.8% | 2.5 | 1168.2 |
 
-#### Kluczowe wnioski
+### Kluczowe wnioski
 - Nieliniowy charakter progresji jakości
 
 Wzrost skuteczności botów heurystycznych nie ma charakteru liniowego. Iteracje It1 i It2 prowadzą do stopniowej poprawy współczynnika zwycięstw (56% -> 73%), natomiast It3 powoduje jakościowy skok skuteczności do 98.7%. Przekroczenie tego progu kompetencyjnego wynika z wprowadzenia strategii optymalnych ustawień początkowych, zapewniających lepsze pozycje startowe, oraz aktywnego wykorzystania rozbójnika do blokowania produkcji przeciwnika. Od tego momentu bot przejmuje kontrolę nad przebiegiem rozgrywki, a kolejne iteracje stabilizują tę dominację, osiągając 96–100% zwycięstw.
@@ -964,7 +985,6 @@ Scenariusz 3 weryfikuje skuteczność AlphaBetaPlayer — algorytmu wykorzystuj�
 | Opponent | Win Rate (AB) | Avg Turns | LossVP (AB) | LossVP (Opp) | LR% (AB) | LR% (Opp) | LA% (AB) | LA% (Opp) |
 |------------|---------------|-----------|-------------|--------------|----------|-----------|----------|-----------|
 | It1 | 99.9% | 105.0 | 10.00 | 3.38 | 96.3% | 2.7% | 92.4% | 3.9% |
-
 | It2 | 99.5% | 107.7 | 10.20 | 3.46 | 90.6% | 8.7% | 91.6% | 3.3% |
 | It3 | 94.6% | 118.8 | 11.43 | 7.36 | 82.1% | 17.8% | 77.1% | 22.3% |
 | It4 | 80.6% | 127.4 | 9.30 | 8.56 | 57.8% | 42.2% | 76.6% | 22.6% |
@@ -1040,6 +1060,9 @@ OneResourcePlayer reprezentuje strategię wyspecjalizowaną, która maksymalizuj
 | It3 | 56.8% | 148.6 | 8.43 | 9.36 | 43.4% | 56.5% | 51.9% | 47.6% | 968.4 | 854.7 |
 | It4 | 36.4% | 146.6 | 8.23 | 10.09 | 22.2% | 77.8% | 46.9% | 51.8% | 859.0 | 1119.4 |
 | It5 | 19.0% | 116.9 | 7.24 | 11.21 | 39.0% | 55.8% | 12.1% | 87.8% | 745.2 | 1065.1 |
+| DevPlayer | 51.1% | 149.2 | 8.74 | 10.14 | 67.4% | 30.1% | 12.5% | 87.5% | 1014.6 | 928.9 |
+| RoadPlayer | 22.5% | 125.9 | 7.45 | 10.28 | 18.3% | 81.3% | 22.1% | 77.6% | 784.8 | 1038.0 |
+| CityRushPlayer | 25.3% | 117.3 | 7.28 | 10.96 | 42.9% | 51.5% | 16.4% | 83.5% | 793.1 | 1034.4 |
 | Para | 34.8% | 127.8 | 7.73 | 6.14 | 32.2% | 67.2% | 60.6% | 33.5% | 795.7 | 962.1 |
 | ParaSettleIt5 | 18.2% | 113.2 | 7.19 | 11.24 | 38.9% | 54.7% | 11.1% | 88.7% | 735.0 | 1089.8 |
 | AlphaBeta | 15.8% | 111.4 | 7.03 | 10.68 | 17.6% | 81.4% | 22.6% | 75.9% | 705.0 | 1113.2 |
@@ -1055,8 +1078,6 @@ Istotna jest obserwacja, że It3Player stanowi punkt przełomowy. Spadek współ
 ![Skuteczność strategii monosurowcowej w zależności od jakości przeciwnika](image-3.png)
 Rysunek: Wykres demonstrujący współczynnik zwycięstw bota OneResourcePlayer przeciwko różnym botom przeciwnika.
 
-[TODO: skuteczność powraca dla para]
-
 #### DevPlayer
 
 DevPlayer reprezentuje strategię opartą na priorytetowym skupieniu się na zakupie kart rozwoju oraz szybkim osiąganiu związanych z nimi bonusów, takich jak premia *Największa Armia* oraz karty punktów zwycięstwa. Eksperyment weryfikuje hipotezę, czy taka strategia pośrednia może stanowić skuteczną alternatywę dla klasycznej ekspansji terytorialnej przeciwko różnym poziomom przeciwników.
@@ -1070,6 +1091,9 @@ DevPlayer reprezentuje strategię opartą na priorytetowym skupieniu się na zak
 | It3 | 68.1% | 172.1 | 10.44 | 10.22 | 23.2% | 76.5% | 90.7% | 9.3% | 3.4 | 1.7 | 1031.3 | 922.0 |
 | It4 | 45.8% | 183.2 | 10.16 | 11.05 | 8.1% | 91.9% | 90.8% | 9.2% | 3.4 | 1.8 | 929.1 | 1201.8 |
 | It5 | 24.9% | 129.0 | 8.61 | 10.96 | 23.6% | 72.4% | 59.8% | 40.2% | 2.6 | 2.4 | 809.0 | 1133.4 |
+| OneResourcePlayer | 52.7% | 147.5 | 10.38 | 8.46 | 33.3% | 63.5% | 89.7% | 10.3% | 3.5 | 1.6 | 948.1 | 989.7 |
+| RoadPlayer | 27.1% | 139.6 | 9.52 | 10.98 | 6.8% | 92.8% | 73.9% | 26.1% | 3.0 | 2.1 | 868.4 | 1164.1 |
+| CityRushPlayer | 31.0% | 135.6 | 8.84 | 10.87 | 28.5% | 69.1% | 65.0% | 35.0% | 2.7 | 2.3 | 837.0 | 1095.4 |
 | Para | 58.0% | 160.4 | 8.46 | 5.54 | 20.9% | 78.6% | 92.3% | 7.5% | 3.2 | 3.4 | 906.9 | 747.6 |
 | ParaSettleIt5 | 23.6% | 129.2 | 8.52 | 11.31 | 23.1% | 73.2% | 54.4% | 45.6% | 2.6 | 2.4 | 797.5 | 1141.4 |
 | AlphaBeta | 18.3% | 122.6 | 4.64 | 10.56 | 8.2% | 91.6% | 74.3% | 25.7% | 2.9 | 2.0 | 747.3 | 1195.7 |
@@ -1114,6 +1138,9 @@ RoadPlayer reprezentuje strategię opartą na aktywnym rozbudowaniu sieci dróg 
 | It3 | 86.7% | 136.1 | 9.68 | 8.23 | 74.3% | 25.7% | 79.6% | 20.3% | 3.0 | 1.8 | 1066.6 | 732.1 |
 | It4 | 68.2% | 140.2 | 9.54 | 9.42 | 48.3% | 51.7% | 75.8% | 24.1% | 2.9 | 2.0 | 1001.2 | 1007.3 |
 | It5 | 47.5% | 118.9 | 9.06 | 10.40 | 77.1% | 21.8% | 33.5% | 66.5% | 2.2 | 2.8 | 946.5 | 1044.1 |
+| OneResourcePlayer | 80.4% | 126.5 | 9.95 | 7.63 | 80.4% | 19.1% | 79.1% | 20.8% | 3.0 | 1.8 | 1038.0 | 781.4 |
+| DevPlayer | 72.9% | 141.6 | 10.80 | 9.43 | 92.0% | 7.8% | 25.0% | 75.0% | 2.1 | 2.9 | 1164.9 | 858.6 |
+| CityRushPlayer | 52.9% | 119.0 | 9.20 | 10.34 | 78.7% | 20.3% | 40.4% | 59.6% | 2.3 | 2.7 | 974.9 | 1005.5 |
 | Para | 74.2% | 134.9 | 8.99 | 5.14 | 71.0% | 28.8% | 79.1% | 20.2% | 2.7 | 3.2 | 1006.6 | 601.1 |
 | ParaSettleIt5 | 43.9% | 118.3 | 9.01 | 10.84 | 78.3% | 21.0% | 28.3% | 71.7% | 2.1 | 2.9 | 935.9 | 1059.4 |
 | AlphaBeta | 33.7% | 114.0 | 10.07 | 5.47 | 38.5% | 61.5% | 52.2% | 47.8% | 2.4 | 2.3 | 855.6 | 1105.8 |
@@ -1124,13 +1151,13 @@ RoadPlayer reprezentuje strategię opartą na aktywnym rozbudowaniu sieci dróg 
 
 RoadPlayer osiąga doskonałe wyniki przeciwko prostym botom (100% vs It1, 99.2% vs It2), ale skuteczność gwałtownie spada wraz ze wzrostem poziomu przeciwnika. Strategia ta okazuje się skuteczna tylko przeciwko słabszym botom, tracąc przewagę wobec zaawansowanych przeciwników (47.5% vs It5, 43.9% vs ParaSettleIt5, 33.7% vs AlphaBeta).
 
-![alt text](../plots/scenario5_road_1_effectiveness_decline.png)
+![alt text](road_effectiveness.png)
 
 **Punkt przełomowy: It4Player**
 
 RoadPlayer pokazuje dramatyczny spadek skuteczności między It3Player a It4Player — z 86.7% do 68.2% (spadek o 18.5 punktów procentowych). Przeciwko It5Player strategia osiąga jedynie 47.5% zwycięstw, co oznacza, że przegrywa częściej niż wygrywa. To pokazuje, że strategia drogowa, podobnie jak strategia monosurowcowa, jest skuteczna tylko przeciwko słabszym botom, jednak działa dłużej — Road wygrywa vs It4 (68.2%), podczas gdy OneResource wygrywa (36.4%).
 
-![alt text](../plots/scenario5_road_3_longest_road.png)
+![alt text](road_longest_road.png)
 
 **Najdłuższa Droga**
 
@@ -1150,6 +1177,17 @@ OneResourcePlayer wykazuje najsłabsze wyniki spośród trzech strategii wyspecj
 
 Wszystkie trzy strategie wykazują przepaść kompetencyjną między It3Player a It4Player, co potwierdza, że wprowadzenie strategii ustawień początkowych oraz aktywnego wykorzystania rozbójnika w It3 wystarcza, aby zneutralizować przewagę wynikającą z jednostronnej specjalizacji. Przeciwko zaawansowanym botom (It5, ParaSettleIt5, AlphaBeta) żadna ze strategii wyspecjalizowanych nie osiąga współczynnika zwycięstw powyżej 50%, co jednoznacznie potwierdza, że **zbalansowane strategie są bardziej skuteczne niż jednostronna specjalizacja w długoterminowej perspektywie**.
 
+#### 8.2.5 Scenariusz 5: Przewaga pierwszego ruchu
+
+Ostatni scenariusz poświęcony jest bezpośredniej ocenie **efektu miejsca** — czyli tego, jak bardzo bycie graczem rozpoczynającym wpływa na szansę zwycięstwa w danej parze botów.
+
+Dla każdej pary graczy (A, B) dysponujemy dwiema wartościami: odsetkiem wygranych A w rozgrywkach, w których A jest graczem pierwszym, oraz odsetkiem wygranych A w rozgrywkach, w których A jest graczem drugim (równoważnie: wygranymi B, gdy B jest pierwszy). **Różnica** tych dwóch wartości mierzy przewagę pierwszego ruchu z perspektywy gracza A przeciwko B: wartość dodatnia oznacza, że A zyskuje na byciu pierwszym, ujemna — że A zyskuje na byciu drugim. Różnice te zestawiono w macierz 13×13 (Random, It1–It5, Para, ParaSettle, AlphaBeta, OneResource, Dev, Road, CityRush) i zwizualizowano jako heatmapę (skala od −30 do +30 punktów procentowych, czerwień — korzyść gracza z osi Y z bycia pierwszym, niebieski — korzyść z bycia drugim).
+
+![Heatmapa przewagi pierwszego ruchu](heatmap.png)
+
+Na osi pionowej znajduje się **gracz rozpoczynający**, na osi poziomej — **gracz drugi**. Kolor w komórce (i, j) odpowiada przewadze gracza i z bycia pierwszym w starciu z graczem j: czerwienie oznaczają, że w tej parze pierwszy ruch daje mu wyraźną korzyść, odcienie niebieskie — że korzystniejsza jest dla niego rola gracza drugiego. Wartości bliskie zera (białe) oznaczają, że w danej parze kolejność ma niewielki wpływ na wynik. Na przekątnej (ten sam bot przeciwko sobie) wartości wynikają z symetrii: np. przy remisie 50–50 różnica wynosi 0; przy nierównowadze (np. It1 vs It1 ok. 43% gdy pierwszy) przekątna może być ujemna.
+
+Z heatmapy wynika, że w wielu parach występuje **umiarkowana przewaga pierwszego ruchu** (wartości dodatnie, do kilkunastu punktów procentowych). W parach o dużej dysproporcji sił (np. silny bot vs Random) obie perspektywy dają temu samemu botowi blisko 100% lub 0%, więc różnica jest bliska zeru. W wyrównanych starciach (np. It5 vs ParaSettle, AlphaBeta vs It5) efekt miejsca jest widoczny i może sięgać kilku–kilkunastu punktów procentowych. Scenariusz ten potwierdza, że **kolejność ustawień ma istotny wpływ na wynik** w wielu konfiguracjach i uzasadnia stosowanie przełączania stron w eksperymentach porównawczych (Scenariusze 1–4).
 
 ## 9. Podsumowanie i wnioski
 ### 9.1. Ocena realizacji celów pracy

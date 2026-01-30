@@ -34,6 +34,15 @@ ROADPLAYER_DATA = {
     'It5': {'win_rate': 47.5, 'avg_turns': 118.9, 'loss_vp_road': 9.06, 'loss_vp_opp': 10.40,
             'lr_pct_road': 77.1, 'lr_pct_opp': 21.8, 'la_pct_road': 33.5, 'la_pct_opp': 66.5,
             'dev_cards_road': 2.2, 'dev_cards_opp': 2.8, 'prod_score_road': 946.5, 'prod_score_opp': 1044.1},
+    'OneResource': {'win_rate': 80.4, 'avg_turns': 126.5, 'loss_vp_road': 9.95, 'loss_vp_opp': 7.63,
+                    'lr_pct_road': 80.4, 'lr_pct_opp': 19.1, 'la_pct_road': 79.1, 'la_pct_opp': 20.8,
+                    'dev_cards_road': 3.0, 'dev_cards_opp': 1.8, 'prod_score_road': 1038.0, 'prod_score_opp': 781.4},
+    'Dev': {'win_rate': 72.9, 'avg_turns': 141.6, 'loss_vp_road': 10.80, 'loss_vp_opp': 9.43,
+            'lr_pct_road': 92.0, 'lr_pct_opp': 7.8, 'la_pct_road': 25.0, 'la_pct_opp': 75.0,
+            'dev_cards_road': 2.1, 'dev_cards_opp': 2.9, 'prod_score_road': 1164.9, 'prod_score_opp': 858.6},
+    'CityRush': {'win_rate': 52.9, 'avg_turns': 119.0, 'loss_vp_road': 9.20, 'loss_vp_opp': 10.34,
+                 'lr_pct_road': 78.7, 'lr_pct_opp': 20.3, 'la_pct_road': 40.4, 'la_pct_opp': 59.6,
+                 'dev_cards_road': 2.3, 'dev_cards_opp': 2.7, 'prod_score_road': 974.9, 'prod_score_opp': 1005.5},
     'Para': {'win_rate': 74.2, 'avg_turns': 134.9, 'loss_vp_road': 8.99, 'loss_vp_opp': 5.14,
              'lr_pct_road': 71.0, 'lr_pct_opp': 28.8, 'la_pct_road': 79.1, 'la_pct_opp': 20.2,
              'dev_cards_road': 2.7, 'dev_cards_opp': 3.2, 'prod_score_road': 1006.6, 'prod_score_opp': 601.1},
@@ -43,7 +52,7 @@ ROADPLAYER_DATA = {
 }
 
 # Kolejność przeciwników (od najsłabszego do najsilniejszego)
-OPPONENTS_ORDER = ['It1', 'It2', 'It3', 'It4', 'It5', 'Para', 'ParaSettleIt5']
+OPPONENTS_ORDER = ['It1', 'It2', 'It3', 'It4', 'It5', 'OneResource', 'Dev', 'CityRush', 'Para', 'ParaSettleIt5']
 
 
 def plot_roadplayer_effectiveness(output_dir: Path):
@@ -62,18 +71,6 @@ def plot_roadplayer_effectiveness(output_dir: Path):
     # Linia referencyjna na poziomie 50% (remis)
     ax.axhline(y=50.0, color='grey', linestyle='--', linewidth=2, 
                alpha=0.7, label='Linia remisu (50%)')
-    
-    # Zaznacz punkt remisu (It5)
-    it5_idx = opponents.index('It5')
-    ax.plot(it5_idx, win_rates[it5_idx], 'D', markersize=10, 
-            color='#9b59b6', markeredgecolor='black', markeredgewidth=2,
-            zorder=5, label='Punkt remisu (It5)')
-    ax.annotate('Granica skuteczności:\nIt5 - prawie remis\n(47.5% vs 52.5%)',
-                xy=(it5_idx, win_rates[it5_idx]), 
-                xytext=(it5_idx - 0.5, win_rates[it5_idx] - 15),
-                arrowprops=dict(arrowstyle='->', color='#9b59b6', lw=2.5),
-                fontsize=10, bbox=dict(boxstyle='round', facecolor='lavender', alpha=0.8),
-                ha='right', fontweight='bold')
     
     # Dodaj wartości na punktach
     for i, (opp, wr) in enumerate(zip(opponents, win_rates)):

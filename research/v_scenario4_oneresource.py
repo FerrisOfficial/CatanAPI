@@ -34,6 +34,15 @@ DATA = {
     'It5': {'win_rate': 19.0, 'avg_turns': 116.9, 'loss_vp_or': 7.24, 'loss_vp_opp': 11.21,
             'lr_or': 39.0, 'lr_opp': 55.8, 'la_or': 12.1, 'la_opp': 87.8,
             'prod_or': 745.2, 'prod_opp': 1065.1},
+    'Dev': {'win_rate': 51.1, 'avg_turns': 149.2, 'loss_vp_or': 8.74, 'loss_vp_opp': 10.14,
+            'lr_or': 67.4, 'lr_opp': 30.1, 'la_or': 12.5, 'la_opp': 87.5,
+            'prod_or': 1014.6, 'prod_opp': 928.9},
+    'Road': {'win_rate': 22.5, 'avg_turns': 125.9, 'loss_vp_or': 7.45, 'loss_vp_opp': 10.28,
+             'lr_or': 18.3, 'lr_opp': 81.3, 'la_or': 22.1, 'la_opp': 77.6,
+             'prod_or': 784.8, 'prod_opp': 1038.0},
+    'CityRush': {'win_rate': 25.3, 'avg_turns': 117.3, 'loss_vp_or': 7.28, 'loss_vp_opp': 10.96,
+                 'lr_or': 42.9, 'lr_opp': 51.5, 'la_or': 16.4, 'la_opp': 83.5,
+                 'prod_or': 793.1, 'prod_opp': 1034.4},
     'Para': {'win_rate': 34.8, 'avg_turns': 127.8, 'loss_vp_or': 7.73, 'loss_vp_opp': 6.14,
              'lr_or': 32.2, 'lr_opp': 67.2, 'la_or': 60.6, 'la_opp': 33.5,
              'prod_or': 795.7, 'prod_opp': 962.1},
@@ -46,7 +55,7 @@ DATA = {
 }
 
 # Kolejność przeciwników
-OPPONENTS = ['It1', 'It2', 'It3', 'It4', 'It5', 'Para', 'ParaSettleIt5', 'AlphaBeta']
+OPPONENTS = ['It1', 'It2', 'It3', 'It4', 'It5', 'Para', 'ParaSettleIt5', 'Dev', 'Road', 'CityRush', 'AlphaBeta']
 
 
 def plot_effectiveness_decline(output_dir: Path):

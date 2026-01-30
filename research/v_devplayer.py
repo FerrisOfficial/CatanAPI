@@ -34,6 +34,15 @@ DEVPLAYER_DATA = {
     'It5': {'win_rate': 24.9, 'avg_turns': 129.0, 'loss_vp_dev': 8.61, 'loss_vp_opp': 10.96,
             'lr_pct_dev': 23.6, 'lr_pct_opp': 72.4, 'la_pct_dev': 59.8, 'la_pct_opp': 40.2,
             'dev_cards_dev': 2.6, 'dev_cards_opp': 2.4, 'prod_score_dev': 809.0, 'prod_score_opp': 1133.4},
+    'OneResource': {'win_rate': 52.7, 'avg_turns': 147.5, 'loss_vp_dev': 10.38, 'loss_vp_opp': 8.46,
+                    'lr_pct_dev': 33.3, 'lr_pct_opp': 63.5, 'la_pct_dev': 89.7, 'la_pct_opp': 10.3,
+                    'dev_cards_dev': 3.5, 'dev_cards_opp': 1.6, 'prod_score_dev': 948.1, 'prod_score_opp': 989.7},
+    'Road': {'win_rate': 27.1, 'avg_turns': 139.6, 'loss_vp_dev': 9.52, 'loss_vp_opp': 10.98,
+             'lr_pct_dev': 6.8, 'lr_pct_opp': 92.8, 'la_pct_dev': 73.9, 'la_pct_opp': 26.1,
+             'dev_cards_dev': 3.0, 'dev_cards_opp': 2.1, 'prod_score_dev': 868.4, 'prod_score_opp': 1164.1},
+    'CityRush': {'win_rate': 31.0, 'avg_turns': 135.6, 'loss_vp_dev': 8.84, 'loss_vp_opp': 10.87,
+                'lr_pct_dev': 28.5, 'lr_pct_opp': 69.1, 'la_pct_dev': 65.0, 'la_pct_opp': 35.0,
+                'dev_cards_dev': 2.7, 'dev_cards_opp': 2.3, 'prod_score_dev': 837.0, 'prod_score_opp': 1095.4},
     'Para': {'win_rate': 58.0, 'avg_turns': 160.4, 'loss_vp_dev': 8.46, 'loss_vp_opp': 5.54,
              'lr_pct_dev': 20.9, 'lr_pct_opp': 78.6, 'la_pct_dev': 92.3, 'la_pct_opp': 7.5,
              'dev_cards_dev': 3.2, 'dev_cards_opp': 3.4, 'prod_score_dev': 906.9, 'prod_score_opp': 747.6},
@@ -46,7 +55,7 @@ DEVPLAYER_DATA = {
 }
 
 # Kolejność przeciwników (od najsłabszego do najsilniejszego)
-OPPONENTS_ORDER = ['It1', 'It2', 'It3', 'It4', 'Para', 'It5', 'ParaSettleIt5', 'AlphaBeta']
+OPPONENTS_ORDER = ['It1', 'It2', 'It3', 'It4', 'Para', 'It5', 'OneResource', 'Road', 'CityRush', 'ParaSettleIt5', 'AlphaBeta']
 
 
 def plot_devplayer_effectiveness(output_dir: Path):

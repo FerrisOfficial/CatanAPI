@@ -82,7 +82,6 @@ ExpectedRollGain expected_roll_gain(const Board::BoardState& board, PlayerId sel
     return out;
 }
 
-// 5 zasobów: Brick, Lumber, Wool, Grain, Ore
 constexpr int RESOURCE_COUNT = 5;
 constexpr int FP_SCALE = 36; // 1 jednostka = 1/36 zasobu na turę
 
@@ -103,7 +102,7 @@ addExpectedResourcesFP(Board::BoardState& board,
                        ExpectedStateFP& expectedState)
 {
     auto packed = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    auto resources = unpack_resources(packed); // std::array<int,5> w [0..255]
+    auto resources = unpack_resources(packed);
 
     // 1) policz expected produkcję per zasób w jednostkach 1/36
     std::array<int, RESOURCE_COUNT> addFP{0,0,0,0,0};

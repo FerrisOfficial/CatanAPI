@@ -74,48 +74,49 @@
 \contentsline {subsection}{\numberline {7.2.3.}Algorytm alpha-beta}{47}{subsection.7.2.3}%
 \contentsline {subsection}{\numberline {7.2.4.}Funkcja oceny pozycji i fazy gry}{48}{subsection.7.2.4}%
 \contentsline {subsection}{\numberline {7.2.5.}Symulacja rzutów kością w drzewie przeszukiwania}{49}{subsection.7.2.5}%
-\contentsline {subsection}{\numberline {7.2.6.}Heurystyki uzupełniające i mechanizmy awaryjne}{49}{subsection.7.2.6}%
+\contentsline {subsection}{\numberline {7.2.6.}Heurystyki uzupełniające i mechanizmy awaryjne}{50}{subsection.7.2.6}%
 \contentsline {section}{\numberline {7.3.}Boty celujące w jedną strategię}{50}{section.7.3}%
 \contentsline {subsection}{\numberline {7.3.1.}Bot celujący w jeden zasób}{50}{subsection.7.3.1}%
-\contentsline {subsection}{\numberline {7.3.2.}Wybór priorytetowego surowca}{50}{subsection.7.3.2}%
+\contentsline {subsection}{\numberline {7.3.2.}Wybór priorytetowego surowca}{51}{subsection.7.3.2}%
 \contentsline {subsection}{\numberline {7.3.3.}Ustawienie początkowe: wymuszenie portu 2:1}{51}{subsection.7.3.3}%
-\contentsline {subsection}{\numberline {7.3.4.}Logika tury: specjalizacja i konwersja zasobów}{51}{subsection.7.3.4}%
+\contentsline {subsection}{\numberline {7.3.4.}Logika tury: specjalizacja i konwersja zasobów}{52}{subsection.7.3.4}%
 \contentsline {subsection}{\numberline {7.3.5.}Odrzucanie kart i mechanizm awaryjny}{52}{subsection.7.3.5}%
 \contentsline {subsection}{\numberline {7.3.6.}Mechanizm awaryjny: powrót do bota zbalansowanego}{52}{subsection.7.3.6}%
 \contentsline {subsection}{\numberline {7.3.7.}Bot celujący w karty rozwoju}{52}{subsection.7.3.7}%
-\contentsline {subsection}{\numberline {7.3.8.}Ustawienie początkowe i logika tury}{52}{subsection.7.3.8}%
+\contentsline {subsection}{\numberline {7.3.8.}Ustawienie początkowe i logika tury}{53}{subsection.7.3.8}%
 \contentsline {subsection}{\numberline {7.3.9.}Polityka odrzucania i ograniczenia strategii}{53}{subsection.7.3.9}%
 \contentsline {subsection}{\numberline {7.3.10.}Bot celujący w najdłuższą drogę}{53}{subsection.7.3.10}%
-\contentsline {subsection}{\numberline {7.3.11.}Ustawienie początkowe i logika tury}{53}{subsection.7.3.11}%
+\contentsline {subsection}{\numberline {7.3.11.}Ustawienie początkowe i logika tury}{54}{subsection.7.3.11}%
 \contentsline {subsection}{\numberline {7.3.12.}Polityka odrzucania i ograniczenia strategii}{54}{subsection.7.3.12}%
-\contentsline {section}{\numberline {7.4.}Bot oparty na algorytmie genetycznym}{54}{section.7.4}%
-\contentsline {chapter}{\numberline {8.}Eksperymenty i analiza wyników}{55}{chapter.8}%
-\contentsline {section}{\numberline {8.1.}Metodologia porównania botów}{55}{section.8.1}%
-\contentsline {subsection}{\numberline {8.1.1.}Metryki oceny skuteczności}{55}{subsection.8.1.1}%
-\contentsline {section}{\numberline {8.2.}Scenariusze testowe}{56}{section.8.2}%
-\contentsline {subsubsection}{Scenariusz 1: Porównanie z graczem losowym}{56}{section*.7}%
-\contentsline {subsubsection}{Podsumowanie danych}{56}{section*.8}%
-\contentsline {subsubsection}{Kluczowe wnioski}{56}{section*.9}%
-\contentsline {subsection}{\numberline {8.2.1.}Scenariusz 2: Analiza iteracyjnego rozwoju heurystyk}{60}{subsection.8.2.1}%
+\contentsline {section}{\numberline {7.4.}Boty oparte na algorytmie genetycznym}{54}{section.7.4}%
+\contentsline {subsubsection}{ParaPlayer}{54}{section*.7}%
+\contentsline {subsubsection}{ParaSettleIt5Player}{56}{section*.8}%
+\contentsline {chapter}{\numberline {8.}Eksperymenty i analiza wyników}{59}{chapter.8}%
+\contentsline {section}{\numberline {8.1.}Metodologia porównania botów}{59}{section.8.1}%
+\contentsline {subsection}{\numberline {8.1.1.}Metryki oceny skuteczności}{59}{subsection.8.1.1}%
+\contentsline {section}{\numberline {8.2.}Scenariusze testowe}{60}{section.8.2}%
+\contentsline {subsubsection}{Scenariusz 1: Porównanie z graczem losowym}{60}{section*.9}%
 \contentsline {subsubsection}{Podsumowanie danych}{60}{section*.10}%
-\contentsline {subsubsection}{Kluczowe wnioski}{61}{section*.11}%
-\contentsline {subsubsection}{Scenariusz 3: AlphaBetaPlayer}{62}{section*.12}%
-\contentsline {subsubsection}{Podsumowanie danych}{63}{section*.13}%
-\contentsline {subsubsection}{Kluczowe wnioski}{63}{section*.14}%
-\contentsline {subsubsection}{Scenariusz 4: Strategie wyspecjalizowane}{66}{section*.15}%
-\contentsline {subsubsection}{OneResourcePlayer}{66}{section*.16}%
-\contentsline {subsubsection}{Podsumowanie danych}{66}{section*.17}%
-\contentsline {subsubsection}{Kluczowe wnioski}{66}{section*.18}%
-\contentsline {subsubsection}{DevPlayer}{68}{section*.19}%
-\contentsline {subsubsection}{Podsumowanie danych}{68}{section*.20}%
-\contentsline {subsubsection}{Podsumowanie danych}{68}{section*.21}%
-\contentsline {subsubsection}{Kluczowe wnioski}{68}{section*.22}%
-\contentsline {subsubsection}{RoadPlayer}{71}{section*.23}%
-\contentsline {subsubsection}{Podsumowanie danych}{71}{section*.24}%
-\contentsline {subsubsection}{Kluczowe wnioski}{71}{section*.25}%
-\contentsline {subsubsection}{Podsumowanie Scenariusza 4: Porównanie strategii wyspecjalizowanych}{73}{section*.26}%
-\contentsline {chapter}{\numberline {9.}Podsumowanie i wnioski}{77}{chapter.9}%
-\contentsline {section}{\numberline {9.1.}Ocena realizacji celów pracy}{77}{section.9.1}%
-\contentsline {section}{\numberline {9.2.}Wnioski z części badawczej}{77}{section.9.2}%
-\contentsline {section}{\numberline {9.3.}Możliwości dalszego rozwoju systemu}{78}{section.9.3}%
-\contentsline {chapter}{Bibliografia}{79}{chapter*.27}%
+\contentsline {subsubsection}{Kluczowe wnioski}{60}{section*.11}%
+\contentsline {subsection}{\numberline {8.2.1.}Scenariusz 2: Analiza iteracyjnego rozwoju heurystyk}{64}{subsection.8.2.1}%
+\contentsline {subsubsection}{Podsumowanie danych}{64}{section*.12}%
+\contentsline {subsubsection}{Kluczowe wnioski}{65}{section*.13}%
+\contentsline {subsubsection}{Scenariusz 3: AlphaBetaPlayer}{66}{section*.14}%
+\contentsline {subsubsection}{Podsumowanie danych}{67}{section*.15}%
+\contentsline {subsubsection}{Kluczowe wnioski}{67}{section*.16}%
+\contentsline {subsubsection}{Scenariusz 4: Strategie wyspecjalizowane}{70}{section*.17}%
+\contentsline {subsubsection}{OneResourcePlayer}{70}{section*.18}%
+\contentsline {subsubsection}{Podsumowanie danych}{70}{section*.19}%
+\contentsline {subsubsection}{Kluczowe wnioski}{70}{section*.20}%
+\contentsline {subsubsection}{DevPlayer}{72}{section*.21}%
+\contentsline {subsubsection}{Podsumowanie danych}{72}{section*.22}%
+\contentsline {subsubsection}{Kluczowe wnioski}{72}{section*.23}%
+\contentsline {subsubsection}{RoadPlayer}{75}{section*.24}%
+\contentsline {subsubsection}{Podsumowanie danych}{75}{section*.25}%
+\contentsline {subsubsection}{Kluczowe wnioski}{75}{section*.26}%
+\contentsline {subsubsection}{Podsumowanie Scenariusza 4: Porównanie strategii wyspecjalizowanych}{77}{section*.27}%
+\contentsline {chapter}{\numberline {9.}Podsumowanie i wnioski}{81}{chapter.9}%
+\contentsline {section}{\numberline {9.1.}Ocena realizacji celów pracy}{81}{section.9.1}%
+\contentsline {section}{\numberline {9.2.}Wnioski z części badawczej}{81}{section.9.2}%
+\contentsline {section}{\numberline {9.3.}Możliwości dalszego rozwoju systemu}{82}{section.9.3}%
+\contentsline {chapter}{Bibliografia}{83}{chapter*.28}%

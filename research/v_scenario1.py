@@ -42,12 +42,14 @@ DATA = {
             'lr_pct': 52.8, 'la_pct': 99.7, 'dev_cards': 4.6, 'prod_score': 1064.8, 'random_wins': 1},
     'Road': {'win_rate': 100.0, 'avg_turns': 132.7, 'loss_vp_random': 3.22, 'loss_vp_bot': None,
              'lr_pct': 94.5, 'la_pct': 98.6, 'dev_cards': 3.6, 'prod_score': 1051.0, 'random_wins': 0},
+    'CityRush': {'win_rate': 100.0, 'avg_turns': 116.1, 'loss_vp_random': 3.23, 'loss_vp_bot': None,
+                 'lr_pct': 72.7, 'la_pct': 97.7, 'dev_cards': 3.5, 'prod_score': 1076.1, 'random_wins': 0},
     'AlphaBeta': {'win_rate': 100.0, 'avg_turns': 108.7, 'loss_vp_random': 2.97, 'loss_vp_bot': None,
                   'lr_pct': 96.2, 'la_pct': 91.8, 'dev_cards': 2.5, 'prod_score': 1168.2, 'random_wins': 0},
 }
 
 # Boty heurystyczne (do wykresów progresji)
-BOTS = ['It1', 'It2', 'It3', 'It4', 'It5', 'Para', 'ParaSettleIt5', 'OneResource', 'Dev', 'Road', 'AlphaBeta']
+BOTS = ['It1', 'It2', 'It3', 'It4', 'It5', 'Para', 'ParaSettleIt5', 'OneResource', 'Dev', 'Road', 'CityRush', 'AlphaBeta']
 
 
 def plot_progression(output_dir: Path):

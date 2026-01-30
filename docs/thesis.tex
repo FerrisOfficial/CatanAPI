@@ -841,7 +841,7 @@ Tak skonstruowana funkcja oceny łączy informacje krótkoterminowe (aktualne za
 
 \subsection{Symulacja rzutów kością w drzewie przeszukiwania}
 
-Kluczowym elementem implementacji AlphaBetaPlayer jest \textbf{automatyczna symulacja oczekiwanych rzutów kością} po każdej akcji \texttt{EndTurn} w drzewie przeszukiwania. Mechanizm ten działa w następujący sposób:
+Aby uwzględnić wpływ losowości produkcji zasobów bez rozgałęziania drzewa na 36 możliwych wyników rzutu, przy każdej akcji \texttt{EndTurn} w drzewie przeszukiwania wywoływana jest funkcja \textbf{symulująca oczekiwaną produkcję} z jednego ``przyszłego'' rzutu kością. Zamiast losować konkretną sumę (2--12), bot oblicza \textbf{wartość oczekiwaną} produkcji: dla każdego gracza sumuje się, po wszystkich jego osadach i miastach, wkład każdego przyległego heksa. Dla heksa z liczbą o prawdopodobieństwie \textit{pips}/36 (gdzie \textit{pips} to liczba sposobów wyrzucenia tej liczby) wkład to \textit{pips} (dla osady) lub 2$\cdot$\textit{pips} (dla miasta) --- są to \textbf{liczniki ułamka pips/36 zasobu}. Heks zajęty przez rozbójnika jest pomijany (produkcja z niego 0). Suma tych liczników jest dodawana do \textbf{reszty z poprzedniej symulowanej tury} (tablica \texttt{remainderFP} dla każdego gracza): łączna wartość jest dzielona przez 36 --- tylko całe karty (część całkowita z dzielenia) są dopisywane do ręki gracza w skopiowanym stanie, a reszta z dzielenia (0--35) jest zapisywana w \texttt{remainderFP} na następne wywołanie. Dzięki temu przy wielu kolejnych \texttt{EndTurn} w tej samej gałęzi drzewa ułamkowa ``produkcja'' się kumuluje i po kilku symulowanych turach gracz otrzymuje kolejne całe karty, bez gubienia ułamków. Stan przekazywany w głąb rekurencji alpha-beta zawiera zaktualizowane ręce obu graczy, a kolejne \texttt{EndTurn} w tej gałęzi dalej dokładają oczekiwaną produkcję i reszty są spójne między ``turami''. W efekcie drzewo nie rozgałęzia się na wyniki kostki --- zamiast tego \textbf{jedna} następna pozycja po \texttt{EndTurn} odzwierciedla średni przyrost zasobów z jednego rzutu, a wielokrotne \texttt{EndTurn} w gałęzi symulują wielokrotne rzuty w sposób przybliżony i deterministyczny.
 
 1. \textbf{Wykrywanie zakończenia tury}: Gdy algorytm symuluje akcję \texttt{EndTurn} w drzewie decyzyjnym, automatycznie wywoływana jest funkcja \texttt{addExpectedResources()}, która modyfikuje kopię stanu planszy dla gracza, który właśnie zakończył turę.
 
@@ -960,14 +960,41 @@ Przy konieczności odrzucania kart w wyniku wyrzucenia liczby 7 bot w pierwszej 
 Strategia RoadPlayer jest \textbf{wrażliwa na ograniczenia przestrzenne planszy}. Skuteczne blokowanie kluczowych węzłów przez przeciwnika lub przerwanie ciągłości sieci znacząco obniża jej skuteczność. Ponadto jednostronna koncentracja na infrastrukturze drogowej może prowadzić do utraty tempa zdobywania punktów zwycięstwa, szczególnie w starciu z botami preferującymi rozwój ekonomiczny i budowę miast. Wyniki uzyskane przez RoadPlayer potwierdzają, że silna specjalizacja w jednym aspekcie gry nie gwarantuje przewagi nad strategiami zbalansowanymi.
 
 
-\section{Bot oparty na algorytmie genetycznym}
+\section{Boty oparte na algorytmie genetycznym}
 
-W ramach projektu zaimplementowano również klasę gracza parametryzowanego (\texttt{ParaPlayer}), w której funkcja oceny i priorytety decyzyjne są sterowane zestawem wag wczytywanych z pliku konfiguracyjnego. Takie podejście umożliwia oddzielenie logiki wyboru akcji (struktury heurystyki) od doboru wartości parametrów.
+\subsubsection{ParaPlayer}
 
-Do strojenia parametrów wykorzystano skrypty treningowe (\texttt{utils/train\_para\_player.py} oraz \texttt{utils/train\_para\_setit5\_player.py}), które realizują prosty algorytm ewolucyjny: zachowanie najlepszych osobników (elitism) oraz generowanie kolejnych kandydatów przez mutacje Gaussowskie wybranych wag. Kandydackie konfiguracje są oceniane na podstawie estymowanego współczynnika zwycięstw w serii gier przeciwko ustalonemu przeciwnikowi, uruchamianych przez program \texttt{run} z włączonym przełączaniem stron (\texttt{--switch}).
+W ramach projektu zaimplementowano klasę gracza parametryzowanego (\texttt{ParaPlayer}), w której funkcja oceny i priorytety decyzyjne są sterowane zestawem wag wczytywanych z pliku konfiguracyjnego (\texttt{players/paraPlayer.cfg}). Takie podejście umożliwia oddzielenie logiki wyboru akcji od doboru wartości parametrów.
 
-W praktyce podejście to pełni w pracy dwie role: (1) umożliwia automatyczne dostrajanie wag heurystyk bez ręcznej kalibracji oraz (2) stanowi przykład metody optymalizacji strategii opartej na wynikach rozgrywek, kompatybilnej z deterministycznym silnikiem symulacyjnym.
+Bot wykorzystuje liniową funkcję oceny pozycji (VP, produkcja, deficyty surowców, ręka, najdłuższa droga, karty rozwoju, wskaźniki ``można zbudować''), premie i kary za typ akcji oraz osobną heurystykę rozbójnika i ustawień początkowych. Wybór akcji polega na ocenie każdej legalnej akcji (symulacja jednego ruchu), z opcjonalnym \textit{lookahead} o jeden krok dla najlepszych \(M\) akcji. Przy odrzucaniu kart bot wybiera cel (miasto, osada, droga, karta) i odrzuca surowce o najniższej wadze dla tego celu. Plik konfiguracyjny zawiera dziesiątki parametrów (policy, eval, prod, action, robber, init, discard); wartości domyślne są zbliżone do It5 i nadpisywane przez trening.
 
+Skrypt \texttt{utils/train\_para\_player.py} realizuje ewolucję: \textbf{kurikulum} przeciwników (rp, it1, \ldots, it5) z testem bramkowym, w każdej generacji \textbf{elita} plus mutanty (mutacja Gaussa \(N(0, \sigma) \cdot (|v|+1)\)), fitness = procent zwycięstw w grach (\texttt{run} z \texttt{CATAN\_PARA\_CFG}), opcjonalna weryfikacja nowego najlepszego i zapis do \texttt{paraPlayer.cfg}, łagodna zmiana \(\sigma\) przy poprawie i przy braku poprawy.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{ProcesTrenowaniaParaPlayer.png}
+\caption{Proces trenowania ParaPlayer}
+\end{figure}
+
+Rysunek przedstawia przebieg treningu przeciwko It5 (oś odciętych: generacja 0--120, oś rzędnych: najlepszy \% zwycięstw). W pierwszych generacjach wynik rośnie do ok.\ 4--5\%, potem występuje skok (ok.\ 18--25) do ok.\ 17--20\% i wzrost do ok.\ 22\% w okolicach generacji 35--45; po ok.\ 45.\ generacji krzywa wypłaszcza się na poziomie ok.\ 22--22,5\%. Ilustruje to typową zbieżność ewolucyjną: szybka poprawa, potem plateau, gdy dalsze mutacje rzadko dają przewagę nad silnym przeciwnikiem. Otrzymany poziom ok.\ 22,5\% vs It5 stanowi osiągnięty w eksperymencie szczyt skuteczności ParaPlayer.
+
+W praktyce podejście to pełni dwie role: (1) automatyczne dostrajanie wag heurystyk oraz (2) przykład optymalizacji strategii na podstawie wyników rozgrywek, kompatybilnej z deterministycznym silnikiem symulacyjnym.
+
+\subsubsection{ParaSettleIt5Player}
+
+ParaSettleIt5Player jest hybrydą: dziedziczy po It5Player i korzysta z logiki It5 we wszystkich fazach gry \textbf{z wyjątkiem ustawień początkowych}. Tylko wybór pierwszej i drugiej osady oraz drogi jest parametryzowany i sterowany plikiem konfiguracyjnym (\texttt{players/paraSetit5Player.cfg}, zmienna \texttt{CATAN\_PARA\_SETIT5\_CFG} przy treningu). Dzięki temu trenowana jest wyłącznie heurystyka ustawień początkowych przy stałej, sprawdzonej strategii It5 w dalszej części rozgrywki.
+
+Plik konfiguracyjny zawiera mniejszy zestaw parametrów niż ParaPlayer: \textbf{policy} (temperatura, \(\varepsilon\), top-k), \textbf{prod} (wagi surowców i portów w ocenie produkcji węzła) oraz \textbf{init} (skala produkcji, premie za różnorodność, porty i komplementarność drugiej osady, kara duplikatów, premia za stopień węzła przy drodze). Ocena węzła przy ustawieniu jest taka jak w ParaPlayer (produkcja przeskalowana + premie/kary), wybór akcji placementu --- \(\varepsilon\)-zachłanny lub softmax/top-k.
+
+Skrypt \texttt{utils/train\_para\_setit5\_player.py} realizuje ewolucję parametrów w tym samym schemacie co trening ParaPlayer (elita + mutacje Gaussa, fitness = \% zwycięstw w grach z \texttt{--switch}, opcjonalne successive halving i weryfikacja), przy kurikulum złożonym np.\ z przeciwnika It5.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{ProcesTrenowaniaParaSetIt5.png}
+\caption{Proces trenowania ParaSettleIt5}
+\end{figure}
+
+Rysunek przedstawia przebieg treningu ParaSettleIt5 przeciwko It5 (oś odciętych: generacja 0--120, oś rzędnych: najlepszy \% zwycięstw). Wynik startuje na ok.\ 6--7\% i w pierwszych 40 generacjach rośnie szybko (ok.\ 18--20\% w gen.\ 10, ok.\ 28--30\% w gen.\ 20, ok.\ 45\% w gen.\ 40). Potem tempo spada; próg 50\% zostaje przekroczony w okolicach generacji 70--75, a ok.\ 90.\ generacji krzywa wypłaszcza się na poziomie ok.\ 54--55\%. Oznacza to, że wytrenowany ParaSettleIt5 osiąga \textbf{ponad 50\% zwycięstw} przeciwko It5 i staje się od niego skuteczniejszy. Mniejsza przestrzeń parametrów (tylko ustawienia początkowe) ułatwia zbieżność ewolucji w porównaniu z pełnym ParaPlayer, który w analogicznym eksperymencie ustabilizował się na ok.\ 22,5\% vs It5.
 \chapter{Eksperymenty i analiza wyników}
 
 \section{Metodologia porównania botów}
@@ -1043,6 +1070,8 @@ OneResourcePlayer & 99.8\% & 0.0\% & 159.9 & 3.79 & 11.50 & 82.0\% & 92.4\% & 2.
 DevPlayer & 99.8\% & 0.1\% & 166.1 & 4.00 & 12.00 & 52.8\% & 99.7\% & 4.6 & 1064.8 \\
 \hline
 RoadPlayer & 100.0\% & 0.0\% & 132.7 & 3.22 & -- & 94.5\% & 98.6\% & 3.6 & 1051.0 \\
+\hline
+CityRushPlayer & 100.0\% & 0.0\% & 116.1 & 3.23 & -- & 72.7\% & 97.7\% & 3.5 & 1076.1 \\
 \hline
 AlphaBeta & 100.0\% & 0.0\% & 108.7 & 2.97 & -- & 96.2\% & 91.8\% & 2.5 & 1168.2 \\
 \hline
@@ -1340,6 +1369,12 @@ It4 & 36.4\% & 146.6 & 8.23 & 10.09 & 22.2\% & 77.8\% & 46.9\% & 51.8\% \\
 \hline
 It5 & 19.0\% & 116.9 & 7.24 & 11.21 & 39.0\% & 55.8\% & 12.1\% & 87.8\% \\
 \hline
+DevPlayer & 51.1\% & 149.2 & 8.74 & 10.14 & 67.4\% & 30.1\% & 12.5\% & 87.5\% \\
+\hline
+RoadPlayer & 22.5\% & 125.9 & 7.45 & 10.28 & 18.3\% & 81.3\% & 22.1\% & 77.6\% \\
+\hline
+CityRushPlayer & 25.3\% & 117.3 & 7.28 & 10.96 & 42.9\% & 51.5\% & 16.4\% & 83.5\% \\
+\hline
 Para & 34.8\% & 127.8 & 7.73 & 6.14 & 32.2\% & 67.2\% & 60.6\% & 33.5\% \\
 \hline
 ParaSettleIt5 & 18.2\% & 113.2 & 7.19 & 11.24 & 38.9\% & 54.7\% & 11.1\% & 88.7\% \\
@@ -1372,8 +1407,6 @@ DevPlayer reprezentuje strategię opartą na priorytetowym skupieniu się na zak
 
 \subsubsection{Podsumowanie danych}
 
-\subsubsection{Podsumowanie danych}
-
 \begin{table}[h]
 \centering
 \caption{Podsumowanie wyników DevPlayer}
@@ -1393,6 +1426,12 @@ It3 & 68.1\% & 172.1 & 10.44 & 10.22 & 23.2\% & 76.5\% & 90.7\% & 9.3\% & 3.4 & 
 It4 & 45.8\% & 183.2 & 10.16 & 11.05 & 8.1\% & 91.9\% & 90.8\% & 9.2\% & 3.4 & 1.8 \\
 \hline
 It5 & 24.9\% & 129.0 & 8.61 & 10.96 & 23.6\% & 72.4\% & 59.8\% & 40.2\% & 2.6 & 2.4 \\
+\hline
+OneResourcePlayer & 52.7\% & 147.5 & 10.38 & 8.46 & 33.3\% & 63.5\% & 89.7\% & 10.3\% & 3.5 & 1.6 \\
+\hline
+RoadPlayer & 27.1\% & 139.6 & 9.52 & 10.98 & 6.8\% & 92.8\% & 73.9\% & 26.1\% & 3.0 & 2.1 \\
+\hline
+CityRushPlayer & 31.0\% & 135.6 & 8.84 & 10.87 & 28.5\% & 69.1\% & 65.0\% & 35.0\% & 2.7 & 2.3 \\
 \hline
 Para & 58.0\% & 160.4 & 8.46 & 5.54 & 20.9\% & 78.6\% & 92.3\% & 7.5\% & 3.2 & 3.4 \\
 \hline
@@ -1465,6 +1504,12 @@ It3 & 86.7\% & 136.1 & 9.68 & 8.23 & 74.3\% & 25.7\% & 79.6\% & 20.3\% & 3.0 & 1
 It4 & 68.2\% & 140.2 & 9.54 & 9.42 & 48.3\% & 51.7\% & 75.8\% & 24.1\% & 2.9 & 2.0 \\
 \hline
 It5 & 47.5\% & 118.9 & 9.06 & 10.40 & 77.1\% & 21.8\% & 33.5\% & 66.5\% & 2.2 & 2.8 \\
+\hline
+OneResourcePlayer & 80.4\% & 126.5 & 9.95 & 7.63 & 80.4\% & 19.1\% & 79.1\% & 20.8\% & 3.0 & 1.8 \\
+\hline
+DevPlayer & 72.9\% & 141.6 & 10.80 & 9.43 & 92.0\% & 7.8\% & 25.0\% & 75.0\% & 2.1 & 2.9 \\
+\hline
+CityRushPlayer & 52.9\% & 119.0 & 9.20 & 10.34 & 78.7\% & 20.3\% & 40.4\% & 59.6\% & 2.3 & 2.7 \\
 \hline
 Para & 74.2\% & 134.9 & 8.99 & 5.14 & 71.0\% & 28.8\% & 79.1\% & 20.2\% & 2.7 & 3.2 \\
 \hline
