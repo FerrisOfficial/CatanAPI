@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cassert>
 #include <consts.hpp>
 
 // Packed 64-bit action representation
@@ -28,6 +29,10 @@ using PackedAction = uint64_t;
 
 constexpr PackedAction getEmptyAction() {return 0;}
 
+constexpr bool isValidPackedResource(Resource r) {
+    return static_cast<uint8_t>(r) <= static_cast<uint8_t>(Resource::Ore);
+}
+
 // Action type packing/unpacking (bits 0-4)
 constexpr PackedAction packType(PackedAction a, ActionType type) {
     return (a & ~0x1FULL) | (uint64_t(static_cast<uint8_t>(type) & 0x1F));
@@ -46,12 +51,30 @@ constexpr PlayerId unpackPlayerID(PackedAction a) {
 
 // Resource packing/unpacking (bits 7-31, 5 bits each)
 constexpr PackedAction packResource(PackedAction a, Resource r, uint8_t value) {
+#ifndef NDEBUG
+    if (!isValidPackedResource(r)) {
+        assert(false && "Action::packResource called with invalid Resource");
+        return a;
+    }
+#endif
+    if (!isValidPackedResource(r)) {
+        return a;
+    }
     uint8_t shift = 7 + (static_cast<uint8_t>(r) * 5);  // Resources start at bit 7
     a &= ~(0x1FULL << shift);
     a |= (uint64_t(value & 0x1F) << shift);
     return a;
 }
 constexpr uint8_t unpackResource(PackedAction a, Resource r) {
+#ifndef NDEBUG
+    if (!isValidPackedResource(r)) {
+        assert(false && "Action::unpackResource called with invalid Resource");
+        return 0;
+    }
+#endif
+    if (!isValidPackedResource(r)) {
+        return 0;
+    }
     uint8_t shift = 7 + (static_cast<uint8_t>(r) * 5);  // Resources start at bit 7
     return static_cast<uint8_t>((a >> shift) & 0x1F);
 }

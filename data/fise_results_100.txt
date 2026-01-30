@@ -1,0 +1,1230 @@
+Eksperyment FISE: wpływ kolejności (pierwszy/drugi) na liczbę zwycięstw
+Liczba gier na porządek: 100
+Łącznie botów: 13
+
+============================================================
+Para: RandomPlayer vs RandomPlayer
+  RandomPlayer (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 48 (48.0%)
+    Wygrane drugiego:   44 (44.0%)
+    Brak zwycięzcy:      8 (8.0%)
+    Średnia liczba tur:  489.7, max tur: 1000
+  RandomPlayer (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 53 (53.0%)
+    Wygrane drugiego:   38 (38.0%)
+    Brak zwycięzcy:      9 (9.0%)
+    Średnia liczba tur:  527.3, max tur: 1000
+
+============================================================
+Para: RandomPlayer vs It1Player
+  RandomPlayer (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 32 (32.0%)
+    Wygrane drugiego:   65 (65.0%)
+    Brak zwycięzcy:      3 (3.0%)
+    Średnia liczba tur:  406.2, max tur: 1000
+  It1Player (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 55 (55.0%)
+    Wygrane drugiego:   37 (37.0%)
+    Brak zwycięzcy:      8 (8.0%)
+    Średnia liczba tur:  432.6, max tur: 1000
+
+============================================================
+Para: RandomPlayer vs It2Player
+  RandomPlayer (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 29 (29.0%)
+    Wygrane drugiego:   69 (69.0%)
+    Brak zwycięzcy:      2 (2.0%)
+    Średnia liczba tur:  370.9, max tur: 1000
+  It2Player (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 74 (74.0%)
+    Wygrane drugiego:   24 (24.0%)
+    Brak zwycięzcy:      2 (2.0%)
+    Średnia liczba tur:  395.6, max tur: 1000
+
+============================================================
+Para: RandomPlayer vs It3Player
+  RandomPlayer (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 1 (1.0%)
+    Wygrane drugiego:   99 (99.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  180.9, max tur: 988
+  It3Player (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 99 (99.0%)
+    Wygrane drugiego:   1 (1.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  172.3, max tur: 375
+
+============================================================
+Para: RandomPlayer vs It4Player
+  RandomPlayer (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 1 (1.0%)
+    Wygrane drugiego:   99 (99.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  178.8, max tur: 603
+  It4Player (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 98 (98.0%)
+    Wygrane drugiego:   1 (1.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  173.9, max tur: 1000
+
+============================================================
+Para: RandomPlayer vs It5Player
+  RandomPlayer (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  112.8, max tur: 194
+  It5Player (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  111.0, max tur: 183
+
+============================================================
+Para: RandomPlayer vs ParaPlayer
+  RandomPlayer (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   99 (99.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  129.4, max tur: 1000
+  ParaPlayer (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  127.0, max tur: 199
+
+============================================================
+Para: RandomPlayer vs ParaSettleIt5Player
+  RandomPlayer (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  113.7, max tur: 186
+  ParaSettleIt5Player (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  108.1, max tur: 169
+
+============================================================
+Para: RandomPlayer vs AlphaBetaPlayer
+  RandomPlayer (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  105.9, max tur: 198
+  AlphaBetaPlayer (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  108.8, max tur: 185
+
+============================================================
+Para: RandomPlayer vs OneResourcePlayer
+  RandomPlayer (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  162.6, max tur: 346
+  OneResourcePlayer (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 99 (99.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  168.6, max tur: 1000
+
+============================================================
+Para: RandomPlayer vs DevPlayer
+  RandomPlayer (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  161.8, max tur: 594
+  DevPlayer (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  165.8, max tur: 431
+
+============================================================
+Para: RandomPlayer vs RoadPlayer
+  RandomPlayer (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  126.7, max tur: 236
+  RoadPlayer (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  133.9, max tur: 255
+
+============================================================
+Para: RandomPlayer vs CityRushPlayer
+  RandomPlayer (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  119.3, max tur: 308
+  CityRushPlayer (pierwszy) vs RandomPlayer (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  117.3, max tur: 193
+
+============================================================
+Para: It1Player vs It1Player
+  It1Player (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 43 (43.0%)
+    Wygrane drugiego:   56 (56.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  361.7, max tur: 1000
+  It1Player (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 46 (46.0%)
+    Wygrane drugiego:   43 (43.0%)
+    Brak zwycięzcy:      11 (11.0%)
+    Średnia liczba tur:  441.0, max tur: 1000
+
+============================================================
+Para: It1Player vs It2Player
+  It1Player (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 38 (38.0%)
+    Wygrane drugiego:   57 (57.0%)
+    Brak zwycięzcy:      5 (5.0%)
+    Średnia liczba tur:  357.5, max tur: 1000
+  It2Player (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 50 (50.0%)
+    Wygrane drugiego:   46 (46.0%)
+    Brak zwycięzcy:      4 (4.0%)
+    Średnia liczba tur:  354.2, max tur: 1000
+
+============================================================
+Para: It1Player vs It3Player
+  It1Player (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 4 (4.0%)
+    Wygrane drugiego:   96 (96.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  168.4, max tur: 403
+  It3Player (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 95 (95.0%)
+    Wygrane drugiego:   5 (5.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  176.1, max tur: 328
+
+============================================================
+Para: It1Player vs It4Player
+  It1Player (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 3 (3.0%)
+    Wygrane drugiego:   96 (96.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  183.8, max tur: 1000
+  It4Player (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 99 (99.0%)
+    Wygrane drugiego:   1 (1.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  170.2, max tur: 543
+
+============================================================
+Para: It1Player vs It5Player
+  It1Player (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  109.9, max tur: 194
+  It5Player (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  111.9, max tur: 191
+
+============================================================
+Para: It1Player vs ParaPlayer
+  It1Player (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 3 (3.0%)
+    Wygrane drugiego:   96 (96.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  128.1, max tur: 1000
+  ParaPlayer (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 97 (97.0%)
+    Wygrane drugiego:   2 (2.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  128.2, max tur: 1000
+
+============================================================
+Para: It1Player vs ParaSettleIt5Player
+  It1Player (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  113.4, max tur: 256
+  ParaSettleIt5Player (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  112.8, max tur: 243
+
+============================================================
+Para: It1Player vs AlphaBetaPlayer
+  It1Player (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  105.8, max tur: 158
+  AlphaBetaPlayer (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  106.5, max tur: 191
+
+============================================================
+Para: It1Player vs OneResourcePlayer
+  It1Player (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 1 (1.0%)
+    Wygrane drugiego:   99 (99.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  151.4, max tur: 386
+  OneResourcePlayer (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 98 (98.0%)
+    Wygrane drugiego:   2 (2.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  161.3, max tur: 293
+
+============================================================
+Para: It1Player vs DevPlayer
+  It1Player (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 1 (1.0%)
+    Wygrane drugiego:   99 (99.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  153.3, max tur: 340
+  DevPlayer (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 97 (97.0%)
+    Wygrane drugiego:   3 (3.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  157.1, max tur: 321
+
+============================================================
+Para: It1Player vs RoadPlayer
+  It1Player (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 1 (1.0%)
+    Wygrane drugiego:   99 (99.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  128.3, max tur: 208
+  RoadPlayer (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  131.0, max tur: 221
+
+============================================================
+Para: It1Player vs CityRushPlayer
+  It1Player (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  119.5, max tur: 204
+  CityRushPlayer (pierwszy) vs It1Player (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  111.6, max tur: 243
+
+============================================================
+Para: It2Player vs It2Player
+  It2Player (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 57 (57.0%)
+    Wygrane drugiego:   42 (42.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  296.0, max tur: 1000
+  It2Player (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 55 (55.0%)
+    Wygrane drugiego:   42 (42.0%)
+    Brak zwycięzcy:      3 (3.0%)
+    Średnia liczba tur:  309.8, max tur: 1000
+
+============================================================
+Para: It2Player vs It3Player
+  It2Player (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 2 (2.0%)
+    Wygrane drugiego:   98 (98.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  182.7, max tur: 546
+  It3Player (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 96 (96.0%)
+    Wygrane drugiego:   4 (4.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  187.6, max tur: 571
+
+============================================================
+Para: It2Player vs It4Player
+  It2Player (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 4 (4.0%)
+    Wygrane drugiego:   95 (95.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  182.5, max tur: 1000
+  It4Player (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 98 (98.0%)
+    Wygrane drugiego:   1 (1.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  157.7, max tur: 1000
+
+============================================================
+Para: It2Player vs It5Player
+  It2Player (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  115.0, max tur: 190
+  It5Player (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  115.1, max tur: 195
+
+============================================================
+Para: It2Player vs ParaPlayer
+  It2Player (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 2 (2.0%)
+    Wygrane drugiego:   98 (98.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  125.4, max tur: 226
+  ParaPlayer (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 96 (96.0%)
+    Wygrane drugiego:   4 (4.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  122.7, max tur: 227
+
+============================================================
+Para: It2Player vs ParaSettleIt5Player
+  It2Player (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  114.1, max tur: 222
+  ParaSettleIt5Player (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 98 (98.0%)
+    Wygrane drugiego:   2 (2.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  109.0, max tur: 191
+
+============================================================
+Para: It2Player vs AlphaBetaPlayer
+  It2Player (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 1 (1.0%)
+    Wygrane drugiego:   99 (99.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  110.6, max tur: 170
+  AlphaBetaPlayer (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  108.6, max tur: 187
+
+============================================================
+Para: It2Player vs OneResourcePlayer
+  It2Player (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 3 (3.0%)
+    Wygrane drugiego:   97 (97.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  161.5, max tur: 428
+  OneResourcePlayer (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 99 (99.0%)
+    Wygrane drugiego:   1 (1.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  159.9, max tur: 331
+
+============================================================
+Para: It2Player vs DevPlayer
+  It2Player (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 3 (3.0%)
+    Wygrane drugiego:   97 (97.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  168.3, max tur: 506
+  DevPlayer (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 97 (97.0%)
+    Wygrane drugiego:   3 (3.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  164.0, max tur: 395
+
+============================================================
+Para: It2Player vs RoadPlayer
+  It2Player (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  134.7, max tur: 214
+  RoadPlayer (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  128.1, max tur: 215
+
+============================================================
+Para: It2Player vs CityRushPlayer
+  It2Player (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 0 (0.0%)
+    Wygrane drugiego:   100 (100.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  116.4, max tur: 186
+  CityRushPlayer (pierwszy) vs It2Player (drugi)
+    Wygrane pierwszego: 100 (100.0%)
+    Wygrane drugiego:   0 (0.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  112.4, max tur: 199
+
+============================================================
+Para: It3Player vs It3Player
+  It3Player (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 45 (45.0%)
+    Wygrane drugiego:   51 (51.0%)
+    Brak zwycięzcy:      4 (4.0%)
+    Średnia liczba tur:  201.5, max tur: 1000
+  It3Player (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 53 (53.0%)
+    Wygrane drugiego:   46 (46.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  172.6, max tur: 1000
+
+============================================================
+Para: It3Player vs It4Player
+  It3Player (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 36 (36.0%)
+    Wygrane drugiego:   63 (63.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  167.7, max tur: 1000
+  It4Player (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 66 (66.0%)
+    Wygrane drugiego:   33 (33.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  186.2, max tur: 1000
+
+============================================================
+Para: It3Player vs It5Player
+  It3Player (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 12 (12.0%)
+    Wygrane drugiego:   88 (88.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  128.5, max tur: 234
+  It5Player (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 79 (79.0%)
+    Wygrane drugiego:   21 (21.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  129.2, max tur: 301
+
+============================================================
+Para: It3Player vs ParaPlayer
+  It3Player (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 36 (36.0%)
+    Wygrane drugiego:   61 (61.0%)
+    Brak zwycięzcy:      3 (3.0%)
+    Średnia liczba tur:  170.2, max tur: 1000
+  ParaPlayer (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 58 (58.0%)
+    Wygrane drugiego:   40 (40.0%)
+    Brak zwycięzcy:      2 (2.0%)
+    Średnia liczba tur:  165.3, max tur: 1000
+
+============================================================
+Para: It3Player vs ParaSettleIt5Player
+  It3Player (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 6 (6.0%)
+    Wygrane drugiego:   94 (94.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  121.7, max tur: 238
+  ParaSettleIt5Player (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 91 (91.0%)
+    Wygrane drugiego:   9 (9.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  123.9, max tur: 259
+
+============================================================
+Para: It3Player vs AlphaBetaPlayer
+  It3Player (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 6 (6.0%)
+    Wygrane drugiego:   94 (94.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  121.0, max tur: 180
+  AlphaBetaPlayer (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 97 (97.0%)
+    Wygrane drugiego:   3 (3.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  123.6, max tur: 349
+
+============================================================
+Para: It3Player vs OneResourcePlayer
+  It3Player (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 34 (34.0%)
+    Wygrane drugiego:   66 (66.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  153.6, max tur: 290
+  OneResourcePlayer (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 63 (63.0%)
+    Wygrane drugiego:   37 (37.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  145.6, max tur: 231
+
+============================================================
+Para: It3Player vs DevPlayer
+  It3Player (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 33 (33.0%)
+    Wygrane drugiego:   66 (66.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  190.8, max tur: 1000
+  DevPlayer (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 72 (72.0%)
+    Wygrane drugiego:   27 (27.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  170.6, max tur: 1000
+
+============================================================
+Para: It3Player vs RoadPlayer
+  It3Player (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 15 (15.0%)
+    Wygrane drugiego:   84 (84.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  150.4, max tur: 1000
+  RoadPlayer (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 88 (88.0%)
+    Wygrane drugiego:   12 (12.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  131.2, max tur: 199
+
+============================================================
+Para: It3Player vs CityRushPlayer
+  It3Player (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 11 (11.0%)
+    Wygrane drugiego:   89 (89.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  128.5, max tur: 314
+  CityRushPlayer (pierwszy) vs It3Player (drugi)
+    Wygrane pierwszego: 91 (91.0%)
+    Wygrane drugiego:   9 (9.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  129.8, max tur: 415
+
+============================================================
+Para: It4Player vs It4Player
+  It4Player (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 47 (47.0%)
+    Wygrane drugiego:   46 (46.0%)
+    Brak zwycięzcy:      7 (7.0%)
+    Średnia liczba tur:  223.6, max tur: 1000
+  It4Player (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 49 (49.0%)
+    Wygrane drugiego:   50 (50.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  189.5, max tur: 1000
+
+============================================================
+Para: It4Player vs It5Player
+  It4Player (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 32 (32.0%)
+    Wygrane drugiego:   68 (68.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  135.0, max tur: 292
+  It5Player (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 74 (74.0%)
+    Wygrane drugiego:   26 (26.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  139.2, max tur: 511
+
+============================================================
+Para: It4Player vs ParaPlayer
+  It4Player (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 64 (64.0%)
+    Wygrane drugiego:   32 (32.0%)
+    Brak zwycięzcy:      4 (4.0%)
+    Średnia liczba tur:  212.9, max tur: 1000
+  ParaPlayer (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 38 (38.0%)
+    Wygrane drugiego:   60 (60.0%)
+    Brak zwycięzcy:      2 (2.0%)
+    Średnia liczba tur:  187.2, max tur: 1000
+
+============================================================
+Para: It4Player vs ParaSettleIt5Player
+  It4Player (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 26 (26.0%)
+    Wygrane drugiego:   74 (74.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  137.0, max tur: 271
+  ParaSettleIt5Player (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 76 (76.0%)
+    Wygrane drugiego:   23 (23.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  134.5, max tur: 1000
+
+============================================================
+Para: It4Player vs AlphaBetaPlayer
+  It4Player (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 18 (18.0%)
+    Wygrane drugiego:   82 (82.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  124.8, max tur: 338
+  AlphaBetaPlayer (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 79 (79.0%)
+    Wygrane drugiego:   20 (20.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  138.5, max tur: 1000
+
+============================================================
+Para: It4Player vs OneResourcePlayer
+  It4Player (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 61 (61.0%)
+    Wygrane drugiego:   39 (39.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  152.2, max tur: 602
+  OneResourcePlayer (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 32 (32.0%)
+    Wygrane drugiego:   68 (68.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  159.9, max tur: 729
+
+============================================================
+Para: It4Player vs DevPlayer
+  It4Player (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 56 (56.0%)
+    Wygrane drugiego:   44 (44.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  169.7, max tur: 878
+  DevPlayer (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 46 (46.0%)
+    Wygrane drugiego:   52 (52.0%)
+    Brak zwycięzcy:      2 (2.0%)
+    Średnia liczba tur:  190.1, max tur: 1000
+
+============================================================
+Para: It4Player vs RoadPlayer
+  It4Player (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 25 (25.0%)
+    Wygrane drugiego:   75 (75.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  138.9, max tur: 268
+  RoadPlayer (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 73 (73.0%)
+    Wygrane drugiego:   27 (27.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  134.2, max tur: 269
+
+============================================================
+Para: It4Player vs CityRushPlayer
+  It4Player (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 22 (22.0%)
+    Wygrane drugiego:   77 (77.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  146.1, max tur: 1000
+  CityRushPlayer (pierwszy) vs It4Player (drugi)
+    Wygrane pierwszego: 71 (71.0%)
+    Wygrane drugiego:   29 (29.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  132.6, max tur: 363
+
+============================================================
+Para: It5Player vs It5Player
+  It5Player (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 47 (47.0%)
+    Wygrane drugiego:   53 (53.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  113.5, max tur: 170
+  It5Player (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 50 (50.0%)
+    Wygrane drugiego:   50 (50.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  116.3, max tur: 201
+
+============================================================
+Para: It5Player vs ParaPlayer
+  It5Player (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 77 (77.0%)
+    Wygrane drugiego:   23 (23.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  121.2, max tur: 247
+  ParaPlayer (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 23 (23.0%)
+    Wygrane drugiego:   77 (77.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  124.8, max tur: 210
+
+============================================================
+Para: It5Player vs ParaSettleIt5Player
+  It5Player (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 52 (52.0%)
+    Wygrane drugiego:   48 (48.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  116.1, max tur: 221
+  ParaSettleIt5Player (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 53 (53.0%)
+    Wygrane drugiego:   47 (47.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  113.4, max tur: 196
+
+============================================================
+Para: It5Player vs AlphaBetaPlayer
+  It5Player (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 44 (44.0%)
+    Wygrane drugiego:   56 (56.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  111.8, max tur: 193
+  AlphaBetaPlayer (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 66 (66.0%)
+    Wygrane drugiego:   34 (34.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  113.5, max tur: 243
+
+============================================================
+Para: It5Player vs OneResourcePlayer
+  It5Player (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 83 (83.0%)
+    Wygrane drugiego:   17 (17.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  117.6, max tur: 235
+  OneResourcePlayer (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 23 (23.0%)
+    Wygrane drugiego:   77 (77.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  116.5, max tur: 353
+
+============================================================
+Para: It5Player vs DevPlayer
+  It5Player (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 75 (75.0%)
+    Wygrane drugiego:   25 (25.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  127.8, max tur: 220
+  DevPlayer (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 21 (21.0%)
+    Wygrane drugiego:   79 (79.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  129.0, max tur: 266
+
+============================================================
+Para: It5Player vs RoadPlayer
+  It5Player (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 58 (58.0%)
+    Wygrane drugiego:   42 (42.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  120.9, max tur: 405
+  RoadPlayer (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 51 (51.0%)
+    Wygrane drugiego:   48 (48.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  126.1, max tur: 1000
+
+============================================================
+Para: It5Player vs CityRushPlayer
+  It5Player (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 51 (51.0%)
+    Wygrane drugiego:   49 (49.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  112.2, max tur: 246
+  CityRushPlayer (pierwszy) vs It5Player (drugi)
+    Wygrane pierwszego: 45 (45.0%)
+    Wygrane drugiego:   55 (55.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  115.7, max tur: 193
+
+============================================================
+Para: ParaPlayer vs ParaPlayer
+  ParaPlayer (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 56 (56.0%)
+    Wygrane drugiego:   43 (43.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  141.0, max tur: 1000
+  ParaPlayer (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 52 (52.0%)
+    Wygrane drugiego:   48 (48.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  129.9, max tur: 205
+
+============================================================
+Para: ParaPlayer vs ParaSettleIt5Player
+  ParaPlayer (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 18 (18.0%)
+    Wygrane drugiego:   82 (82.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  122.9, max tur: 258
+  ParaSettleIt5Player (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 87 (87.0%)
+    Wygrane drugiego:   13 (13.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  120.4, max tur: 221
+
+============================================================
+Para: ParaPlayer vs AlphaBetaPlayer
+  ParaPlayer (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 19 (19.0%)
+    Wygrane drugiego:   81 (81.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  115.3, max tur: 182
+  AlphaBetaPlayer (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 88 (88.0%)
+    Wygrane drugiego:   12 (12.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  116.3, max tur: 217
+
+============================================================
+Para: ParaPlayer vs OneResourcePlayer
+  ParaPlayer (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 65 (65.0%)
+    Wygrane drugiego:   35 (35.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  125.8, max tur: 250
+  OneResourcePlayer (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 44 (44.0%)
+    Wygrane drugiego:   56 (56.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  132.8, max tur: 212
+
+============================================================
+Para: ParaPlayer vs DevPlayer
+  ParaPlayer (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 48 (48.0%)
+    Wygrane drugiego:   52 (52.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  160.3, max tur: 512
+  DevPlayer (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 61 (61.0%)
+    Wygrane drugiego:   39 (39.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  161.9, max tur: 411
+
+============================================================
+Para: ParaPlayer vs RoadPlayer
+  ParaPlayer (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 31 (31.0%)
+    Wygrane drugiego:   68 (68.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  138.4, max tur: 1000
+  RoadPlayer (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 75 (75.0%)
+    Wygrane drugiego:   25 (25.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  133.0, max tur: 207
+
+============================================================
+Para: ParaPlayer vs CityRushPlayer
+  ParaPlayer (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 21 (21.0%)
+    Wygrane drugiego:   79 (79.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  124.8, max tur: 228
+  CityRushPlayer (pierwszy) vs ParaPlayer (drugi)
+    Wygrane pierwszego: 71 (71.0%)
+    Wygrane drugiego:   29 (29.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  125.2, max tur: 603
+
+============================================================
+Para: ParaSettleIt5Player vs ParaSettleIt5Player
+  ParaSettleIt5Player (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 59 (59.0%)
+    Wygrane drugiego:   41 (41.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  115.0, max tur: 283
+  ParaSettleIt5Player (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 62 (62.0%)
+    Wygrane drugiego:   38 (38.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  108.6, max tur: 190
+
+============================================================
+Para: ParaSettleIt5Player vs AlphaBetaPlayer
+  ParaSettleIt5Player (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 48 (48.0%)
+    Wygrane drugiego:   52 (52.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  111.8, max tur: 197
+  AlphaBetaPlayer (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 55 (55.0%)
+    Wygrane drugiego:   45 (45.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  109.9, max tur: 186
+
+============================================================
+Para: ParaSettleIt5Player vs OneResourcePlayer
+  ParaSettleIt5Player (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 82 (82.0%)
+    Wygrane drugiego:   18 (18.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  112.2, max tur: 245
+  OneResourcePlayer (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 16 (16.0%)
+    Wygrane drugiego:   84 (84.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  108.9, max tur: 189
+
+============================================================
+Para: ParaSettleIt5Player vs DevPlayer
+  ParaSettleIt5Player (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 77 (77.0%)
+    Wygrane drugiego:   23 (23.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  126.1, max tur: 412
+  DevPlayer (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 27 (27.0%)
+    Wygrane drugiego:   73 (73.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  125.0, max tur: 232
+
+============================================================
+Para: ParaSettleIt5Player vs RoadPlayer
+  ParaSettleIt5Player (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 54 (54.0%)
+    Wygrane drugiego:   46 (46.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  121.1, max tur: 201
+  RoadPlayer (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 51 (51.0%)
+    Wygrane drugiego:   49 (49.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  119.7, max tur: 175
+
+============================================================
+Para: ParaSettleIt5Player vs CityRushPlayer
+  ParaSettleIt5Player (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 50 (50.0%)
+    Wygrane drugiego:   50 (50.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  118.5, max tur: 269
+  CityRushPlayer (pierwszy) vs ParaSettleIt5Player (drugi)
+    Wygrane pierwszego: 37 (37.0%)
+    Wygrane drugiego:   63 (63.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  108.2, max tur: 186
+
+============================================================
+Para: AlphaBetaPlayer vs AlphaBetaPlayer
+  AlphaBetaPlayer (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 43 (43.0%)
+    Wygrane drugiego:   57 (57.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  108.6, max tur: 179
+  AlphaBetaPlayer (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 50 (50.0%)
+    Wygrane drugiego:   50 (50.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  108.6, max tur: 165
+
+============================================================
+Para: AlphaBetaPlayer vs OneResourcePlayer
+  AlphaBetaPlayer (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 91 (91.0%)
+    Wygrane drugiego:   9 (9.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  107.6, max tur: 161
+  OneResourcePlayer (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 8 (8.0%)
+    Wygrane drugiego:   92 (92.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  106.4, max tur: 166
+
+============================================================
+Para: AlphaBetaPlayer vs DevPlayer
+  AlphaBetaPlayer (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 79 (79.0%)
+    Wygrane drugiego:   21 (21.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  127.0, max tur: 320
+  DevPlayer (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 19 (19.0%)
+    Wygrane drugiego:   81 (81.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  123.1, max tur: 235
+
+============================================================
+Para: AlphaBetaPlayer vs RoadPlayer
+  AlphaBetaPlayer (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 66 (66.0%)
+    Wygrane drugiego:   34 (34.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  113.4, max tur: 184
+  RoadPlayer (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 36 (36.0%)
+    Wygrane drugiego:   64 (64.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  111.7, max tur: 218
+
+============================================================
+Para: AlphaBetaPlayer vs CityRushPlayer
+  AlphaBetaPlayer (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 57 (57.0%)
+    Wygrane drugiego:   43 (43.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  113.0, max tur: 186
+  CityRushPlayer (pierwszy) vs AlphaBetaPlayer (drugi)
+    Wygrane pierwszego: 31 (31.0%)
+    Wygrane drugiego:   69 (69.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  113.8, max tur: 178
+
+============================================================
+Para: OneResourcePlayer vs OneResourcePlayer
+  OneResourcePlayer (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 87 (87.0%)
+    Wygrane drugiego:   13 (13.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  157.0, max tur: 307
+  OneResourcePlayer (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 84 (84.0%)
+    Wygrane drugiego:   16 (16.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  160.9, max tur: 307
+
+============================================================
+Para: OneResourcePlayer vs DevPlayer
+  OneResourcePlayer (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 45 (45.0%)
+    Wygrane drugiego:   54 (54.0%)
+    Brak zwycięzcy:      1 (1.0%)
+    Średnia liczba tur:  153.1, max tur: 1000
+  DevPlayer (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 55 (55.0%)
+    Wygrane drugiego:   45 (45.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  142.0, max tur: 250
+
+============================================================
+Para: OneResourcePlayer vs RoadPlayer
+  OneResourcePlayer (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 20 (20.0%)
+    Wygrane drugiego:   80 (80.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  124.1, max tur: 254
+  RoadPlayer (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 74 (74.0%)
+    Wygrane drugiego:   26 (26.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  123.3, max tur: 247
+
+============================================================
+Para: OneResourcePlayer vs CityRushPlayer
+  OneResourcePlayer (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 25 (25.0%)
+    Wygrane drugiego:   75 (75.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  117.2, max tur: 264
+  CityRushPlayer (pierwszy) vs OneResourcePlayer (drugi)
+    Wygrane pierwszego: 74 (74.0%)
+    Wygrane drugiego:   26 (26.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  112.3, max tur: 270
+
+============================================================
+Para: DevPlayer vs DevPlayer
+  DevPlayer (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 55 (55.0%)
+    Wygrane drugiego:   45 (45.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  161.2, max tur: 628
+  DevPlayer (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 47 (47.0%)
+    Wygrane drugiego:   53 (53.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  156.8, max tur: 563
+
+============================================================
+Para: DevPlayer vs RoadPlayer
+  DevPlayer (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 25 (25.0%)
+    Wygrane drugiego:   75 (75.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  134.2, max tur: 217
+  RoadPlayer (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 64 (64.0%)
+    Wygrane drugiego:   34 (34.0%)
+    Brak zwycięzcy:      2 (2.0%)
+    Średnia liczba tur:  168.2, max tur: 1000
+
+============================================================
+Para: DevPlayer vs CityRushPlayer
+  DevPlayer (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 37 (37.0%)
+    Wygrane drugiego:   63 (63.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  132.1, max tur: 226
+  CityRushPlayer (pierwszy) vs DevPlayer (drugi)
+    Wygrane pierwszego: 74 (74.0%)
+    Wygrane drugiego:   26 (26.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  127.3, max tur: 285
+
+============================================================
+Para: RoadPlayer vs RoadPlayer
+  RoadPlayer (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 58 (58.0%)
+    Wygrane drugiego:   42 (42.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  123.8, max tur: 205
+  RoadPlayer (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 49 (49.0%)
+    Wygrane drugiego:   51 (51.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  126.8, max tur: 260
+
+============================================================
+Para: RoadPlayer vs CityRushPlayer
+  RoadPlayer (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 51 (51.0%)
+    Wygrane drugiego:   49 (49.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  116.4, max tur: 167
+  CityRushPlayer (pierwszy) vs RoadPlayer (drugi)
+    Wygrane pierwszego: 47 (47.0%)
+    Wygrane drugiego:   53 (53.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  120.2, max tur: 209
+
+============================================================
+Para: CityRushPlayer vs CityRushPlayer
+  CityRushPlayer (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 54 (54.0%)
+    Wygrane drugiego:   46 (46.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  117.3, max tur: 274
+  CityRushPlayer (pierwszy) vs CityRushPlayer (drugi)
+    Wygrane pierwszego: 54 (54.0%)
+    Wygrane drugiego:   46 (46.0%)
+    Brak zwycięzcy:      0 (0.0%)
+    Średnia liczba tur:  122.5, max tur: 296
+
+============================================================
+Podsumowanie per bot (wygrane zależne od kolejności)
+- RandomPlayer
+    jako pierwszy: 164/1400 (11.7%), NW=23
+    jako drugi:    145/1400 (10.4%), NW=29
+- It1Player
+    jako pierwszy: 195/1400 (13.9%), NW=27
+    jako drugi:    223/1400 (15.9%), NW=20
+- It2Player
+    jako pierwszy: 251/1400 (17.9%), NW=11
+    jako drugi:    225/1400 (16.1%), NW=12
+- It3Player
+    jako pierwszy: 577/1400 (41.2%), NW=11
+    jako drugi:    581/1400 (41.5%), NW=9
+- It4Player
+    jako pierwszy: 761/1400 (54.4%), NW=16
+    jako drugi:    754/1400 (53.9%), NW=17
+- It5Player
+    jako pierwszy: 990/1400 (70.7%), NW=0
+    jako drugi:    976/1400 (69.7%), NW=1
+- ParaPlayer
+    jako pierwszy: 722/1400 (51.6%), NW=7
+    jako drugi:    674/1400 (48.1%), NW=10
+- ParaSettleIt5Player
+    jako pierwszy: 1037/1400 (74.1%), NW=1
+    jako drugi:    991/1400 (70.8%), NW=0
+- AlphaBetaPlayer
+    jako pierwszy: 1071/1400 (76.5%), NW=1
+    jako drugi:    1077/1400 (76.9%), NW=0
+- OneResourcePlayer
+    jako pierwszy: 743/1400 (53.1%), NW=2
+    jako drugi:    606/1400 (43.3%), NW=0
+- DevPlayer
+    jako pierwszy: 759/1400 (54.2%), NW=3
+    jako drugi:    739/1400 (52.8%), NW=4
+- RoadPlayer
+    jako pierwszy: 970/1400 (69.3%), NW=3
+    jako drugi:    949/1400 (67.8%), NW=2
+- CityRushPlayer
+    jako pierwszy: 949/1400 (67.8%), NW=0
+    jako drugi:    966/1400 (69.0%), NW=1
+
+Czas całkowity: 8511.71 s

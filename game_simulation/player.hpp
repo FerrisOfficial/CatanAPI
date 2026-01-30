@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cassert>
 #pragma once
 
 #include <cstdint>
@@ -44,12 +45,39 @@ constexpr PackedPlayer makeNewPlayer() {
     return (5ULL << 48) | (4ULL << 51) | (15ULL << 54);
 }
 
+constexpr bool isValidPackedResource(Resource r) {
+    // Only the 5 real resources are packable.
+    return static_cast<uint8_t>(r) <= static_cast<uint8_t>(Resource::Ore);
+}
+
+constexpr uint8_t clampResource5Bits(int v) {
+    return static_cast<uint8_t>(v < 0 ? 0 : (v > 31 ? 31 : v));
+}
+
 constexpr PackedPlayer packResource(PackedPlayer p, Resource r, uint8_t value) {
+#ifndef NDEBUG
+    if (!isValidPackedResource(r)) {
+        assert(false && "Player::packResource called with invalid Resource");
+        return p;
+    }
+#endif
+    if (!isValidPackedResource(r)) {
+        return p;
+    }
     p &= ~(0x1FULL << (r*5));
     p |= (uint64_t(value & 0x1F) << (r*5));
     return p;
 }
 constexpr uint8_t unpackResource(PackedPlayer p, Resource r) {
+#ifndef NDEBUG
+    if (!isValidPackedResource(r)) {
+        assert(false && "Player::unpackResource called with invalid Resource");
+        return 0;
+    }
+#endif
+    if (!isValidPackedResource(r)) {
+        return 0;
+    }
     return (p >> (r*5)) & 0x1F;
 }
 
@@ -207,7 +235,9 @@ constexpr uint8_t totalDevCards(PackedPlayer p) {
 }
 
 constexpr void changeResourceQuantity(PackedPlayer &p, Resource r, int8_t delta) {
-    p = packResource(p, r, unpackResource(p, r) + delta);
+    const int cur = static_cast<int>(unpackResource(p, r));
+    const int next = cur + static_cast<int>(delta);
+    p = packResource(p, r, clampResource5Bits(next));
 }
 
 }// namespace Player

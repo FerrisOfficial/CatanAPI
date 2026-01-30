@@ -1,12 +1,17 @@
 #pragma once
 
 #include <random>
+#include <cstdint>
 
 namespace RandomDevice {
 
 inline std::mt19937& get_rng() {
     static thread_local std::mt19937 rng((std::random_device())());
     return rng;
+}
+
+inline void seed(uint32_t s) {
+    get_rng().seed(s);
 }
 
 // RAII helper: saves/restores RNG state for simulations.
