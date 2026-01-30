@@ -1,31 +1,38 @@
 #include "devPlayer.hpp"
-#include "playerHelpers.hpp"
 
 #include <algorithm>
 #include <array>
 #include <limits>
 #include <vector>
 
+#include "playerHelpers.hpp"
+
 namespace {
 
-using PlayerHelpers::effective_vp;
-using PlayerHelpers::unpack_resources;
-using PlayerHelpers::hand_count;
 using PlayerHelpers::cost_for;
 using PlayerHelpers::deficit;
-using PlayerHelpers::evaluate_position;
-using PlayerHelpers::is_deterministic_action;
 using PlayerHelpers::dice_pips;
+using PlayerHelpers::effective_vp;
+using PlayerHelpers::evaluate_position;
+using PlayerHelpers::hand_count;
+using PlayerHelpers::is_deterministic_action;
+using PlayerHelpers::unpack_resources;
 
 uint8_t resource_weight_dev_early(Resource r) {
     // Dev-card strategy wants Ore/Grain/Wool early.
     switch (r) {
-        case Resource::Ore:    return 9;
-        case Resource::Grain:  return 8;
-        case Resource::Wool:   return 7;
-        case Resource::Brick:  return 2;
-        case Resource::Lumber: return 2;
-        default:               return 0;
+        case Resource::Ore:
+            return 9;
+        case Resource::Grain:
+            return 8;
+        case Resource::Wool:
+            return 7;
+        case Resource::Brick:
+            return 2;
+        case Resource::Lumber:
+            return 2;
+        default:
+            return 0;
     }
 }
 
@@ -34,8 +41,9 @@ struct PlacementScore {
     Action::PackedAction action = Action::getEmptyAction();
 };
 
-std::array<bool, 5> resources_at_node(const Board::BoardState* board, NodeId nodeId) {
-    std::array<bool, 5> has {false, false, false, false, false};
+std::array<bool, 5> resources_at_node(const Board::BoardState* board,
+                                      NodeId nodeId) {
+    std::array<bool, 5> has{false, false, false, false, false};
     if (nodeId >= NODE_COUNT) return has;
 
     const auto node = board->nodes[nodeId];
@@ -51,13 +59,14 @@ std::array<bool, 5> resources_at_node(const Board::BoardState* board, NodeId nod
     return has;
 }
 
-int score_settlement_node_dev(const Board::BoardState* board, NodeId nodeId, bool secondPlacement,
+int score_settlement_node_dev(const Board::BoardState* board, NodeId nodeId,
+                              bool secondPlacement,
                               const std::array<bool, 5>& firstRes) {
     if (nodeId >= NODE_COUNT) return std::numeric_limits<int>::min();
     const auto node = board->nodes[nodeId];
 
     int productionScore = 0;
-    std::array<uint8_t, 5> resourceCounts {0, 0, 0, 0, 0};
+    std::array<uint8_t, 5> resourceCounts{0, 0, 0, 0, 0};
 
     for (uint8_t i = 0; i < 3; ++i) {
         const HexId hexId = Board::Node::unpackAdjacentHex(node, i);
@@ -68,7 +77,8 @@ int score_settlement_node_dev(const Board::BoardState* board, NodeId nodeId, boo
         if (r == Resource::NoResource) continue;
 
         const uint8_t pips = dice_pips(Board::Hex::unpackCatanNumber(hex));
-        productionScore += static_cast<int>(pips) * static_cast<int>(resource_weight_dev_early(r));
+        productionScore += static_cast<int>(pips) *
+                           static_cast<int>(resource_weight_dev_early(r));
 
         if (static_cast<uint8_t>(r) < 5) {
             resourceCounts[static_cast<size_t>(r)]++;
@@ -80,7 +90,8 @@ int score_settlement_node_dev(const Board::BoardState* board, NodeId nodeId, boo
     for (size_t i = 0; i < 5; ++i) unique += resourceCounts[i] > 0 ? 1 : 0;
     int diversityBonus = unique * 18;
 
-    // Penalize duplicates on the same node (double resources are less flexible).
+    // Penalize duplicates on the same node (double resources are less
+    // flexible).
     int duplicatePenalty = 0;
     for (size_t i = 0; i < 5; ++i) {
         if (resourceCounts[i] > 1) {
@@ -104,25 +115,28 @@ int score_settlement_node_dev(const Board::BoardState* board, NodeId nodeId, boo
     if (secondPlacement) {
         auto add_if_missing = [&](Resource r, int bonus) {
             const size_t idx = static_cast<size_t>(r);
-            if (resourceCounts[idx] > 0 && !firstRes[idx]) complementBonus += bonus;
+            if (resourceCounts[idx] > 0 && !firstRes[idx])
+                complementBonus += bonus;
         };
 
         add_if_missing(Resource::Ore, 30);
         add_if_missing(Resource::Grain, 26);
         add_if_missing(Resource::Wool, 22);
 
-        // Still mildly prefer getting at least one of {Brick,Lumber} if totally missing.
+        // Still mildly prefer getting at least one of {Brick,Lumber} if totally
+        // missing.
         add_if_missing(Resource::Brick, 8);
         add_if_missing(Resource::Lumber, 8);
     }
 
-    return productionScore + diversityBonus + portBonus + complementBonus - duplicatePenalty;
+    return productionScore + diversityBonus + portBonus + complementBonus -
+           duplicatePenalty;
 }
 
-PlacementScore pick_best_dev_placement(const Board::BoardState* board,
-                                      const std::vector<Action::PackedAction>& actions,
-                                      bool secondPlacement,
-                                      const std::array<bool, 5>& firstRes) {
+PlacementScore pick_best_dev_placement(
+    const Board::BoardState* board,
+    const std::vector<Action::PackedAction>& actions, bool secondPlacement,
+    const std::array<bool, 5>& firstRes) {
     PlacementScore best;
 
     for (const auto a : actions) {
@@ -131,7 +145,8 @@ PlacementScore pick_best_dev_placement(const Board::BoardState* board,
         if (nodeId >= NODE_COUNT) continue;
         if (edgeId == EdgeIdNone) continue;
 
-        int s = score_settlement_node_dev(board, nodeId, secondPlacement, firstRes);
+        int s =
+            score_settlement_node_dev(board, nodeId, secondPlacement, firstRes);
 
         // Tiny road target degree bonus (more future options).
         NodeId n0 = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 0);
@@ -141,7 +156,7 @@ PlacementScore pick_best_dev_placement(const Board::BoardState* board,
             const auto adj = Board::Node::getAdjacentEdges(board->nodes[other]);
             int deg = 0;
             for (auto e : adj) deg += (e != EdgeIdNone) ? 1 : 0;
-            s += deg; // 1..3
+            s += deg;  // 1..3
         }
 
         if (s > best.score) {
@@ -151,7 +166,8 @@ PlacementScore pick_best_dev_placement(const Board::BoardState* board,
     }
 
     if (best.score == std::numeric_limits<int>::min()) {
-        best.action = actions.empty() ? Action::getEmptyAction() : actions.front();
+        best.action =
+            actions.empty() ? Action::getEmptyAction() : actions.front();
         best.score = 0;
     }
 
@@ -161,38 +177,44 @@ PlacementScore pick_best_dev_placement(const Board::BoardState* board,
 std::array<int, 5> dev_keep_weights() {
     // Strongly keep Ore/Grain/Wool to enable dev buys.
     return {
-        6,  // Brick
-        6,  // Lumber
-        20, // Wool
-        22, // Grain
-        24, // Ore
+        6,   // Brick
+        6,   // Lumber
+        20,  // Wool
+        22,  // Grain
+        24,  // Ore
     };
 }
 
-} // namespace
+}  // namespace
 
-std::pair<Action::PackedAction, Action::PackedAction> DevPlayer::getInitialPlacement() {
-    auto actions = boardState->generatePlaceInitialStructures(boardState->currentPlayer);
+std::pair<Action::PackedAction, Action::PackedAction>
+DevPlayer::getInitialPlacement() {
+    auto actions =
+        boardState->generatePlaceInitialStructures(boardState->currentPlayer);
     if (actions.empty()) {
         auto noAction = Action::getEmptyAction();
         return {noAction, noAction};
     }
 
     firstPlacementResources = {false, false, false, false, false};
-    const auto best = pick_best_dev_placement(boardState, actions, false, firstPlacementResources);
+    const auto best = pick_best_dev_placement(boardState, actions, false,
+                                              firstPlacementResources);
     const NodeId nodeId = Action::unpackArg1(best.action);
     firstPlacementResources = resources_at_node(boardState, nodeId);
     return {best.action, best.action};
 }
 
-std::pair<Action::PackedAction, Action::PackedAction> DevPlayer::get2InitialPlacement() {
-    auto actions = boardState->generatePlace2InitialStructures(boardState->currentPlayer);
+std::pair<Action::PackedAction, Action::PackedAction>
+DevPlayer::get2InitialPlacement() {
+    auto actions =
+        boardState->generatePlace2InitialStructures(boardState->currentPlayer);
     if (actions.empty()) {
         auto noAction = Action::getEmptyAction();
         return {noAction, noAction};
     }
 
-    const auto best = pick_best_dev_placement(boardState, actions, true, firstPlacementResources);
+    const auto best = pick_best_dev_placement(boardState, actions, true,
+                                              firstPlacementResources);
     return {best.action, best.action};
 }
 
@@ -219,9 +241,12 @@ Action::PackedAction DevPlayer::getDiscardAction() {
         for (int i = 0; i < 5; ++i) {
             if (have[static_cast<size_t>(i)] == 0) continue;
 
-            const bool neededForDev = have[static_cast<size_t>(i)] <= need[static_cast<size_t>(i)];
+            const bool neededForDev =
+                have[static_cast<size_t>(i)] <= need[static_cast<size_t>(i)];
             int discardCost = baseW[static_cast<size_t>(i)];
-            if (neededForDev) discardCost += 800; // strongly avoid discarding dev ingredients
+            if (neededForDev)
+                discardCost +=
+                    800;  // strongly avoid discarding dev ingredients
 
             if (discardCost < best) {
                 best = discardCost;
@@ -233,7 +258,8 @@ Action::PackedAction DevPlayer::getDiscardAction() {
 
         const auto r = static_cast<Resource>(bestIdx);
         const uint8_t current = Action::unpackResource(action, r);
-        action = Action::packResource(action, r, static_cast<uint8_t>(current + 1));
+        action =
+            Action::packResource(action, r, static_cast<uint8_t>(current + 1));
         have[static_cast<size_t>(bestIdx)]--;
         remaining--;
     }
@@ -249,7 +275,8 @@ Action::PackedAction DevPlayer::getTurnAction() {
 
     const int baseScore = evaluate_position(boardState, selfId);
 
-    // If we can win immediately by building (or are at 9+ VP), prefer deterministic builds.
+    // If we can win immediately by building (or are at 9+ VP), prefer
+    // deterministic builds.
     const int selfVP = effective_vp(boardState, selfId);
 
     Action::PackedAction devBuy = Action::getEmptyAction();
@@ -265,8 +292,10 @@ Action::PackedAction DevPlayer::getTurnAction() {
 
     if (Action::unpackType(devBuy) == ActionType::BuyDevCard) {
         if (selfVP >= 9) {
-            if (Action::unpackType(cityBuild) == ActionType::BuildCity) return cityBuild;
-            if (Action::unpackType(settleBuild) == ActionType::BuildSettlement) return settleBuild;
+            if (Action::unpackType(cityBuild) == ActionType::BuildCity)
+                return cityBuild;
+            if (Action::unpackType(settleBuild) == ActionType::BuildSettlement)
+                return settleBuild;
         }
         // Heavy dev-card priority.
         return devBuy;
@@ -282,7 +311,8 @@ Action::PackedAction DevPlayer::getTurnAction() {
         int s = evaluate_position(boardState, selfId) + extraBonus;
 
         // Strongly reward actions that enable buying a dev card next.
-        if (Action::unpackType(a) == ActionType::TradeBank || Action::unpackType(a) == ActionType::BuildRoad) {
+        if (Action::unpackType(a) == ActionType::TradeBank ||
+            Action::unpackType(a) == ActionType::BuildRoad) {
             auto next = boardState->getLegalActions(selfId);
             bool canDev = false;
             for (const auto na : next) {
@@ -309,14 +339,16 @@ Action::PackedAction DevPlayer::getTurnAction() {
             consider(a);
         }
     }
-    if (Action::unpackType(best) == ActionType::BuildCity || Action::unpackType(best) == ActionType::BuildSettlement) {
+    if (Action::unpackType(best) == ActionType::BuildCity ||
+        Action::unpackType(best) == ActionType::BuildSettlement) {
         return best;
     }
 
     // Otherwise, prefer actions that set up dev-buy.
     for (const auto a : actions) {
         const auto t = Action::unpackType(a);
-        if (t == ActionType::TradeBank || t == ActionType::BuildRoad || t == ActionType::EndTurn) {
+        if (t == ActionType::TradeBank || t == ActionType::BuildRoad ||
+            t == ActionType::EndTurn) {
             consider(a);
         }
     }
@@ -327,7 +359,8 @@ Action::PackedAction DevPlayer::getTurnAction() {
     }
 
     // Avoid choosing EndTurn when it doesn't improve the evaluation.
-    if (Action::unpackType(best) == ActionType::EndTurn && bestScore < baseScore) {
+    if (Action::unpackType(best) == ActionType::EndTurn &&
+        bestScore < baseScore) {
         return It5Player::getTurnAction();
     }
 

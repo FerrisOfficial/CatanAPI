@@ -1,10 +1,11 @@
 #include "it4Player.hpp"
-#include "playerHelpers.hpp"
 
 #include <algorithm>
 #include <array>
 #include <limits>
 #include <vector>
+
+#include "playerHelpers.hpp"
 
 namespace {
 
@@ -32,10 +33,12 @@ std::array<uint8_t, 5> cost_for(BuyableType b) {
     return {c[0], c[1], c[2], c[3], c[4]};
 }
 
-uint16_t deficit(const std::array<uint8_t, 5>& have, const std::array<uint8_t, 5>& need) {
+uint16_t deficit(const std::array<uint8_t, 5>& have,
+                 const std::array<uint8_t, 5>& need) {
     uint16_t d = 0;
     for (size_t i = 0; i < 5; ++i) {
-        if (have[i] < need[i]) d = static_cast<uint16_t>(d + (need[i] - have[i]));
+        if (have[i] < need[i])
+            d = static_cast<uint16_t>(d + (need[i] - have[i]));
     }
     return d;
 }
@@ -48,11 +51,16 @@ struct TargetEval {
 
 int priority_index(BuyableType b) {
     switch (b) {
-        case BuyableType::City: return 0;
-        case BuyableType::Settlement: return 1;
-        case BuyableType::Road: return 2;
-        case BuyableType::DevCard: return 3;
-        default: return 99;
+        case BuyableType::City:
+            return 0;
+        case BuyableType::Settlement:
+            return 1;
+        case BuyableType::Road:
+            return 2;
+        case BuyableType::DevCard:
+            return 3;
+        default:
+            return 99;
     }
 }
 
@@ -60,12 +68,14 @@ TargetEval best_target_for(const std::array<uint8_t, 5>& have) {
     TargetEval best;
     best.def = std::numeric_limits<uint16_t>::max();
 
-    for (BuyableType t : {BuyableType::City, BuyableType::Settlement, BuyableType::Road, BuyableType::DevCard}) {
+    for (BuyableType t : {BuyableType::City, BuyableType::Settlement,
+                          BuyableType::Road, BuyableType::DevCard}) {
         const auto need = cost_for(t);
         const auto d = deficit(have, need);
         const bool aff = (d == 0);
 
-        if (d < best.def || (d == best.def && priority_index(t) < priority_index(best.target))) {
+        if (d < best.def || (d == best.def &&
+                             priority_index(t) < priority_index(best.target))) {
             best.target = t;
             best.def = d;
             best.affordable = aff;
@@ -84,21 +94,25 @@ bool is_pre_roll_dev_window(const Board::BoardState* board) {
     if (type == ActionType::EndTurn) return true;
 
     // First ever turn after setup: last action may be a placement.
-    if (board->currentTurn == 0 && (type == ActionType::PlaceInitialStructures || type == ActionType::Place2InitialStructures)) {
+    if (board->currentTurn == 0 &&
+        (type == ActionType::PlaceInitialStructures ||
+         type == ActionType::Place2InitialStructures)) {
         return true;
     }
 
     return false;
 }
 
-int robber_hex_score(const Board::BoardState* board, PlayerId selfId, HexId hexId) {
+int robber_hex_score(const Board::BoardState* board, PlayerId selfId,
+                     HexId hexId) {
     if (hexId >= HEX_COUNT) return std::numeric_limits<int>::min();
 
     const auto hex = board->hexes[hexId];
     const Resource r = Board::Hex::unpackResource(hex);
     if (r == Resource::NoResource) return std::numeric_limits<int>::min();
 
-    const PlayerId enemyId = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+    const PlayerId enemyId =
+        (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
 
     const uint8_t pips = dice_pips(Board::Hex::unpackCatanNumber(hex));
     const uint8_t selfVal = Board::Hex::unpackPlayerValue(hex, selfId);
@@ -114,7 +128,8 @@ int robber_hex_score(const Board::BoardState* board, PlayerId selfId, HexId hexI
     return s;
 }
 
-int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId edgeId) {
+int edge_network_score(const Board::BoardState* board, PlayerId selfId,
+                       EdgeId edgeId) {
     if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) return -10000;
 
     int s = 0;
@@ -128,7 +143,8 @@ int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId e
         const auto owner = Board::Node::unpackOwner(node);
         const auto st = Board::Node::unpackStructure(node);
 
-        if (owner == selfId && (st == StructureType::Settlement || st == StructureType::City)) {
+        if (owner == selfId &&
+            (st == StructureType::Settlement || st == StructureType::City)) {
             s += 200;
         }
 
@@ -136,7 +152,8 @@ int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId e
         for (uint8_t i = 0; i < 3; ++i) {
             const EdgeId e = Board::Node::unpackAdjacentEdge(node, i);
             if (e == EdgeIdNone || e >= EDGE_COUNT) continue;
-            if (Board::Edge::unpackHasRoad(board->edges[e]) && Board::Edge::unpackOwner(board->edges[e]) == selfId) {
+            if (Board::Edge::unpackHasRoad(board->edges[e]) &&
+                Board::Edge::unpackOwner(board->edges[e]) == selfId) {
                 s += 120;
                 break;
             }
@@ -148,16 +165,19 @@ int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId e
 
     // Minor bonus if this edge is near a port node (helps future trading).
     if (n0 < NODE_COUNT) {
-        if (Board::Node::unpackPortType(board->nodes[n0]) != PortType::NoPort) s += 10;
+        if (Board::Node::unpackPortType(board->nodes[n0]) != PortType::NoPort)
+            s += 10;
     }
     if (n1 < NODE_COUNT) {
-        if (Board::Node::unpackPortType(board->nodes[n1]) != PortType::NoPort) s += 10;
+        if (Board::Node::unpackPortType(board->nodes[n1]) != PortType::NoPort)
+            s += 10;
     }
 
     return s;
 }
 
-bool bank_can_supply(const Board::BoardState* board, Resource r, uint8_t amount) {
+bool bank_can_supply(const Board::BoardState* board, Resource r,
+                     uint8_t amount) {
     return Bank::unpackResource(board->packedBank, r) >= amount;
 }
 
@@ -168,12 +188,18 @@ int node_production_score(const Board::BoardState* board, NodeId nodeId) {
     // Slight preference: ore/grain are more valuable mid-game (cities/devs).
     auto res_weight = [](Resource r) -> int {
         switch (r) {
-            case Resource::Ore: return 14;
-            case Resource::Grain: return 13;
-            case Resource::Brick: return 12;
-            case Resource::Lumber: return 12;
-            case Resource::Wool: return 11;
-            default: return 0;
+            case Resource::Ore:
+                return 14;
+            case Resource::Grain:
+                return 13;
+            case Resource::Brick:
+                return 12;
+            case Resource::Lumber:
+                return 12;
+            case Resource::Wool:
+                return 11;
+            default:
+                return 0;
         }
     };
 
@@ -190,8 +216,10 @@ int node_production_score(const Board::BoardState* board, NodeId nodeId) {
     // Port bonus (generic small, specific larger).
     const auto pt = Board::Node::unpackPortType(node);
     if (pt != PortType::NoPort) {
-        if (pt == PortType::ThreeForOne) s += 35;
-        else s += 70;
+        if (pt == PortType::ThreeForOne)
+            s += 35;
+        else
+            s += 70;
     }
     return s;
 }
@@ -201,7 +229,8 @@ bool node_distance_rule_ok(const Board::BoardState* board, NodeId nodeId) {
     const auto node = board->nodes[nodeId];
 
     // Node itself must be empty.
-    if (Board::Node::unpackStructure(node) != StructureType::NoStructure) return false;
+    if (Board::Node::unpackStructure(node) != StructureType::NoStructure)
+        return false;
 
     // No adjacent settlements/cities.
     for (int i = 0; i < 3; ++i) {
@@ -213,21 +242,24 @@ bool node_distance_rule_ok(const Board::BoardState* board, NodeId nodeId) {
         for (NodeId adj : {a, b}) {
             if (adj == nodeId || adj >= NODE_COUNT) continue;
             const auto st = Board::Node::unpackStructure(board->nodes[adj]);
-            if (st == StructureType::Settlement || st == StructureType::City) return false;
+            if (st == StructureType::Settlement || st == StructureType::City)
+                return false;
         }
     }
     return true;
 }
 
 int city_upgrade_score(const Board::BoardState* board, NodeId nodeId) {
-    // Upgrading doubles production on adjacent hexes; so just use production score.
-    // (Node already contains a settlement owned by us in legal actions.)
+    // Upgrading doubles production on adjacent hexes; so just use production
+    // score. (Node already contains a settlement owned by us in legal actions.)
     return node_production_score(board, nodeId);
 }
 
 // Road scoring: prefer roads that open good settlement spots.
-int road_action_score(const Board::BoardState* board, PlayerId selfId, EdgeId edgeId) {
-    if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) return std::numeric_limits<int>::min();
+int road_action_score(const Board::BoardState* board, PlayerId selfId,
+                      EdgeId edgeId) {
+    if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT)
+        return std::numeric_limits<int>::min();
 
     int s = edge_network_score(board, selfId, edgeId);
 
@@ -235,18 +267,20 @@ int road_action_score(const Board::BoardState* board, PlayerId selfId, EdgeId ed
     const NodeId n1 = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 1);
     for (NodeId n : {n0, n1}) {
         if (!node_distance_rule_ok(board, n)) continue;
-        // This road gives adjacency, so this node is an immediately-legal settlement *once we can afford it*.
+        // This road gives adjacency, so this node is an immediately-legal
+        // settlement *once we can afford it*.
         s += 3 * node_production_score(board, n);
     }
 
     return s;
 }
 
-} // namespace
+}  // namespace
 
 Action::PackedAction It4Player::getDevAction() {
     const PlayerId selfId = boardState->currentPlayer;
-    const PlayerId enemyId = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+    const PlayerId enemyId =
+        (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
 
     auto actions = boardState->generatePlayDevCardActions(selfId);
     if (actions.empty()) {
@@ -255,8 +289,10 @@ Action::PackedAction It4Player::getDevAction() {
 
     const bool preRoll = is_pre_roll_dev_window(boardState);
 
-    const auto selfPacked = boardState->packedPlayers[static_cast<uint8_t>(selfId)];
-    const auto enemyPacked = boardState->packedPlayers[static_cast<uint8_t>(enemyId)];
+    const auto selfPacked =
+        boardState->packedPlayers[static_cast<uint8_t>(selfId)];
+    const auto enemyPacked =
+        boardState->packedPlayers[static_cast<uint8_t>(enemyId)];
 
     const uint8_t selfVP = effective_vp(boardState, selfId);
     const uint8_t enemyVP = effective_vp(boardState, enemyId);
@@ -274,7 +310,8 @@ Action::PackedAction It4Player::getDevAction() {
         const auto hx = boardState->hexes[boardState->robberPosition];
         const uint8_t p = dice_pips(Board::Hex::unpackCatanNumber(hx));
         const uint8_t selfVal = Board::Hex::unpackPlayerValue(hx, selfId);
-        currentRobberHurt = static_cast<int>(p) * 220 * static_cast<int>(selfVal);
+        currentRobberHurt =
+            static_cast<int>(p) * 220 * static_cast<int>(selfVal);
     }
 
     int bestScore = std::numeric_limits<int>::min();
@@ -291,18 +328,21 @@ Action::PackedAction It4Player::getDevAction() {
                 const HexId hexId = Action::unpackArg1(a);
                 score += robber_hex_score(boardState, selfId, hexId);
 
-                // Playing a knight also frees the current robber spot (if it hurts us).
+                // Playing a knight also frees the current robber spot (if it
+                // hurts us).
                 score += currentRobberHurt;
 
                 // Prefer stealing (must place robber on an enemy-produced hex).
-                const uint8_t enemyVal = Board::Hex::unpackPlayerValue(boardState->hexes[hexId], enemyId);
+                const uint8_t enemyVal = Board::Hex::unpackPlayerValue(
+                    boardState->hexes[hexId], enemyId);
                 if (enemyVal > 0) {
                     score += 700;
                 }
 
                 // Huge if this knight would grant largest army.
                 const uint8_t newUsed = static_cast<uint8_t>(usedKnights + 1);
-                if (newUsed >= 3 && newUsed > enemyUsedKnights && !Player::unpackLargestArmyFlag(selfPacked)) {
+                if (newUsed >= 3 && newUsed > enemyUsedKnights &&
+                    !Player::unpackLargestArmyFlag(selfPacked)) {
                     score += 10000;
                     if (Player::unpackLargestArmyFlag(enemyPacked)) {
                         // Swing of +4 effective VP.
@@ -313,13 +353,15 @@ Action::PackedAction It4Player::getDevAction() {
                 // If enemy is close to winning, be more willing to block.
                 if (enemyVP >= 12) score += 800;
 
-                // Knights are generally safe pre-roll (don't increase hand size), so don't punish pre-roll.
+                // Knights are generally safe pre-roll (don't increase hand
+                // size), so don't punish pre-roll.
                 break;
             }
 
             case ActionType::PlayDevCardMonopoly: {
                 const Resource r = static_cast<Resource>(Action::unpackArg1(a));
-                const uint8_t enemyHave = Player::unpackResource(enemyPacked, r);
+                const uint8_t enemyHave =
+                    Player::unpackResource(enemyPacked, r);
 
                 // Only meaningful if it actually takes a chunk.
                 if (enemyHave < 3) {
@@ -329,41 +371,57 @@ Action::PackedAction It4Player::getDevAction() {
 
                 score += static_cast<int>(enemyHave) * 420;
 
-                // Model the post-monopoly inventory to see if it unlocks a better purchase.
+                // Model the post-monopoly inventory to see if it unlocks a
+                // better purchase.
                 auto after = have;
-                after[static_cast<size_t>(r)] = static_cast<uint8_t>(std::min<int>(255, static_cast<int>(after[static_cast<size_t>(r)]) + static_cast<int>(enemyHave)));
+                after[static_cast<size_t>(r)] =
+                    static_cast<uint8_t>(std::min<int>(
+                        255, static_cast<int>(after[static_cast<size_t>(r)]) +
+                                 static_cast<int>(enemyHave)));
                 const auto afterTarget = best_target_for(after);
-                const int improvement = static_cast<int>(baseTarget.def) - static_cast<int>(afterTarget.def);
+                const int improvement = static_cast<int>(baseTarget.def) -
+                                        static_cast<int>(afterTarget.def);
                 score += improvement * 750;
 
                 if (afterTarget.affordable) {
-                    if (afterTarget.target == BuyableType::City) score += 8000;
-                    else if (afterTarget.target == BuyableType::Settlement) score += 6000;
-                    else if (afterTarget.target == BuyableType::Road) score += 2500;
-                    else score += 1800;
+                    if (afterTarget.target == BuyableType::City)
+                        score += 8000;
+                    else if (afterTarget.target == BuyableType::Settlement)
+                        score += 6000;
+                    else if (afterTarget.target == BuyableType::Road)
+                        score += 2500;
+                    else
+                        score += 1800;
                 }
 
                 // If enemy is close to winning, deny resources even more.
                 if (enemyVP >= 12) score += 600;
 
-                // Pre-roll risk: if we already have a big hand, avoid taking more before we know the roll.
+                // Pre-roll risk: if we already have a big hand, avoid taking
+                // more before we know the roll.
                 if (preRoll) {
-                    const int projected = static_cast<int>(handCount) + static_cast<int>(enemyHave);
-                    if (projected >= 10) score -= 4500;
-                    else if (projected >= 8) score -= 1800;
+                    const int projected = static_cast<int>(handCount) +
+                                          static_cast<int>(enemyHave);
+                    if (projected >= 10)
+                        score -= 4500;
+                    else if (projected >= 8)
+                        score -= 1800;
                 }
 
                 break;
             }
 
             case ActionType::PlayDevCardYearOfPlenty: {
-                const Resource r1 = static_cast<Resource>(Action::unpackArg1(a));
-                const Resource r2 = static_cast<Resource>(Action::unpackArg2(a));
+                const Resource r1 =
+                    static_cast<Resource>(Action::unpackArg1(a));
+                const Resource r2 =
+                    static_cast<Resource>(Action::unpackArg2(a));
 
                 // Avoid underflowing the bank in edge cases.
                 const uint8_t need1 = 1;
                 const uint8_t need2 = (r1 == r2) ? 2 : 1;
-                if (!bank_can_supply(boardState, r1, need2) || (r1 != r2 && !bank_can_supply(boardState, r2, need1))) {
+                if (!bank_can_supply(boardState, r1, need2) ||
+                    (r1 != r2 && !bank_can_supply(boardState, r2, need1))) {
                     score = -5000;
                     break;
                 }
@@ -375,22 +433,30 @@ Action::PackedAction It4Player::getDevAction() {
                 const auto afterTarget = best_target_for(after);
 
                 // Prefer reducing deficit to high-value targets.
-                const int improvement = static_cast<int>(baseTarget.def) - static_cast<int>(afterTarget.def);
+                const int improvement = static_cast<int>(baseTarget.def) -
+                                        static_cast<int>(afterTarget.def);
                 score += improvement * 850;
 
                 // Big bonuses if it makes an immediate purchase possible.
                 if (afterTarget.affordable) {
-                    if (afterTarget.target == BuyableType::City) score += 9000;
-                    else if (afterTarget.target == BuyableType::Settlement) score += 7000;
-                    else if (afterTarget.target == BuyableType::Road) score += 4500;
-                    else score += 2500;
+                    if (afterTarget.target == BuyableType::City)
+                        score += 9000;
+                    else if (afterTarget.target == BuyableType::Settlement)
+                        score += 7000;
+                    else if (afterTarget.target == BuyableType::Road)
+                        score += 4500;
+                    else
+                        score += 2500;
                 }
 
-                // Pre-roll risk: YoP increases hand size; avoid if it risks discarding.
+                // Pre-roll risk: YoP increases hand size; avoid if it risks
+                // discarding.
                 if (preRoll) {
                     const int projected = static_cast<int>(handCount) + 2;
-                    if (projected >= 10) score -= 4200;
-                    else if (projected >= 8 && score < 9000) score -= 1400;
+                    if (projected >= 10)
+                        score -= 4200;
+                    else if (projected >= 8 && score < 9000)
+                        score -= 1400;
                 }
 
                 break;
@@ -403,13 +469,15 @@ Action::PackedAction It4Player::getDevAction() {
                 score += road_action_score(boardState, selfId, e1);
                 if (e2 != EdgeIdNone) {
                     score += road_action_score(boardState, selfId, e2);
-                    score += 200; // two-road actions are better than one-road actions
+                    score += 200;  // two-road actions are better than one-road
+                                   // actions
                 }
 
                 // If we are behind, push expansion a bit.
                 if (enemyVP > selfVP) score += 200;
 
-                // Road building is also safe pre-roll (doesn't increase hand size).
+                // Road building is also safe pre-roll (doesn't increase hand
+                // size).
 
                 break;
             }
@@ -435,7 +503,8 @@ Action::PackedAction It4Player::getDevAction() {
 
 Action::PackedAction It4Player::getTurnAction() {
     const PlayerId selfId = boardState->currentPlayer;
-    const PlayerId enemyId = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+    const PlayerId enemyId =
+        (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
 
     auto actions = boardState->getLegalActions(selfId);
     if (actions.empty()) return Action::getEmptyAction();
@@ -450,13 +519,27 @@ Action::PackedAction It4Player::getTurnAction() {
 
     for (const auto a : actions) {
         switch (Action::unpackType(a)) {
-            case ActionType::BuildCity: cityActions.push_back(a); break;
-            case ActionType::BuildSettlement: settlementActions.push_back(a); break;
-            case ActionType::BuildRoad: roadActions.push_back(a); break;
-            case ActionType::BuyDevCard: devBuyActions.push_back(a); break;
-            case ActionType::TradeBank: tradeActions.push_back(a); break;
-            case ActionType::EndTurn: endTurnActions.push_back(a); break;
-            default: otherActions.push_back(a); break;
+            case ActionType::BuildCity:
+                cityActions.push_back(a);
+                break;
+            case ActionType::BuildSettlement:
+                settlementActions.push_back(a);
+                break;
+            case ActionType::BuildRoad:
+                roadActions.push_back(a);
+                break;
+            case ActionType::BuyDevCard:
+                devBuyActions.push_back(a);
+                break;
+            case ActionType::TradeBank:
+                tradeActions.push_back(a);
+                break;
+            case ActionType::EndTurn:
+                endTurnActions.push_back(a);
+                break;
+            default:
+                otherActions.push_back(a);
+                break;
         }
     }
 
@@ -467,7 +550,10 @@ Action::PackedAction It4Player::getTurnAction() {
         for (const auto a : cityActions) {
             const NodeId n = Action::unpackArg1(a);
             const int s = city_upgrade_score(boardState, n);
-            if (s > bestS) { bestS = s; best = a; }
+            if (s > bestS) {
+                bestS = s;
+                best = a;
+            }
         }
         return best;
     }
@@ -478,14 +564,19 @@ Action::PackedAction It4Player::getTurnAction() {
         for (const auto a : settlementActions) {
             const NodeId n = Action::unpackArg1(a);
             const int s = node_production_score(boardState, n);
-            if (s > bestS) { bestS = s; best = a; }
+            if (s > bestS) {
+                bestS = s;
+                best = a;
+            }
         }
         return best;
     }
 
-    // Trades: pick the trade that most improves our ability to afford best target.
+    // Trades: pick the trade that most improves our ability to afford best
+    // target.
     if (!tradeActions.empty()) {
-        const auto selfPacked = boardState->packedPlayers[static_cast<uint8_t>(selfId)];
+        const auto selfPacked =
+            boardState->packedPlayers[static_cast<uint8_t>(selfId)];
         const auto have = unpack_resources(selfPacked);
         const auto beforeTarget = best_target_for(have);
 
@@ -530,7 +621,10 @@ Action::PackedAction It4Player::getTurnAction() {
         for (const auto a : roadActions) {
             const EdgeId e = Action::unpackArg1(a);
             const int s = road_action_score(boardState, selfId, e);
-            if (s > bestRoadScore) { bestRoadScore = s; bestRoad = a; }
+            if (s > bestRoadScore) {
+                bestRoadScore = s;
+                bestRoad = a;
+            }
         }
     }
 
@@ -538,7 +632,8 @@ Action::PackedAction It4Player::getTurnAction() {
     const uint8_t enemyVP = effective_vp(boardState, enemyId);
 
     if (!devBuyActions.empty() && !roadActions.empty()) {
-        // If behind or mid-game, buy dev unless a road is clearly opening a strong settlement.
+        // If behind or mid-game, buy dev unless a road is clearly opening a
+        // strong settlement.
         if (enemyVP > selfVP || selfVP >= 6) {
             if (bestRoadScore < 3500) return devBuyActions.front();
         }

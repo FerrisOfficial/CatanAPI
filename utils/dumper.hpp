@@ -1,9 +1,5 @@
 #pragma once
 
-#include "game_simulation/actions.hpp"
-#include "game_simulation/board.hpp"
-#include "game_simulation/consts.hpp"
-
 #include <array>
 #include <cstdint>
 #include <filesystem>
@@ -11,8 +7,12 @@
 #include <string>
 #include <string_view>
 
+#include "game_simulation/actions.hpp"
+#include "game_simulation/board.hpp"
+#include "game_simulation/consts.hpp"
+
 class Dumper {
-public:
+   public:
     explicit Dumper(std::filesystem::path logsDir = "logs");
     ~Dumper();
 
@@ -29,15 +29,17 @@ public:
     void recordTurnEnd(const Board::BoardState& state);
     void recordInitialState(const Board::BoardState& state);
     void recordDiceRoll(uint8_t diceNumber, const Board::BoardState& state);
-    void recordActionApplied(Action::PackedAction action, const Board::BoardState& state, const std::string& phase);
+    void recordActionApplied(Action::PackedAction action,
+                             const Board::BoardState& state,
+                             const std::string& phase);
     void recordGameEnd(PlayerId winner, const Board::BoardState& state);
 
-private:
+   private:
     std::ofstream out_;
     std::string outPath_;
     uint64_t seq_ = 0;
 
-    std::array<std::string, 2> playerNames_{ {"Player0", "Player1"} };
+    std::array<std::string, 2> playerNames_{{"Player0", "Player1"}};
 
     static std::string escapeJson(std::string_view s);
     static std::string nowIso8601Local();

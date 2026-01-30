@@ -10,9 +10,7 @@ inline std::mt19937& get_rng() {
     return rng;
 }
 
-inline void seed(uint32_t s) {
-    get_rng().seed(s);
-}
+inline void seed(uint32_t s) { get_rng().seed(s); }
 
 struct ScopedState {
     std::mt19937 saved;
@@ -30,7 +28,8 @@ inline uint32_t uniform_u32(uint32_t maxExclusive) {
     return dist(get_rng());
 }
 
-inline uint32_t uniform_u32_range(uint32_t minInclusive, uint32_t maxInclusive) {
+inline uint32_t uniform_u32_range(uint32_t minInclusive,
+                                  uint32_t maxInclusive) {
     std::uniform_int_distribution<uint32_t> dist(minInclusive, maxInclusive);
     return dist(get_rng());
 }
@@ -39,4 +38,4 @@ inline int rollDices() {
     return uniform_u32_range(1, 6) + uniform_u32_range(1, 6);
 }
 
-} // namespace RandomDevice
+}  // namespace RandomDevice

@@ -10,19 +10,19 @@
 #include <vector>
 
 #include "game_simulation/game.hpp"
-#include "players/randomPlayer.hpp"
 #include "players/itPlayers/it1Player.hpp"
 #include "players/itPlayers/it2Player.hpp"
 #include "players/itPlayers/it3Player.hpp"
 #include "players/itPlayers/it4Player.hpp"
 #include "players/itPlayers/it5Player.hpp"
+#include "players/oneTacticPlayers/alphaBetaPlayer.hpp"
+#include "players/oneTacticPlayers/cityRushPlayer.hpp"
+#include "players/oneTacticPlayers/devPlayer.hpp"
+#include "players/oneTacticPlayers/oneResourcePlayer.hpp"
 #include "players/parametricPlayers/paraPlayer.hpp"
 #include "players/parametricPlayers/paraSetit5Player.hpp"
-#include "players/oneTacticPlayers/alphaBetaPlayer.hpp"
-#include "players/oneTacticPlayers/oneResourcePlayer.hpp"
-#include "players/oneTacticPlayers/devPlayer.hpp"
+#include "players/randomPlayer.hpp"
 #include "players/roadPlayer.hpp"
-#include "players/oneTacticPlayers/cityRushPlayer.hpp"
 
 namespace {
 std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
@@ -81,12 +81,12 @@ struct OrderResult {
     unsigned maxTurns = 0;
 };
 
-OrderResult  run_fixed_seats(const std::string& p0_flag,
-                            const std::string& p1_flag,
-                            size_t games,
+OrderResult run_fixed_seats(const std::string& p0_flag,
+                            const std::string& p1_flag, size_t games,
                             const std::string& progressLabel) {
     OrderResult result;
-    const size_t progressEvery = (games >= 100) ? std::max<size_t>(1, games / 100) : 1;
+    const size_t progressEvery =
+        (games >= 100) ? std::max<size_t>(1, games / 100) : 1;
     for (size_t i = 0; i < games; ++i) {
         auto player0 = make_player_from_flag(p0_flag);
         auto player1 = make_player_from_flag(p1_flag);
@@ -96,29 +96,38 @@ OrderResult  run_fixed_seats(const std::string& p0_flag,
         }
 
         Game game(*player0, *player1);
-        game.setPlayerDisplayNames(display_name_from_flag(p0_flag), display_name_from_flag(p1_flag));
+        game.setPlayerDisplayNames(display_name_from_flag(p0_flag),
+                                   display_name_from_flag(p1_flag));
         game.setDumpEnabled(false);
 
         const auto winner = game.runGame();
-        const unsigned turns = static_cast<unsigned>(game.boardState.currentTurn);
+        const unsigned turns =
+            static_cast<unsigned>(game.boardState.currentTurn);
         result.totalTurns += turns;
         result.maxTurns = std::max(result.maxTurns, turns);
 
         switch (winner) {
-            case PlayerId::Player0: ++result.winsFirst; break;
-            case PlayerId::Player1: ++result.winsSecond; break;
-            case PlayerId::NoPlayer: ++result.noWinner; break;
+            case PlayerId::Player0:
+                ++result.winsFirst;
+                break;
+            case PlayerId::Player1:
+                ++result.winsSecond;
+                break;
+            case PlayerId::NoPlayer:
+                ++result.noWinner;
+                break;
         }
 
         const size_t done = i + 1;
         if (done == 1 || done == games || (done % progressEvery) == 0) {
-            const double pct = games > 0 ? (100.0 * static_cast<double>(done) / static_cast<double>(games)) : 0.0;
-            std::cout << progressLabel << " " << done << "/" << games
-                      << " (" << std::fixed << std::setprecision(1) << pct << "%)"
+            const double pct = games > 0 ? (100.0 * static_cast<double>(done) /
+                                            static_cast<double>(games))
+                                         : 0.0;
+            std::cout << progressLabel << " " << done << "/" << games << " ("
+                      << std::fixed << std::setprecision(1) << pct << "%)"
                       << " | W1=" << result.winsFirst
                       << " W2=" << result.winsSecond
-                      << " NW=" << result.noWinner
-                      << "\n";
+                      << " NW=" << result.noWinner << "\n";
         }
     }
     return result;
@@ -133,7 +142,8 @@ struct SeatTotals {
     size_t noWinnerSecond = 0;
 };
 
-void update_totals_for_order(SeatTotals& firstBot, SeatTotals& secondBot, const OrderResult& r, size_t games) {
+void update_totals_for_order(SeatTotals& firstBot, SeatTotals& secondBot,
+                             const OrderResult& r, size_t games) {
     firstBot.gamesFirst += games;
     secondBot.gamesSecond += games;
     firstBot.winsFirst += r.winsFirst;
@@ -142,28 +152,31 @@ void update_totals_for_order(SeatTotals& firstBot, SeatTotals& secondBot, const 
     secondBot.noWinnerSecond += r.noWinner;
 }
 
-void print_order_summary(std::ostream& os,
-                         const std::string& firstFlag,
-                         const std::string& secondFlag,
-                         size_t games,
+void print_order_summary(std::ostream& os, const std::string& firstFlag,
+                         const std::string& secondFlag, size_t games,
                          const OrderResult& r) {
     const auto pct = [games](size_t v) {
-        return games > 0 ? (100.0 * static_cast<double>(v) / static_cast<double>(games)) : 0.0;
+        return games > 0 ? (100.0 * static_cast<double>(v) /
+                            static_cast<double>(games))
+                         : 0.0;
     };
-    const double avgTurns = games > 0 ? (static_cast<double>(r.totalTurns) / static_cast<double>(games)) : 0.0;
+    const double avgTurns =
+        games > 0
+            ? (static_cast<double>(r.totalTurns) / static_cast<double>(games))
+            : 0.0;
 
     os << "  " << display_name_from_flag(firstFlag) << " (pierwszy) vs "
        << display_name_from_flag(secondFlag) << " (drugi)\n";
-    os << "    Wygrane pierwszego: " << r.winsFirst << " (" << std::fixed << std::setprecision(1)
-       << pct(r.winsFirst) << "%)\n";
-    os << "    Wygrane drugiego:   " << r.winsSecond << " (" << std::fixed << std::setprecision(1)
-       << pct(r.winsSecond) << "%)\n";
-    os << "    Brak zwycięzcy:      " << r.noWinner << " (" << std::fixed << std::setprecision(1)
-       << pct(r.noWinner) << "%)\n";
-    os << "    Średnia liczba tur:  " << std::fixed << std::setprecision(1) << avgTurns
-       << ", max tur: " << r.maxTurns << "\n";
+    os << "    Wygrane pierwszego: " << r.winsFirst << " (" << std::fixed
+       << std::setprecision(1) << pct(r.winsFirst) << "%)\n";
+    os << "    Wygrane drugiego:   " << r.winsSecond << " (" << std::fixed
+       << std::setprecision(1) << pct(r.winsSecond) << "%)\n";
+    os << "    Brak zwycięzcy:      " << r.noWinner << " (" << std::fixed
+       << std::setprecision(1) << pct(r.noWinner) << "%)\n";
+    os << "    Średnia liczba tur:  " << std::fixed << std::setprecision(1)
+       << avgTurns << ", max tur: " << r.maxTurns << "\n";
 }
-} // namespace
+}  // namespace
 
 int main(int argc, char* argv[]) {
     size_t gamesPerOrder = 1000;  // default value
@@ -171,20 +184,26 @@ int main(int argc, char* argv[]) {
     // Parse command-line arguments
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
-            std::cout << "Usage: " << argv[0] << " [options]\n"
-                      << "Options:\n"
-                      << "  --help, -h          Show this help message\n"
-                      << "  --games N           Number of games per order (default: 1000)\n"
-                      << "\n"
-                      << "This program runs FISE (First/Second Influence on Success Evaluation) experiments\n"
-                      << "to analyze how seat order affects win rates between different AI players.\n";
+            std::cout
+                << "Usage: " << argv[0] << " [options]\n"
+                << "Options:\n"
+                << "  --help, -h          Show this help message\n"
+                << "  --games N           Number of games per order (default: "
+                   "1000)\n"
+                << "\n"
+                << "This program runs FISE (First/Second Influence on Success "
+                   "Evaluation) experiments\n"
+                << "to analyze how seat order affects win rates between "
+                   "different AI "
+                   "players.\n";
             return 0;
         } else if (strcmp(argv[i], "--games") == 0) {
             if (i + 1 < argc) {
                 try {
                     gamesPerOrder = std::stoul(argv[++i]);
                 } catch (const std::exception&) {
-                    std::cerr << "Error: Invalid value for --games: " << argv[i] << "\n";
+                    std::cerr << "Error: Invalid value for --games: " << argv[i]
+                              << "\n";
                     return 1;
                 }
             } else {
@@ -199,9 +218,8 @@ int main(int argc, char* argv[]) {
     }
 
     const std::vector<std::string> flags = {
-        "rp", "it1", "it2", "it3", "it4", "it5",
-        "para", "psit5", "ab", "or", "dev", "road", "cr"
-    };
+        "rp",    "it1", "it2", "it3", "it4",  "it5", "para",
+        "psit5", "ab",  "or",  "dev", "road", "cr"};
 
     for (const auto& f : flags) {
         if (!make_player_from_flag(f)) {
@@ -210,14 +228,16 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    const std::string outputPath = "logs/fise_results_" + timestamp_string() + ".txt";
+    const std::string outputPath =
+        "logs/fise_results_" + timestamp_string() + ".txt";
     std::ofstream out(outputPath);
     if (!out) {
         std::cerr << "Failed to open output file: " << outputPath << "\n";
         return 2;
     }
 
-    out << "Eksperyment FISE: wpływ kolejności (pierwszy/drugi) na liczbę zwycięstw\n";
+    out << "Eksperyment FISE: wpływ kolejności (pierwszy/drugi) na liczbę "
+           "zwycięstw\n";
     out << "Liczba gier na porządek: " << gamesPerOrder << "\n";
     out << "Łącznie botów: " << flags.size() << "\n\n";
 
@@ -230,21 +250,27 @@ int main(int argc, char* argv[]) {
             const auto& a = flags[i];
             const auto& b = flags[j];
 
-            std::cout << "Matchup: " << display_name_from_flag(a)
-                      << " vs " << display_name_from_flag(b)
-                      << " (" << (i + 1) << "/" << flags.size()
-                      << " vs " << (j + 1) << "/" << flags.size() << ")\n";
+            std::cout << "Matchup: " << display_name_from_flag(a) << " vs "
+                      << display_name_from_flag(b) << " (" << (i + 1) << "/"
+                      << flags.size() << " vs " << (j + 1) << "/"
+                      << flags.size() << ")\n";
 
-            out << "============================================================\n";
-            out << "Para: " << display_name_from_flag(a) << " vs " << display_name_from_flag(b) << "\n";
+            out << "==========================================================="
+                   "=\n";
+            out << "Para: " << display_name_from_flag(a) << " vs "
+                << display_name_from_flag(b) << "\n";
 
-            OrderResult r1 = run_fixed_seats(a, b, gamesPerOrder,
-                                             "  [" + display_name_from_flag(a) + "(1) vs " + display_name_from_flag(b) + "(2)]");
+            OrderResult r1 =
+                run_fixed_seats(a, b, gamesPerOrder,
+                                "  [" + display_name_from_flag(a) + "(1) vs " +
+                                    display_name_from_flag(b) + "(2)]");
             print_order_summary(out, a, b, gamesPerOrder, r1);
             update_totals_for_order(totals[i], totals[j], r1, gamesPerOrder);
 
-            OrderResult r2 = run_fixed_seats(b, a, gamesPerOrder,
-                                             "  [" + display_name_from_flag(b) + "(1) vs " + display_name_from_flag(a) + "(2)]");
+            OrderResult r2 =
+                run_fixed_seats(b, a, gamesPerOrder,
+                                "  [" + display_name_from_flag(b) + "(1) vs " +
+                                    display_name_from_flag(a) + "(2)]");
             print_order_summary(out, b, a, gamesPerOrder, r2);
             update_totals_for_order(totals[j], totals[i], r2, gamesPerOrder);
 
@@ -254,7 +280,8 @@ int main(int argc, char* argv[]) {
     }
 
     const auto end = std::chrono::steady_clock::now();
-    const auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+    const auto elapsed =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 
     out << "============================================================\n";
     out << "Podsumowanie per bot (wygrane zależne od kolejności)\n";
@@ -263,19 +290,24 @@ int main(int argc, char* argv[]) {
         const auto& name = display_name_from_flag(flags[i]);
         const auto& t = totals[i];
         const auto pct = [](size_t wins, size_t games) {
-            return games > 0 ? (100.0 * static_cast<double>(wins) / static_cast<double>(games)) : 0.0;
+            return games > 0 ? (100.0 * static_cast<double>(wins) /
+                                static_cast<double>(games))
+                             : 0.0;
         };
 
         out << "- " << name << "\n";
         out << "    jako pierwszy: " << t.winsFirst << "/" << t.gamesFirst
-            << " (" << std::fixed << std::setprecision(1) << pct(t.winsFirst, t.gamesFirst) << "%), "
+            << " (" << std::fixed << std::setprecision(1)
+            << pct(t.winsFirst, t.gamesFirst) << "%), "
             << "NW=" << t.noWinnerFirst << "\n";
         out << "    jako drugi:    " << t.winsSecond << "/" << t.gamesSecond
-            << " (" << std::fixed << std::setprecision(1) << pct(t.winsSecond, t.gamesSecond) << "%), "
+            << " (" << std::fixed << std::setprecision(1)
+            << pct(t.winsSecond, t.gamesSecond) << "%), "
             << "NW=" << t.noWinnerSecond << "\n";
     }
 
-    out << "\nCzas całkowity: " << std::fixed << std::setprecision(2) << elapsed.count() << " s\n";
+    out << "\nCzas całkowity: " << std::fixed << std::setprecision(2)
+        << elapsed.count() << " s\n";
 
     std::cout << "Zapisano wyniki do: " << outputPath << "\n";
     return 0;

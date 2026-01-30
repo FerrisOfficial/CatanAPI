@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdint>
+
 #include "consts.hpp"
 
 namespace Bank {
@@ -11,7 +12,6 @@ using PackedBank = uint64_t;
 constexpr bool isValidPackedResource(Resource r) {
     return static_cast<uint8_t>(r) <= static_cast<uint8_t>(Resource::Ore);
 }
-
 
 // Resources: 5 bits each (same order as Player)
 // - Brick:  bits 0-4
@@ -42,11 +42,11 @@ constexpr PackedBank makeNewBank() {
 
     // Dev cards: standard distribution
     // Knights: 14, RoadBuilding:2, YearOfPlenty:2, Monopoly:2, VictoryPoint:5
-    pb |= (PackedBank(14) << 25); // Knight
-    pb |= (PackedBank(2)  << 29); // RoadBuilding
-    pb |= (PackedBank(2)  << 31); // YearOfPlenty
-    pb |= (PackedBank(2)  << 33); // Monopoly
-    pb |= (PackedBank(5)  << 35); // VictoryPoint
+    pb |= (PackedBank(14) << 25);  // Knight
+    pb |= (PackedBank(2) << 29);   // RoadBuilding
+    pb |= (PackedBank(2) << 31);   // YearOfPlenty
+    pb |= (PackedBank(2) << 33);   // Monopoly
+    pb |= (PackedBank(5) << 35);   // VictoryPoint
 
     // Cached total dev cards (sum = 14+2+2+2+5 = 25)
     pb |= (PackedBank(25) << 38);
@@ -92,49 +92,76 @@ constexpr uint8_t unpackTotalDevCount(PackedBank pb) {
 }
 
 constexpr uint8_t unpackDevCard(PackedBank pb, DevType d) {
-    switch(d) {
-        case DevType::Knight:       return static_cast<uint8_t>((pb >> 25) & 0xF);
-        case DevType::RoadBuilding: return static_cast<uint8_t>((pb >> 29) & 0x3);
-        case DevType::YearOfPlenty: return static_cast<uint8_t>((pb >> 31) & 0x3);
-        case DevType::Monopoly:     return static_cast<uint8_t>((pb >> 33) & 0x3);
-        case DevType::VictoryPoint: return static_cast<uint8_t>((pb >> 35) & 0x7);
-        default: return 0;
+    switch (d) {
+        case DevType::Knight:
+            return static_cast<uint8_t>((pb >> 25) & 0xF);
+        case DevType::RoadBuilding:
+            return static_cast<uint8_t>((pb >> 29) & 0x3);
+        case DevType::YearOfPlenty:
+            return static_cast<uint8_t>((pb >> 31) & 0x3);
+        case DevType::Monopoly:
+            return static_cast<uint8_t>((pb >> 33) & 0x3);
+        case DevType::VictoryPoint:
+            return static_cast<uint8_t>((pb >> 35) & 0x7);
+        default:
+            return 0;
     }
 }
 
 constexpr uint8_t computeTotalDevCards(PackedBank pb) {
-    return static_cast<uint8_t>(
-        unpackDevCard(pb, DevType::Knight) +
-        unpackDevCard(pb, DevType::RoadBuilding) +
-        unpackDevCard(pb, DevType::YearOfPlenty) +
-        unpackDevCard(pb, DevType::Monopoly) +
-        unpackDevCard(pb, DevType::VictoryPoint)
-    );
+    return static_cast<uint8_t>(unpackDevCard(pb, DevType::Knight) +
+                                unpackDevCard(pb, DevType::RoadBuilding) +
+                                unpackDevCard(pb, DevType::YearOfPlenty) +
+                                unpackDevCard(pb, DevType::Monopoly) +
+                                unpackDevCard(pb, DevType::VictoryPoint));
 }
 
 constexpr PackedBank packDevCard(PackedBank pb, DevType d, uint8_t value) {
-    switch(d) {
-        case DevType::Knight:       pb &= ~(PackedBank(0xFULL) << 25); pb |= PackedBank(value & 0xF) << 25; break;
-        case DevType::RoadBuilding: pb &= ~(PackedBank(0x3ULL) << 29); pb |= PackedBank(value & 0x3) << 29; break;
-        case DevType::YearOfPlenty: pb &= ~(PackedBank(0x3ULL) << 31); pb |= PackedBank(value & 0x3) << 31; break;
-        case DevType::Monopoly:     pb &= ~(PackedBank(0x3ULL) << 33); pb |= PackedBank(value & 0x3) << 33; break;
-        case DevType::VictoryPoint: pb &= ~(PackedBank(0x7ULL) << 35); pb |= PackedBank(value & 0x7) << 35; break;
-        default: break;
+    switch (d) {
+        case DevType::Knight:
+            pb &= ~(PackedBank(0xFULL) << 25);
+            pb |= PackedBank(value & 0xF) << 25;
+            break;
+        case DevType::RoadBuilding:
+            pb &= ~(PackedBank(0x3ULL) << 29);
+            pb |= PackedBank(value & 0x3) << 29;
+            break;
+        case DevType::YearOfPlenty:
+            pb &= ~(PackedBank(0x3ULL) << 31);
+            pb |= PackedBank(value & 0x3) << 31;
+            break;
+        case DevType::Monopoly:
+            pb &= ~(PackedBank(0x3ULL) << 33);
+            pb |= PackedBank(value & 0x3) << 33;
+            break;
+        case DevType::VictoryPoint:
+            pb &= ~(PackedBank(0x7ULL) << 35);
+            pb |= PackedBank(value & 0x7) << 35;
+            break;
+        default:
+            break;
     }
     pb = packTotalDevCount(pb, computeTotalDevCards(pb));
     return pb;
 }
 
-constexpr PackedBank buyableTransaction(PackedBank pb, BuyableType b, DevType d = DevType::NoDev, bool sell = true) {
+constexpr PackedBank buyableTransaction(PackedBank pb, BuyableType b,
+                                        DevType d = DevType::NoDev,
+                                        bool sell = true) {
     const auto& cost = StructureCost[static_cast<size_t>(b)];
 
     if (sell) {
         // Bank sells an item to a player: add resources from bank
-        pb = packResource(pb, Resource::Brick, unpackResource(pb, Resource::Brick) + cost[0]);
-        pb = packResource(pb, Resource::Lumber, unpackResource(pb, Resource::Lumber) + cost[1]);
-        pb = packResource(pb, Resource::Wool, unpackResource(pb, Resource::Wool) + cost[2]);
-        pb = packResource(pb, Resource::Grain, unpackResource(pb, Resource::Grain) + cost[3]);
-        pb = packResource(pb, Resource::Ore, unpackResource(pb, Resource::Ore) + cost[4]);
+        pb = packResource(pb, Resource::Brick,
+                          unpackResource(pb, Resource::Brick) + cost[0]);
+        pb = packResource(pb, Resource::Lumber,
+                          unpackResource(pb, Resource::Lumber) + cost[1]);
+        pb = packResource(pb, Resource::Wool,
+                          unpackResource(pb, Resource::Wool) + cost[2]);
+        pb = packResource(pb, Resource::Grain,
+                          unpackResource(pb, Resource::Grain) + cost[3]);
+        pb = packResource(pb, Resource::Ore,
+                          unpackResource(pb, Resource::Ore) + cost[4]);
         if (b == BuyableType::DevCard) {
             if (d != DevType::NoDev) {
                 uint8_t cur = unpackDevCard(pb, d);
@@ -145,11 +172,16 @@ constexpr PackedBank buyableTransaction(PackedBank pb, BuyableType b, DevType d 
         }
     } else {
         // Bank receives an item back and gives resources to player
-        pb = packResource(pb, Resource::Brick, unpackResource(pb, Resource::Brick) - cost[0]);
-        pb = packResource(pb, Resource::Lumber, unpackResource(pb, Resource::Lumber) - cost[1]);
-        pb = packResource(pb, Resource::Wool, unpackResource(pb, Resource::Wool) - cost[2]);
-        pb = packResource(pb, Resource::Grain, unpackResource(pb, Resource::Grain) - cost[3]);
-        pb = packResource(pb, Resource::Ore, unpackResource(pb, Resource::Ore) - cost[4]);
+        pb = packResource(pb, Resource::Brick,
+                          unpackResource(pb, Resource::Brick) - cost[0]);
+        pb = packResource(pb, Resource::Lumber,
+                          unpackResource(pb, Resource::Lumber) - cost[1]);
+        pb = packResource(pb, Resource::Wool,
+                          unpackResource(pb, Resource::Wool) - cost[2]);
+        pb = packResource(pb, Resource::Grain,
+                          unpackResource(pb, Resource::Grain) - cost[3]);
+        pb = packResource(pb, Resource::Ore,
+                          unpackResource(pb, Resource::Ore) - cost[4]);
 
         if (b == BuyableType::DevCard) {
             if (d != DevType::NoDev) {
@@ -164,10 +196,13 @@ constexpr PackedBank buyableTransaction(PackedBank pb, BuyableType b, DevType d 
     return pb;
 }
 
-constexpr void changeResourceQuantity(PackedBank &pb, Resource r, int8_t delta) {
-    // Preserve historical wrap semantics (mod 32) while still guarding invalid Resource.
-    // This matters for bot rollouts that temporarily explore invalid states but must undo exactly.
-    pb = packResource(pb, r, static_cast<uint8_t>(unpackResource(pb, r) + delta));
+constexpr void changeResourceQuantity(PackedBank& pb, Resource r,
+                                      int8_t delta) {
+    // Preserve historical wrap semantics (mod 32) while still guarding invalid
+    // Resource. This matters for bot rollouts that temporarily explore invalid
+    // states but must undo exactly.
+    pb = packResource(pb, r,
+                      static_cast<uint8_t>(unpackResource(pb, r) + delta));
 }
 
-} // namespace Bank
+}  // namespace Bank

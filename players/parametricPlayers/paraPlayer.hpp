@@ -1,15 +1,17 @@
 #pragma once
 
-#include "players/player.hpp"
 #include "game_simulation/actions.hpp"
+#include "players/player.hpp"
 
 class ParaPlayer : public IPlayer {
-public:
+   public:
     ParaPlayer();
     virtual ~ParaPlayer() = default;
 
-    std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement() override;
-    std::pair<Action::PackedAction, Action::PackedAction> get2InitialPlacement() override;
+    std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement()
+        override;
+    std::pair<Action::PackedAction, Action::PackedAction> get2InitialPlacement()
+        override;
 
     Action::PackedAction getDevAction() override;
     Action::PackedAction getDiscardAction() override;

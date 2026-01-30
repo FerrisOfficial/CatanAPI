@@ -8,8 +8,10 @@ struct RandomPlayer : public IPlayer {
     RandomPlayer() : IPlayer() {}
     virtual ~RandomPlayer() = default;
 
-    std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement() override;
-    std::pair<Action::PackedAction, Action::PackedAction> get2InitialPlacement() override;
+    std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement()
+        override;
+    std::pair<Action::PackedAction, Action::PackedAction> get2InitialPlacement()
+        override;
 
     Action::PackedAction getDevAction() override;
     Action::PackedAction getDiscardAction() override;
