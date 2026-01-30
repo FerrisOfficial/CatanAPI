@@ -6,6 +6,7 @@
 #include <limits>
 #include <utility>
 #include <vector>
+#include <cstdint>
 
 namespace {
 
@@ -81,50 +82,87 @@ ExpectedRollGain expected_roll_gain(const Board::BoardState& board, PlayerId sel
     return out;
 }
 
-std::array<int, 5> addExpectedResources(Board::BoardState& board, PlayerId playerId) {
+// 5 zasobów: Brick, Lumber, Wool, Grain, Ore
+constexpr int RESOURCE_COUNT = 5;
+constexpr int FP_SCALE = 36; // 1 jednostka = 1/36 zasobu na turę
+
+static inline int resourceIndex(Resource r) {
+    return static_cast<int>(r);
+}
+
+struct ExpectedStateFP {
+    // reszta (0..35) w jednostkach 1/36 dla każdego zasobu
+    std::array<int, RESOURCE_COUNT> remainderFP{0,0,0,0,0};
+};
+
+// Liczy expected produkcję w fixed-point (1/36) dla playerId i OD RAZU aplikuje do ręki (tylko całe karty).
+// Zwraca addFP (ile 1/36 wpadło w tej turze per zasób).
+std::array<int, RESOURCE_COUNT>
+addExpectedResourcesFP(Board::BoardState& board,
+                       PlayerId playerId,
+                       ExpectedStateFP& expectedState)
+{
     auto packed = board.packedPlayers[static_cast<uint8_t>(playerId)];
-    auto resources = unpack_resources(packed);
-    
-    // Calculate expected production for each resource type
-    std::array<int, 5> expectedProduction = {0, 0, 0, 0, 0};
-    
+    auto resources = unpack_resources(packed); // std::array<int,5> w [0..255]
+
+    // 1) policz expected produkcję per zasób w jednostkach 1/36
+    std::array<int, RESOURCE_COUNT> addFP{0,0,0,0,0};
+
     for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
         const auto node = board.nodes[nodeId];
+
         const auto owner = Board::Node::unpackOwner(node);
         if (owner != playerId) continue;
-        
+
         const auto structure = Board::Node::unpackStructure(node);
         const int multiplier = (structure == StructureType::City) ? 2 : 1;
-        
-        // Check adjacent hexes
+
+        // Node ma do 3 sąsiadujących heksów
         for (uint8_t i = 0; i < 3; ++i) {
             const HexId hexId = Board::Node::unpackAdjacentHex(node, i);
             if (hexId == HexIdNone || hexId >= HEX_COUNT) continue;
-            
+
+            // Jeśli masz rozbójnika, zablokuj produkcję z tego heksa:
+            if (board.robberPosition == hexId) continue;
+
             const auto hex = board.hexes[hexId];
             const auto resource = Board::Hex::unpackResource(hex);
             if (resource == Resource::NoResource) continue;
-            
+
             const uint8_t pips = dice_pips(Board::Hex::unpackCatanNumber(hex));
-            const int productionAmount = (pips * multiplier) / 12;
-            
-            expectedProduction[static_cast<size_t>(resource)] += productionAmount;
+            if (pips == 0) continue; // np. pusty / 7
+
+            const int idx = resourceIndex(resource);
+            if (idx < 0 || idx >= RESOURCE_COUNT) continue;
+
+            // fixed-point: expected = multiplier * pips / 36
+            // przechowujemy licznik (multiplier * pips) jako "1/36"
+            addFP[idx] += multiplier * static_cast<int>(pips);
         }
     }
 
-    for (size_t i = 0; i < 5; ++i) {
-        if (expectedProduction[i] > 0) {
-            resources[i] = std::min(255, resources[i] + expectedProduction[i]);
+    // 2) zamień fixed-point na całe karty + zachowaj resztę
+    for (int i = 0; i < RESOURCE_COUNT; ++i) {
+        int totalFP = expectedState.remainderFP[i] + addFP[i];
+
+        const int gain = totalFP / FP_SCALE;       // ile całych kart
+        expectedState.remainderFP[i] = totalFP % FP_SCALE; // reszta 0..35
+
+        if (gain > 0) {
+            resources[i] = std::min(255, resources[i] + gain);
         }
     }
-    packed = Player::packResource(packed, Resource::Brick, resources[0]);
+
+    // 3) zapakuj zasoby z powrotem do packedPlayers
+    packed = Player::packResource(packed, Resource::Brick,  resources[0]);
     packed = Player::packResource(packed, Resource::Lumber, resources[1]);
-    packed = Player::packResource(packed, Resource::Wool, resources[2]);
-    packed = Player::packResource(packed, Resource::Grain, resources[3]);
-    packed = Player::packResource(packed, Resource::Ore, resources[4]);
+    packed = Player::packResource(packed, Resource::Wool,   resources[2]);
+    packed = Player::packResource(packed, Resource::Grain,  resources[3]);
+    packed = Player::packResource(packed, Resource::Ore,    resources[4]);
+
     board.packedPlayers[static_cast<uint8_t>(playerId)] = packed;
-    
-    return expectedProduction;
+
+    return addFP;
 }
 
 int evaluate_position_stage(const Board::BoardState& board, PlayerId selfId) {
@@ -254,7 +292,7 @@ std::vector<Action::PackedAction> filtered_actions(
         return maximizing ? (lhs.first > rhs.first) : (lhs.first < rhs.first);
     });
 
-    const size_t maxActions = 14;
+    const size_t maxActions = 5;
     out.clear();
     out.reserve(std::min(maxActions, scored.size()));
 
@@ -281,13 +319,16 @@ int alphabeta(
     PlayerId selfId,
     int depth,
     int alpha,
-    int beta
+    int beta,
+    ExpectedStateFP exp0,
+    ExpectedStateFP exp1
 ) {
     if (depth <= 0) {
         return evaluate_position_stage(board, selfId);
     }
 
     const PlayerId current = board.currentPlayer;
+    const PlayerId enemy = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
     auto actions = filtered_actions(board, current, selfId);
     if (actions.empty()) {
         return evaluate_position_stage(board, selfId);
@@ -300,13 +341,17 @@ int alphabeta(
         for (const auto a : actions) {
             Board::BoardState sim = board;
             sim.applyAction(a);
-            
+
+            ExpectedStateFP exp0Next = exp0;
+            ExpectedStateFP exp1Next = exp1;
+
             // If EndTurn was played, simulate expected dice roll before next turn
             if (Action::unpackType(a) == ActionType::EndTurn) {
-                addExpectedResources(sim, current);
+                addExpectedResourcesFP(sim, current, exp0Next);
+                addExpectedResourcesFP(sim, enemy, exp1Next);
             }
-            
-            const int score = alphabeta(sim, selfId, depth - 1, alpha, beta);
+
+            const int score = alphabeta(sim, selfId, depth - 1, alpha, beta, exp0Next, exp1Next);
             best = std::max(best, score);
             alpha = std::max(alpha, score);
             // Clear actionQueue to free memory early
@@ -321,13 +366,17 @@ int alphabeta(
     for (const auto a : actions) {
         Board::BoardState sim = board;
         sim.applyAction(a);
-        
+
+        ExpectedStateFP exp0Next = exp0;
+        ExpectedStateFP exp1Next = exp1;
+
         // If EndTurn was played, simulate expected dice roll before next turn
         if (Action::unpackType(a) == ActionType::EndTurn) {
-            addExpectedResources(sim, current);
+            addExpectedResourcesFP(sim, current, exp0Next);
+            addExpectedResourcesFP(sim, enemy, exp1Next);
         }
-        
-        const int score = alphabeta(sim, selfId, depth - 1, alpha, beta);
+
+        const int score = alphabeta(sim, selfId, depth - 1, alpha, beta, exp0Next, exp1Next);
         best = std::min(best, score);
         beta = std::min(beta, score);
         // Clear actionQueue to free memory early
@@ -357,9 +406,12 @@ Action::PackedAction alphaBetaPlayer::getTurnAction() {
     for (const auto a : candidates) {
         Board::BoardState sim = *boardState; // simulate on copy
         sim.applyAction(a);
+        ExpectedStateFP exp0;
+        ExpectedStateFP exp1;
         const int score = alphabeta(sim, selfId, depth - 1,
                                     std::numeric_limits<int>::min(),
-                                    std::numeric_limits<int>::max());
+                                    std::numeric_limits<int>::max(),
+                                    exp0, exp1);
         if (score > bestScore) {
             bestScore = score;
             best = a;

@@ -665,16 +665,6 @@ class BoardRenderer:
                     color = PLAYER_COLORS.get(owner, "#111")
                     self.canvas.create_rectangle(x - 7, y - 7, x + 7, y + 7, fill=color, outline="#fff", width=1)
 
-        # Draw node IDs at all node positions
-        for nid, (x, y) in self.node_pos.items():
-            self.canvas.create_text(
-                x,
-                y,
-                text=str(nid),
-                font=("Segoe UI", 8, "bold"),
-                fill="cyan",
-            )
-
         # Draw ports
         self._draw_ports()
 
