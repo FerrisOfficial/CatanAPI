@@ -1,6 +1,6 @@
 #pragma once
 
-#include "it5Player.hpp"
+#include "../itPlayers/it5Player.hpp"
 #include "../game_simulation/consts.hpp"
 
 // It3: It2 turn logic + smarter setup + smarter robber.

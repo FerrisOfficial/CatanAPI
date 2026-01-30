@@ -17,7 +17,7 @@ add_executable(bank_tests test_bank.cpp)
 # 🔗 Link libraries
 # ----------------------------
 foreach(test_target IN ITEMS player_tests actions_tests board_tests game_tests bank_tests utils_tests)
-    target_link_libraries(${test_target} gtest_main gmock game_simulation)
+    target_link_libraries(${test_target} gtest_main gmock game_simulation players)
 endforeach()
 
 # ----------------------------

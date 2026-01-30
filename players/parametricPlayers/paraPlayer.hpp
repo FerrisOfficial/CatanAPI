@@ -1,6 +1,6 @@
 #pragma once
 
-#include "player.hpp"
+#include "../player.hpp"
 
 // ParaPlayer: heurystyczny gracz sterowany parametrami wczytywanymi z pliku.
 // Domyślnie czyta konfigurację tylko z: ./players/paraPlayer.cfg (wyszukiwanego w górę po katalogach).

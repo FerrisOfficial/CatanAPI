@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 #include "utils/dumper.hpp"
-#include "../players/alphaBetaPlayer.hpp"
+#include "../players/oneTacticPlayers/alphaBetaPlayer.hpp"
 
 namespace {
 

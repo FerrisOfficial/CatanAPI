@@ -1,6 +1,6 @@
 #pragma once
 
-#include "it5Player.hpp"
+#include "itPlayers/it5Player.hpp"
 
 #include <array>
 

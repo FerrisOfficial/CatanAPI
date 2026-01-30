@@ -3,40 +3,10 @@ project(runs)
 
 add_executable(run 
     run.cpp
-    ${CMAKE_SOURCE_DIR}/players/player.cpp
-    ${CMAKE_SOURCE_DIR}/players/randomPlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/paraPlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/paraSetit5Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/playerHelpers.cpp
-    ${CMAKE_SOURCE_DIR}/players/it1Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/it2Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/it3Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/it4Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/it5Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/alphaBetaPlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/oneResourcePlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/devPlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/roadPlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/cityRushPlayer.cpp
 )
 
 add_executable(run_fise
     run_fise.cpp
-    ${CMAKE_SOURCE_DIR}/players/player.cpp
-    ${CMAKE_SOURCE_DIR}/players/randomPlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/paraPlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/paraSetit5Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/playerHelpers.cpp
-    ${CMAKE_SOURCE_DIR}/players/it1Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/it2Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/it3Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/it4Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/it5Player.cpp
-    ${CMAKE_SOURCE_DIR}/players/alphaBetaPlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/oneResourcePlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/devPlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/roadPlayer.cpp
-    ${CMAKE_SOURCE_DIR}/players/cityRushPlayer.cpp
 )
 
 target_include_directories(run PRIVATE
@@ -53,8 +23,8 @@ target_include_directories(run_fise PRIVATE
     ${CMAKE_SOURCE_DIR}/utils
 )
 
-target_link_libraries(run PRIVATE game_simulation)
-target_link_libraries(run_fise PRIVATE game_simulation)
+target_link_libraries(run PRIVATE game_simulation players)
+target_link_libraries(run_fise PRIVATE game_simulation players)
 
 # Configure-time player flags (set via: cmake -S . -B build -DRUN_P0=rp -DRUN_P1=rp)
 set(RUN_P0 "rp" CACHE STRING "Player0 flag for runs/run (e.g., rp)")

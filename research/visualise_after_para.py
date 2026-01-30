@@ -1,4 +1,6 @@
 import random
+import matplotlib.pyplot as plt
+
 data = {    
     ("It5", "Random"): 100,
     ("It5", "It1"): 100,
@@ -35,7 +37,7 @@ diffs = {
     for (a, b) in data.keys()
 }
 
-import matplotlib.pyplot as plt
+
 
 bots = [
     "Random", "It1", "It2", "It3", "It4", "It5",

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "randomPlayer.hpp"
+#include "../randomPlayer.hpp"
 
 struct It2Player : public RandomPlayer {
     It2Player() : RandomPlayer() {}

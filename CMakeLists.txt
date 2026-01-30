@@ -41,35 +41,15 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/players
 )
 
+# ----------------------------
+# 🎮 Game simulation library
+# ----------------------------
+add_subdirectory(game_simulation)
 
 # ----------------------------
-# 🧱 Source files
+# 🎮 Players library
 # ----------------------------
-set(GAME_SIM_SRC
-  players/player.cpp
-  players/randomPlayer.cpp
-  players/paraPlayer.cpp
-  players/paraSetit5Player.cpp
-  players/devPlayer.cpp
-  players/roadPlayer.cpp
-  players/playerHelpers.cpp
-  game_simulation/game.cpp
-  game_simulation/board.cpp
-  game_simulation/board_generate_actions.cpp
-  utils/dumper.cpp
-)
-
-# ----------------------------
-
-# 🔧 Library definition
-# ----------------------------
-add_library(game_simulation ${GAME_SIM_SRC})
-
-target_include_directories(game_simulation PUBLIC
-  ${CMAKE_SOURCE_DIR}/game_simulation
-  ${CMAKE_SOURCE_DIR}/players
-  ${CMAKE_SOURCE_DIR}
-)
+add_subdirectory(players)
 
 # ----------------------------
 # 🧪 Enable testing
