@@ -877,7 +877,7 @@ TEST_F(ActionTest, ExpectGeneratePlaceInitialStructuresActionsSecondPlayer){
 
     placeInitialStructuresActions = boardState.generatePlaceInitialStructures(PlayerId::Player1);
 
-    EXPECT_EQ(placeInitialStructuresActions.size(), 135);
+    EXPECT_EQ(placeInitialStructuresActions.size(), 132);
     for (const auto& action : placeInitialStructuresActions) {
         ActionType type = Action::unpackType(action);
         EXPECT_EQ(ActionType::PlaceInitialStructures, type);

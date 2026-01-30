@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include "consts.hpp"
 
@@ -9,6 +10,11 @@
 namespace Bank {
 
 using PackedBank = uint64_t;
+
+constexpr bool isValidPackedResource(Resource r) {
+    return static_cast<uint8_t>(r) <= static_cast<uint8_t>(Resource::Ore);
+}
+
 
 // Resources: 5 bits each (same order as Player)
 // - Brick:  bits 0-4
@@ -52,12 +58,30 @@ constexpr PackedBank makeNewBank() {
 }
 
 constexpr PackedBank packResource(PackedBank pb, Resource r, uint8_t value) {
+#ifndef NDEBUG
+    if (!isValidPackedResource(r)) {
+        assert(false && "Bank::packResource called with invalid Resource");
+        return pb;
+    }
+#endif
+    if (!isValidPackedResource(r)) {
+        return pb;
+    }
     uint8_t shift = static_cast<uint8_t>(r) * 5;
     pb &= ~(PackedBank(0x1F) << shift);
     pb |= (PackedBank(value & 0x1F) << shift);
     return pb;
 }
 constexpr uint8_t unpackResource(PackedBank pb, Resource r) {
+#ifndef NDEBUG
+    if (!isValidPackedResource(r)) {
+        assert(false && "Bank::unpackResource called with invalid Resource");
+        return 0;
+    }
+#endif
+    if (!isValidPackedResource(r)) {
+        return 0;
+    }
     uint8_t shift = static_cast<uint8_t>(r) * 5;
     return static_cast<uint8_t>((pb >> shift) & 0x1F);
 }
@@ -144,7 +168,9 @@ constexpr PackedBank buyableTransaction(PackedBank pb, BuyableType b, DevType d 
 }
 
 constexpr void changeResourceQuantity(PackedBank &pb, Resource r, int8_t delta) {
-    pb = packResource(pb, r, unpackResource(pb, r) + delta);
+    // Preserve historical wrap semantics (mod 32) while still guarding invalid Resource.
+    // This matters for bot rollouts that temporarily explore invalid states but must undo exactly.
+    pb = packResource(pb, r, static_cast<uint8_t>(unpackResource(pb, r) + delta));
 }
 
 } // namespace Bank
