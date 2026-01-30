@@ -217,7 +217,7 @@ for i, player_a in enumerate(players):
         matrix[i, j] = diff[(player_a, player_b)]
 # Plot heatmap
 plt.figure(figsize=(10, 8))
-plt.imshow(matrix, cmap='bwr', vmin=-100, vmax=100)
+plt.imshow(matrix, cmap='bwr', vmin=-20, vmax=20)
 plt.colorbar(label='Win Rate Difference (%)')
 plt.xticks(ticks=np.arange(len(players)), labels=players, rotation=45, ha='right')
 plt.yticks(ticks=np.arange(len(players)), labels=players)
