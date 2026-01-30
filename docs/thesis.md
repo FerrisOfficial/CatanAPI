@@ -1,7 +1,7 @@
 ## Streszczenie
 Praca składa się z dwóch zasadniczych części. Pierwszym celem pracy jest zaprojektowanie oraz implementacja silnika gry planszowej Catan w wersji dwuosobowej (1 vs 1) w języku C++. Implementacja została wykonana z naciskiem na wydajność oraz elastyczność, w szczególności poprzez efektywną reprezentację stanu gry, system aplikowania i cofania akcji oraz modelowanie obiektów występujących w grze. Poprawność działania silnika została zweryfikowana za pomocą rozbudowanego zestawu testów jednostkowych i integracyjnych.
 
-Drugim celem pracy, o charakterze badawczym, jest implementacja oraz porównanie botów wykorzystujących różne strategie rozgrywki. Przedstawiono kilka typów graczy automatycznych, w tym graczy losowych, heurystycznych, gracza wykorzystującego algorytm przeszukiwania drzewa gry oraz gracza parametrycznego(?). Skuteczność poszczególnych botów została oceniona na podstawie przeprowadzonych eksperymentów i analizy uzyskanych wyników.
+Drugim celem pracy, o charakterze badawczym, jest implementacja oraz porównanie botów wykorzystujących różne strategie rozgrywki. Przedstawiono kilka typów graczy automatycznych, w tym graczy losowych, heurystycznych, gracza wykorzystującego algorytm przeszukiwania drzewa gry oraz gracza opartego na algorytmie genetycznym. Skuteczność poszczególnych botów została oceniona na podstawie przeprowadzonych eksperymentów i analizy uzyskanych wyników.
 
 Dodatkowo opracowano moduł rejestracji i odtwarzania rozgrywek, umożliwiający szczegółowe prześledzenie przebiegu gry pomiędzy wybranymi botami krok po kroku. Moduł ten wspiera analizę zachowania graczy automatycznych, ułatwia debugowanie silnika gry oraz stanowi narzędzie pomocnicze w procesie porównywania strategii.
 
@@ -126,7 +126,31 @@ Zakres pracy obejmuje:
 - przygotowanie narzędzi do rejestracji i odtwarzania rozgrywek (replay),
 - przeprowadzenie eksperymentów porównawczych i analizę wyników.
 
-### 1.4. Struktura pracy
+### 1.4. Podział pracy i wkład autorów
+
+Praca została zrealizowana zespołowo. Poniżej przedstawiono podział zadań między autorów.
+
+**Maciej Stempniak** odpowiadał za:
+- implementację silnika gry Catan w wariancie 1 vs 1, w tym reprezentację stanu gry oraz logikę przebiegu rozgrywki,
+- implementację środowiska do przeprowadzania masowych eksperymentów symulacyjnych,
+- projekt i implementację wyspecjalizowanych botów: *RoadPlayer*, *DevPlayer* oraz *CityRushPlayer*,
+- implementację bota opartego na algorytmie genetycznym,
+- opracowanie narzędzia do wizualizacji i odtwarzania przebiegu rozgrywek (viewer).
+
+**Yaryna Rachkevych** odpowiadała za:
+- projekt topologii planszy oraz struktur danych opisujących jej elementy,
+- implementację systemu akcji wraz z mechanizmem ich stosowania i cofania (apply/undo),
+- projekt i implementację bota wykorzystującego algorytm alpha-beta oraz bota *OneResource*,
+- przeprowadzanie eksperymentów porównawczych pomiędzy botami oraz wprowadzenie i analizę metryk skuteczności,
+- projekt i implementację testów jednostkowych weryfikujących poprawność działania silnika gry.
+
+**Wkład wspólny autorów** obejmował:
+- definiowanie celów i zakresu pracy,
+- projekt oraz implementację botów heurystycznych (iteracje It1–It5),
+- przygotowanie części badawczej pracy oraz interpretację wyników symulacji,
+- redakcję, weryfikację merytoryczną oraz korektę końcowej wersji pracy.
+
+### 1.5. Struktura pracy
 
 Rozdział 2 przedstawia przegląd istniejących rozwiązań i prac naukowych związanych z symulacją gry *Catan* oraz projektowaniem botów. Rozdział 3 definiuje założenia wariantu 1 vs 1 oraz wymagania projektowe silnika. W rozdziale 4 opisano architekturę i szczegóły implementacji (model stanu, system akcji, mechanizm cofania oraz narzędzia diagnostyczne). Rozdziały 5–8 prezentują sposób uruchamiania symulacji, eksperymenty porównawcze, wyniki oraz ich analizę. Rozdział 9 zawiera podsumowanie oraz wnioski.
 
@@ -498,6 +522,45 @@ Odtwarzacz jest wykorzystywany do:
 - diagnozowania błędów w botach (np. nieoptymalne wybory lub zapętlenia),
 - analizy jakości strategii (np. decyzje o blokowaniu rozbójnikiem, handlu z bankiem i budowie).
 
+### 5.4. Jak przeprowadzać rozgrywki
+
+Poniżej opisano praktyczny sposób uruchamiania serii gier oraz odtwarzania zapisanych rozgrywek.
+
+**Uruchamianie serii gier (program `run`).** Program uruchomieniowy (katalog `runs/`, plik `run.cpp`) uruchamia się z linii poleceń w następujący sposób:
+
+```
+run [opcje] <flaga_gracza0> <flaga_gracza1>
+```
+
+Argumenty pozycyjne to **flagi botów**: gracz 0 i gracz 1. Dostępne flagi to m.in. `rp` (RandomPlayer), `it1`–`it5` (boty heurystyczne), `para` (ParaPlayer), `psit5` (ParaSettleIt5Player), `ab` (AlphaBetaPlayer), `or` (OneResourcePlayer), `dev` (DevPlayer), `road` (RoadPlayer). Pełną listę oraz opis opcji wyświetla polecenie `run -h` (lub `run --help`).
+
+Ważniejsze opcje:
+- **`-n N`** lub **`--games N`** — liczba rozgrywek do przeprowadzenia (domyślnie 1);
+- **`--switch`** (lub **`--swap`**) — przełączanie stron co drugą grę (gracz 0 i gracz 1 zamieniają się miejscami), co redukuje efekt pierwszeństwa strony;
+- **`--no-dump`** — wyłączenie zapisu logów JSONL (zalecane przy dużej liczbie gier, gdy nie potrzebujemy replayu);
+- **`--dump`** — włączenie zapisu (domyślne); każda rozgrywka zapisuje jeden plik w katalogu `./logs` (np. `game_YYYYMMDD_HHMMSS_*.jsonl`).
+
+Przykłady:
+- jedna gra It4 vs It5 z zapisem logu: `run it4 it5`;
+- 1000 gier Para vs Random bez logów: `run -n 1000 --no-dump para rp`;
+- 500 gier z przełączaniem stron i zapisem: `run -n 500 --switch ab it5`.
+
+**Odtwarzanie i wizualizacja (replay viewer).** Narzędzie `utils/replay_viewer.py` wczytuje plik JSONL wygenerowany przez Dumper i wizualizuje przebieg gry. Uruchomienie:
+
+```
+python utils/replay_viewer.py [ścieżka/do/pliku.jsonl]
+```
+
+Jeśli nie podano ścieżki, otwiera się okno wyboru pliku. Opcja **`-lr`** (lub **`--last-replay`**) automatycznie wybiera najnowszy plik `*.jsonl` z katalogów `logs/` lub `build/logs/` i uruchamia odtwarzacz z włączonym auto-odtwarzaniem.
+
+W oknie odtwarzacza: suwak pozwala przewijać stany gry (początek, kolejne tury); klawisze strzałek zmieniają klatkę; spacja włącza lub zatrzymuje auto-odtwarzanie. Wyświetlane są: plansza (heksy z zasobami i numerami, rozbójnik, drogi, osady i miasta, porty), tabele graczy (punkty zwycięstwa, zasoby, karty rozwoju, premie) oraz log zdarzeń dla bieżącej tury. Dzięki temu można krok po kroku prześledzić rozgrywkę i zlokalizować błędy lub nieoczekiwane zachowania botów.
+
+![](example_game.png)
+
+![](example_game2.png)
+
+**Rys. 5.1–5.2.** Przykład działania odtwarzacza: pierwszy zrzut — stan plaszy na początku tury 26 w której wypadła siódemka i gracz It4 przestawił rozbójnika na inny heks; drugi — stan planszy na początku tury 27.
+
 
 ## 6. Testowanie i weryfikacja poprawności
 
@@ -603,87 +666,69 @@ It4 wprowadza **inteligentne używanie kart rozwoju** oraz **deterministyczny wy
 
 It5 uzupełnia it4 o **jednokrokową symulację** (*one-step lookahead*) i **zunifikowaną ocenę pozycji**. Zamiast sztywnych priorytetów bot dla każdej rozważanej akcji deterministycznej: stosuje ją do kopii stanu, liczy wartość funkcji oceny pozycji, cofa akcję – i wybiera akcję dającą **najwyższą ocenę**. Decyzja opiera się więc na **rzeczywistym wpływie na stan gry**, a nie na samym typie akcji. Najpierw rozważane są budowy miasta i osady (wybór najlepszej lokalizacji), potem drogi i handel; dodatkowo premiowane są ruchy, które **odblokowują** w następnym kroku budowę miasta lub osady.
 
-
 Zakup karty rozwoju nie jest symulowany (losowość talii) i oceniany heurystycznie; gdy najlepszą opcją jest zakończenie tury bez poprawy, bot **zawraca do logiki it4**. Przy wyrzuceniu 7 it5 **nie odrzuca losowo**: ustala najbliższy cel (miasto, osada, droga, karta), po czym odrzuca surowce najmniej potrzebne do tego celu, chroniąc zasoby krytyczne. It5 łączy deterministyczny wybór i sensowne priorytety z oceną konsekwencji ruchu przy niewielkim koszcie obliczeniowym.
 
-### 7.3. Bot wykorzystujący algorytm alpha-beta
+### 7.2. Bot wykorzystujący algorytm alpha-beta
 
-Kolejnym graczem automatycznym jest bot wykorzystujący **algorytm przeszukiwania drzewa gry alpha-beta**. Jego celem jest podejmowanie decyzji na podstawie analizy przyszłych stanów gry, z uwzględnieniem możliwych odpowiedzi przeciwnika.
+Kolejnym graczem automatycznym jest bot wykorzystujący algorytm przeszukiwania drzewa gry alpha-beta. Jego celem jest podejmowanie decyzji na podstawie analizy przyszłych stanów gry, z uwzględnieniem możliwych odpowiedzi przeciwnika. W przeciwieństwie do botów heurystycznych, które oceniają jedynie pojedynczy ruch, bot alpha-beta eksploruje sekwencje akcji, traktując rozgrywkę jako dwuosobową grę o sumie zerowej, w której:
 
-W przeciwieństwie do botów heurystycznych, które oceniają jedynie pojedynczy ruch, bot alpha-beta eksploruje sekwencje akcji, traktując grę jako **dwuosobową grę o sumie zerowej** i zakładając racjonalne zachowanie przeciwnika.
+- bot (gracz selfId) jest stroną maksymalizującą,
+- przeciwnik jest stroną minimalizującą wartość funkcji oceny.
 
-#### Podstawowa wersja algorytmu
+#### 7.2.1. Reprezentacja drzewa i znaczenie głębokości
 
-Początkowa implementacja bota opierała się na klasycznym algorytmie **minimax z obcinaniem alpha-beta**, przeszukującym drzewo gry do stałej głębokości. W węzłach drzewa:
+Drzewo decyzyjne budowane przez algorytm składa się z kolejnych stanów planszy, powstałych w wyniku zastosowania akcji gry. Głębokość przeszukiwania (depth) w tej implementacji oznacza liczbę kolejnych symulowanych akcji, a nie liczbę pełnych tur. Ponieważ pojedyncza tura w grze składa się z wielu możliwych decyzji (np. handel, budowa, zakończenie tury), algorytm może zakończyć analizę w dowolnym momencie sekwencji ruchów.
 
-- gracz sterowany przez bota pełni rolę **maksymalizującą**,
-- przeciwnik traktowany jest jako gracz **minimalizujący** wartość funkcji oceny.
+#### 7.2.2. Ograniczanie rozmiaru drzewa przeszukiwania
 
-Po osiągnięciu maksymalnej głębokości przeszukiwania lub stanu terminalnego, pozycja oceniana jest za pomocą **rozbudowanej funkcji heurystycznej**, uwzględniającej m.in.:
+Ze względu na dużą liczbę potencjalnych akcji, bot stosuje mechanizmy redukujące rozgałęzienie drzewa:
 
-- różnicę punktów zwycięstwa,
-- produkcję zasobów,
-- potencjał przyszłych osad,
-- stan zasobów na ręce,
-- długość najdłuższej drogi,
-- liczbę kart rozwoju.
+1. **Filtrowanie akcji deterministycznych** – do przeszukiwania wybierane są głównie akcje o przewidywalnych skutkach, natomiast akcje silnie losowe są w większości pomijane.
 
-Głębokość przeszukiwania została ograniczona do niewielkiej wartości (maksymalnie 3), co wynika z dużego współczynnika rozgałęzienia drzewa gry *Catan*, szczególnie w fazach obejmujących liczne akcje handlu.
+2. **Selekcja najlepszych kandydatów** – akcje są wstępnie oceniane heurystycznie, sortowane i ograniczane do stałej liczby (14), przy czym zawsze gwarantowana jest obecność akcji EndTurn.
 
-W trakcie przeszukiwania drzewa gry bot nie modeluje jawnie losowych rzutów kośćmi (co znacząco zwiększałoby współczynnik rozgałęzienia), jednak uwzględnia ich wpływ w sposób przybliżony poprzez **wartość oczekiwaną produkcji zasobów**. W tym celu dla każdej pozycji obliczana jest miara produkcji oparta o tzw. *pipsy* – liczbę oczek odpowiadającą prawdopodobieństwu wyrzucenia danego numeru heksu. Węzły (osady i miasta) oceniane są na podstawie sumy wartości `pips × waga_surowca` dla przyległych heksów, przy czym miasta otrzymują podwojony wkład produkcyjny. Taka agregacja stanowi aproksymację przewidywanej liczby otrzymanych zasobów w kolejnych turach i pozwala botowi preferować linie rozgrywki prowadzące do stabilniejszej oraz bardziej wartościowej ekonomicznie produkcji, bez konieczności explicite symulowania wszystkich możliwych wyników rzutów kośćmi.
+Dodatkowo stosowane jest porządkowanie ruchów (move ordering), co zwiększa skuteczność obcinania alpha-beta poprzez wcześniejsze rozpatrywanie najbardziej obiecujących decyzji.
 
-#### Sortowanie akcji i poprawa skuteczności obcinania
+#### 7.2.3. Algorytm alpha-beta
 
-W praktyce okazało się, że naiwne przeszukiwanie drzewa, w którym akcje rozważane są w kolejności generowanej przez silnik gry, prowadzi do znacznych kosztów obliczeniowych i ogranicza efektywność obcinania alpha-beta.
+Rdzeniem bota jest klasyczny algorytm minimax z obcinaniem alpha-beta, zaimplementowany z głębokością 3 akcji. Dla danego stanu gry:
 
-W celu przyspieszenia działania algorytmu wprowadzono **heurystyczne sortowanie akcji** przed ich eksploracją. Każdej legalnej, deterministycznej akcji przypisywana jest szybka, przybliżona ocena jakości, która:
+- jeżeli osiągnięto maksymalną głębokość przeszukiwania (depth = 0), zwracana jest wartość funkcji oceny pozycji,
+- w przeciwnym razie generowane są legalne akcje dla aktualnego gracza, które następnie podlegają filtrowaniu i sortowaniu,
+- dla każdej akcji tworzona jest kopia stanu planszy i symulowane jest wykonanie akcji,
+- jeśli akcja to EndTurn, automatycznie wywoływana jest symulacja oczekiwanych rzutów kością,
+- jeśli ruch należy do bota (maximizing), wybierana jest akcja maksymalizująca ocenę, aktualizowane jest alpha, a przeszukiwanie przerywane jest gdy alpha >= beta (beta cutoff),
+- jeśli ruch należy do przeciwnika (minimizing), wybierana jest akcja minimalizująca ocenę, aktualizowane jest beta, a przeszukiwanie przerywane jest gdy alpha >= beta (alpha cutoff).
 
-- preferuje akcje budowy miasta i osady,
-- promuje działania prowadzące do zdobycia punktów zwycięstwa,
-- wstępnie ocenia użyteczność handlu z bankiem.
+Parametry alpha i beta reprezentują odpowiednio najlepszą wartość znalezioną dla gracza maksymalizującego oraz najlepszą wartość znalezioną dla gracza minimalizującego. Mechanizm przycinania pozwala na pominięcie gałęzi drzewa, które z pewnością nie będą wybrane, co znacząco redukuje liczbę rozważanych stanów.
 
-Następnie:
+#### 7.2.4. Funkcja oceny pozycji i fazy gry
 
-- w węzłach maksymalizujących akcje są rozważane w **kolejności malejącej** oceny,
-- w węzłach minimalizujących akcje są rozważane w **kolejności rosnącej** oceny.
+Ocena stanu gry realizowana jest przez funkcję heurystyczną `evaluate_position_stage()`, której struktura zależy od aktualnej fazy rozgrywki (wczesnej, środkowej lub późnej). Faza gry określana jest na podstawie maksymalnej liczby VP uzyskanych przez graczy oraz numeru tury.
 
-Takie uporządkowanie powoduje, że w węzłach maksymalizujących najsilniejsze ruchy analizowane są jako pierwsze, natomiast w węzłach minimalizujących priorytetowo rozważane są ruchy najbardziej niekorzystne dla gracza maksymalizującego. Dzięki temu znacznie częściej spełniony zostaje warunek obcinania (`beta ≤ alpha`), co prowadzi do istotnej redukcji liczby odwiedzanych węzłów drzewa gry.
+We wczesnej fazie gry funkcja oceny kładzie większy nacisk na rozwój ekonomiczny, w szczególności na produkcję zasobów oraz potencjał dalszej ekspansji osadniczej. W fazie środkowej wagi poszczególnych składników są bardziej zrównoważone, natomiast w końcowej fazie gry dominującym czynnikiem staje się bezpośrednia realizacja punktów zwycięstwa, a znaczenie produkcji zasobów ulega względnemu zmniejszeniu.
 
-W praktyce umożliwia to przeszukiwanie głębszych drzew decyzyjnych przy tym samym budżecie czasowym, bez pogorszenia jakości podejmowanych decyzji.
+Funkcja oceny uwzględnia następujące komponenty:
 
-#### Adaptacja algorytmu do fazy gry
+- **Punkty zwycięstwa** – kluczowy czynnik oceny, odzwierciedlający bezpośrednie zbliżanie się do warunku zakończenia gry.
+- **Produkcję zasobów** – bieżący potencjał ekonomiczny gracza wynikający z rozmieszczenia osad i miast, porównywany z potencjałem przeciwnika.
+- **Potencjał osadniczy** – ocenę możliwości dalszej ekspansji, wynikającą z aktualnej sieci dróg i dostępnych lokalizacji pod osady.
+- **Deficyty zasobów** – stopień braków zasobów niezbędnych do realizacji kluczowych zakupów, takich jak miasto, osada czy karta rozwoju.
+- **Ryzyko utraty kart** – kara za nadmierną liczbę kart zasobów na ręce, zwiększającą podatność na straty w przypadku wyrzucenia liczby 7.
+- **Różnice w zasobach i kartach rozwoju** – porównanie aktualnej siły ekonomicznej i długoterminowych inwestycji obu graczy.
+- **Najdłuższą drogę** – element strategiczny związany z kontrolą infrastruktury i dodatkowymi punktami zwycięstwa.
+- **Oczekiwany zysk z rzutów kością** – heurystyczną ocenę potencjalnej przyszłej produkcji zasobów, wyznaczaną na podstawie rozkładu prawdopodobieństwa rzutów.
+- **Możliwość natychmiastowej budowy** – dodatkowe premiowanie stanów, w których gracz może bezpośrednio zrealizować istotną akcję budowy.
 
-Kolejnym istotnym rozszerzeniem algorytmu było wprowadzenie mechanizmu **dynamicznej adaptacji strategii do fazy gry**. Faza gry określana jest na podstawie maksymalnej liczby punktów zwycięstwa posiadanych przez dowolnego gracza:
+Tak skonstruowana funkcja oceny łączy informacje krótkoterminowe (aktualne zasoby, możliwość budowy) z oceną długofalowego potencjału pozycji, umożliwiając algorytmowi alpha-beta podejmowanie decyzji lepiej dopasowanych do aktualnej fazy rozgrywki.
 
-- **faza początkowa** – mniej niż 5 punktów zwycięstwa,
-- **faza środkowa** – od 5 do 7 punktów,
-- **faza końcowa** – 8 lub więcej punktów.
+#### 7.2.5. Symulacja rzutów kością w drzewie przeszukiwania
 
-W zależności od fazy gry modyfikowane są:
+Aby uwzględnić wpływ losowości produkcji zasobów bez rozgałęziania drzewa na 36 możliwych wyników rzutu, przy każdej akcji EndTurn w drzewie przeszukiwania wywoływana jest funkcja **symulująca oczekiwaną produkcję** z jednego „przyszłego” rzutu kością. Zamiast losować konkretną sumę (2–12), bot oblicza **wartość oczekiwaną** produkcji: dla każdego gracza (właśnie kończącego turę i przeciwnika) sumuje się, po wszystkich jego osadach i miastach, wkład każdego przyległego heksa. Dla heksa z liczbą o prawdopodobieństwie *pips*/36 (gdzie *pips* to liczba sposobów wyrzucenia tej liczby) wkład to *pips* (dla osady) lub 2·*pips* (dla miasta) — są to **liczniki ułamka pips/36 zasobu**; heks zajęty przez rozbójnika jest pomijany (produkcja z niego 0). Suma tych liczników jest dodawana do **reszty z poprzedniej symulowanej tury** (tablica `remainderFP` dla każdego gracza): łączna wartość jest dzielona przez 36 — **tylko całe karty** (część całkowita z dzielenia) są dopisywane do ręki gracza w skopiowanym stanie, a **reszta z dzielenia (0–35)** jest zapisywana w `remainderFP` na następne wywołanie. Dzięki temu przy wielu kolejnych EndTurn w tej samej gałęzi drzewa ułamkowa „produkcja” się kumuluje i po kilku symulowanych turach gracz otrzymuje kolejne całe karty, bez gubienia ułamków. Stan przekazywany w głąb rekurencji alpha-beta zawiera zaktualizowane ręce obu graczy oraz zaktualizowane `ExpectedStateFP` (exp0, exp1), tak że kolejne EndTurn w tej gałęzi dalej dokładają oczekiwaną produkcję i reszty są spójne między „turami”. W efekcie drzewo nie rozgałęzia się na wyniki kostki — zamiast tego **jedna** następna pozycja po EndTurn odzwierciedla średni przyrost zasobów z jednego rzutu, a wielokrotne EndTurn w gałęzi symulują wielokrotne rzuty w sposób przybliżony i deterministyczny.
 
-- wagi składowych funkcji oceny,
-- maksymalna głębokość przeszukiwania,
-- liczba rozważanych akcji handlu,
-- priorytety typów akcji (np. budowa vs. handel).
+#### 7.2.6. Heurystyki uzupełniające i mechanizmy awaryjne
 
-W fazie początkowej algorytm preferuje rozwój produkcji i elastyczność zasobów, przy jednoczesnym ograniczeniu głębokości przeszukiwania ze względu na bardzo dużą liczbę dostępnych akcji. W fazie środkowej równoważone są aspekty ekonomiczne i punktowe. Natomiast w fazie końcowej algorytm kładzie silny nacisk na **natychmiastowe zdobywanie punktów zwycięstwa**, zwiększając wagę budowy miast i osad oraz pogłębiając przeszukiwanie drzewa gry.
-
-
-#### Selekcja i filtrowanie akcji
-
-Aby dodatkowo ograniczyć złożoność obliczeniową, bot alpha-beta rozważa wyłącznie **akcje deterministyczne**, pomijając działania o losowym efekcie (np. dobór kart rozwoju), które nie są bezpośrednio modelowane w drzewie gry.
-
-Akcje handlu z bankiem są dodatkowo filtrowane — w każdej turze analizowana jest jedynie ograniczona liczba najlepiej ocenionych transakcji, przy czym limit ten zależy od aktualnej fazy gry. W fazie końcowej liczba rozważanych wymian jest celowo zmniejszana, aby skoncentrować obliczenia na akcjach prowadzących bezpośrednio do zakończenia rozgrywki.
-
-#### Integracja z botami heurystycznymi
-
-W sytuacjach, w których:
-
-- dostępne są wyłącznie akcje niedeterministyczne,
-- najlepszą decyzją według algorytmu okazuje się zakończenie tury,
-- lub wynik przeszukiwania nie poprawia bieżącej oceny pozycji,
-
-bot alpha-beta stosuje **mechanizm awaryjny**, delegując decyzję do najbardziej zaawansowanego bota heurystycznego (it5). Takie rozwiązanie zapewnia stabilność zachowania i zapobiega podejmowaniu decyzji ewidentnie gorszych od strategii heurystycznej.
+Po zakończeniu przeszukiwania drzewa bot stosuje dodatkowe heurystyki, m.in. ocenę zakupu karty rozwoju poza algorytmem alpha-beta, ze względu na jej losowy charakter. W sytuacjach, w których najlepszą akcją okazuje się EndTurn, a jej ocena jest gorsza niż aktualna pozycja, bot deleguje decyzję do prostszego gracza heurystycznego, co zapobiega nadmiernie pasywnemu stylowi gry.
 
 ### 7.4. Boty celujące w jedną strategię
 
@@ -811,7 +856,7 @@ W celu kompleksowej oceny skuteczności botów wprowadzono następujące metryki
 - Procent nierozegranych rozgrywek: NW (No Winner) 
 - Częstość zdobycia premii Najdłuższa Droga i Największa Armia: Longest road% i Largest army%
 - Średnia liczba zakupionych kart rozwoju: Avg DevCards
-- Średnia produkcja zasobów: ProdScore
+- **Średnia produkcja zasobów (ProdScore):** metryka potencjału produkcyjnego gracza na turę, wyznaczana ze stanu planszy po zakończeniu rozgrywki, w skali ważonej. Dla każdego pola zasobowego przy osadzie lub mieście: iloczyn liczby sposobów wyrzucenia danej sumy oczek (pips, z 36) i wagi zasobu (Ruda: 14, Zboże: 13, Cegła: 12, Drewno: 12, Wełna: 11). Miasta liczą się 2×, osady 1×; porty dodają +35 (3:1) lub +70 (2:1).
 
 ### 8.2. Scenariusze testowe
 
@@ -881,7 +926,7 @@ W scenariuszu 2 zestawiono iteracje botów heurystycznych w układzie „każdy 
 
 #### Podsumowanie danych
 
-| Para | Bot A | Bot B | Win Rate A | Win Rate B | Avg Turns | LossVP A | LossVP B | Longest road% A | Longest road% B | Largest Army% A | Largest Army% B | DevCards A | DevCards B | ProdScore A | ProdScore B |
+| Para | Bot A | Bot B | Win Rate A | Win Rate B | Avg Turns | LossVP A | LossVP B | LR% A | LR% B | LA% A | LA% B | DevCards A | DevCards B | ProdScore A | ProdScore B |
 |------|-------|-------|------------|------------|-----------|----------|----------|--------------|--------------|--------------|--------------|------------|------------|-------------|-------------|
 | It1 vs It2 | It1 | It2 | 35.8% | 61.9% | 339.8 | 6.24 | 7.96 | 37.4% | 62.6% | 45.8% | 52.3% | 2.3 | 2.6 | 589.1 | 832.1 |
 | It2 vs It3 | It2 | It3 | 5.8% | 93.6% | 181.9 | 5.06 | 11.28 | 31.4% | 68.5% | 5.8% | 91.1% | 0.9 | 3.2 | 400.5 | 1017.3 |
@@ -891,15 +936,24 @@ W scenariuszu 2 zestawiono iteracje botów heurystycznych w układzie „każdy 
 
 #### Kluczowe wnioski
 
-Wyniki wskazują na monotoniczną poprawę w układzie iteracyjnym: w każdej z rozpatrywanych par nowsza iteracja uzyskuje wyższy współczynnik zwycięstw niż iteracja wcześniejsza. Największy skok jakościowy dotyczy przejścia It2 → It3 (w parze It2 vs It3 It3 wygrywa 93.6% rozgrywek), co jest spójne z obserwacjami ze scenariusza 1.
+![alt text](scenario2_pairwise_comparison.png)
+Porównanie wyników par botów w scenariuszu 2.
 
-Wraz ze wzrostem jakości botów skraca się również średnia długość rozgrywki. Różnice są szczególnie widoczne dla przejścia It2 → It3, natomiast dla późniejszych wersji (It3–It5) tempo stabilizuje się na poziomie około 130–185 tur.
+![alt text](scenario2_tempo.png)
+Porównanie średniej liczby tur (Avg Turns) dla wybranych par botów w scenariuszu 2.
 
-![Porównanie wyników par botów w scenariuszu 2](../plots/scenario2_1_pairwise_comparison.png)
-Rysunek: Porównanie wyników par botów w scenariuszu 2 (Win Rate).
+Wyniki wskazują na **monotoniczną poprawę** w układzie iteracyjnym: w każdej z rozpatrywanych par nowsza iteracja uzyskuje wyższy współczynnik zwycięstw niż iteracja wcześniejsza. Interpretacja w świetle heurystyk z rozdziału 7.2:
 
-![Porównanie średniej liczby tur w scenariuszu 2](image-1.png)
-Rysunek: Porównanie średniej liczby tur (Avg Turns) dla wybranych par botów w scenariuszu 2.
+- **It1 → It2:** Wprowadzenie handlu z bankiem i celu zakupu daje ok. 26 punktów procentowych przewagi (61.9% vs 35.8% dla It2). Średnia liczba tur spada z ok. 340 do ok. 182 w kolejnej parze, co potwierdza szybsze domykanie partii przez lepszą alokację zasobów.
+- **It2 → It3:** Ustawienia początkowe i rozbójnik powodują **jakościowy skok** — It3 wygrywa 93.6% z It2. Spadek średniej liczby tur (ok. 182) oraz wyższy ProdScore It3 (1017.3 vs 400.5) pokazują, że lepsza pozycja startowa i blokowanie produkcji przeciwnika dają więcej zasobów.
+- **It3 → It4:** Karty rozwoju i deterministyczny wybór budowy dają It4 wyraźną przewagę (66.0%), przy podobnym tempie (ok. 184 tury). Wzrost wykorzystania premii (np. Najdłuższa Droga 75.4% dla It4) odzwierciedla lepsze wykorzystanie kart i lokalizacji.
+- **It4 → It5:** Jednokrokowy lookahead i zunifikowana ocena pozycji pozwalają It5 wygrywać 74.2% z It4 przy krótszych rozgrywkach (ok. 134 tury).
+
+![Największa Armia w parach iteracji](scenario2_largest_army.png)
+
+![Najdłuższa Droga w parach iteracji](scenario2_longest_road.png)
+
+**Najciekawsze momenty z wykresów premii.** Na wykresie **Największa Armia (LA%)** wyróżniają się dwa skoki: przejście It2 → It3 (It2 tylko 5,8%, It3 aż 91,1%) oraz It4 → It5 (It4 11,4%, It5 88,6%). Potwierdza to, że ustawienia początkowe i rozbójnik (It3) oraz jednokrokowy lookahead i zunifikowana ocena (It5) silnie sprzyjają zdobywaniu premii przez karty rozwoju. W parze It3 vs It4 It4 ma nieco niższy LA% (46,3%) niż It3 (52,5%) — It4 bardziej koncentruje się na deterministycznym wyborze budowy i Najdłuższej Drodze niż na rycerzach. Na wykresie **Najdłuższa Droga (LR%)** widać stopniowy wzrost od It1 do It4 (It4 osiąga 82,0% w parze z It5), a następnie wyraźne odwrócenie w parze It4 vs It5: It5 ma tylko 17,8% LR%, podczas gdy It4 82,0%. It5 priorytetyzuje karty rozwoju i Największą Armię (88,6% LA%), więc w tej parze premia drogowa przechodzi na It4; mimo to It5 wygrywa 74,2% rozgrywek, co ilustruje, że wybór strategii (droga vs armia) zależy od heurystyk, a zwycięstwo nie wymaga przewagi we wszystkich metrykach.
 
 #### 8.2.3. Scenariusz 3: AlphaBetaPlayer
 
@@ -910,6 +964,7 @@ Scenariusz 3 weryfikuje skuteczność AlphaBetaPlayer — algorytmu wykorzystuj�
 | Opponent | Win Rate (AB) | Avg Turns | LossVP (AB) | LossVP (Opp) | LR% (AB) | LR% (Opp) | LA% (AB) | LA% (Opp) |
 |------------|---------------|-----------|-------------|--------------|----------|-----------|----------|-----------|
 | It1 | 99.9% | 105.0 | 10.00 | 3.38 | 96.3% | 2.7% | 92.4% | 3.9% |
+
 | It2 | 99.5% | 107.7 | 10.20 | 3.46 | 90.6% | 8.7% | 91.6% | 3.3% |
 | It3 | 94.6% | 118.8 | 11.43 | 7.36 | 82.1% | 17.8% | 77.1% | 22.3% |
 | It4 | 80.6% | 127.4 | 9.30 | 8.56 | 57.8% | 42.2% | 76.6% | 22.6% |
@@ -987,7 +1042,7 @@ OneResourcePlayer reprezentuje strategię wyspecjalizowaną, która maksymalizuj
 | It5 | 19.0% | 116.9 | 7.24 | 11.21 | 39.0% | 55.8% | 12.1% | 87.8% | 745.2 | 1065.1 |
 | Para | 34.8% | 127.8 | 7.73 | 6.14 | 32.2% | 67.2% | 60.6% | 33.5% | 795.7 | 962.1 |
 | ParaSettleIt5 | 18.2% | 113.2 | 7.19 | 11.24 | 38.9% | 54.7% | 11.1% | 88.7% | 735.0 | 1089.8 |
-| AlphaBeta | 11.1% | 111.1 | 6.93 | 10.60 | 14.6% | 85.2% | 23.2% | 76.8% | 1.7 | 2.6 | 680.6 | 1129.1 |
+| AlphaBeta | 15.8% | 111.4 | 7.03 | 10.68 | 17.6% | 81.4% | 22.6% | 75.9% | 705.0 | 1113.2 |
 
 #### Kluczowe wnioski
 

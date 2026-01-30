@@ -50,7 +50,7 @@ Każdy typ pola produkcyjnego na planszy odpowiada określonemu surowcowi:
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\textwidth]{board.png}
+    \includegraphics[width=\textwidth]{board.png}
     \caption{Przykładowa plansza gry Catan}
 \end{figure}
 
@@ -65,7 +65,7 @@ Osady i miasta muszą być połączone drogami — każda nowa struktura musi by
 \medskip
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{building_costs.png}
+\includegraphics[width=\textwidth]{building_costs.png}
 \caption{Koszty budowy struktur w grze Catan}
 \end{figure}
 
@@ -103,7 +103,7 @@ Istotnym elementem gry jest losowość wynikająca z rzutów kośćmi, która wp
 Jak wspomniano wcześniej, każde pole produkcyjne (heks) na planszy posiada przypisaną liczbę z zakresu 2–12 (z wyjątkiem 7). Ze względu na różną liczbę kombinacji prowadzących do danej sumy, poszczególne liczby mają odmienne prawdopodobieństwo wystąpienia. W praktyce wprowadza się miarę \textbf{pipsów} (z ang. \textit{pips}, dosłownie: oczka na kości), która odzwierciedla częstość występowania danej liczby:
 
 \begin{itemize}
-\item \textbf{2 lub 12}: 1 pipsa (1 kombinacja: 1+1 lub 6+6),
+\item \textbf{2 lub 12}: 1 pips (1 kombinacja: 1+1 lub 6+6),
 \item \textbf{3 lub 11}: 2 pipsy (2 kombinacje: 1+2, 2+1 lub 5+6, 6+5),
 \item \textbf{4 lub 10}: 3 pipsy (3 kombinacje),
 \item \textbf{5 lub 9}: 4 pipsy (4 kombinacje),
@@ -159,6 +159,36 @@ Zakres pracy obejmuje:
 \item przeprowadzenie eksperymentów porównawczych i analizę wyników.
 \end{itemize}
 
+\section{Podział pracy i wkład autorów}
+
+Praca została zrealizowana zespołowo. Poniżej przedstawiono podział zadań między autorów.
+
+\textbf{Maciej Stempniak} odpowiadał za:
+\begin{itemize}
+\item implementację silnika gry Catan w wariancie 1 vs 1, w tym reprezentację stanu gry oraz logikę przebiegu rozgrywki,
+\item implementację środowiska do przeprowadzania masowych eksperymentów symulacyjnych,
+\item projekt i implementację wyspecjalizowanych botów: \textit{RoadPlayer}, \textit{DevPlayer} oraz \textit{CityRushPlayer},
+\item implementację bota opartego na algorytmie genetycznym,
+\item opracowanie narzędzia do wizualizacji i odtwarzania przebiegu rozgrywek (viewer).
+\end{itemize}
+
+\textbf{Yaryna Rachkevych} odpowiadała za:
+\begin{itemize}
+\item projekt topologii planszy oraz struktur danych opisujących jej elementy,
+\item implementację systemu akcji wraz z mechanizmem ich stosowania i cofania (apply/undo),
+\item projekt i implementację bota wykorzystującego algorytm alpha-beta oraz bota \textit{OneResource},
+\item przeprowadzanie eksperymentów porównawczych pomiędzy botami oraz wprowadzenie i analizę metryk skuteczności,
+\item projekt i implementację testów jednostkowych weryfikujących poprawność działania silnika gry.
+\end{itemize}
+
+\textbf{Wkład wspólny autorów} obejmował:
+\begin{itemize}
+\item definiowanie celów i zakresu pracy,
+\item projekt oraz implementację botów heurystycznych (iteracje It1--It5),
+\item przygotowanie części badawczej pracy oraz interpretację wyników symulacji,
+\item redakcję, weryfikację merytoryczną oraz korektę końcowej wersji pracy.
+\end{itemize}
+
 \section{Struktura pracy}
 
 Rozdział 2 przedstawia przegląd istniejących rozwiązań i prac naukowych związanych z symulacją gry \textit{Catan} oraz projektowaniem botów. Rozdział 3 definiuje założenia wariantu 1 vs 1 oraz wymagania projektowe silnika. W rozdziale 4 opisano architekturę i szczegóły implementacji (model stanu, system akcji, mechanizm cofania oraz narzędzia diagnostyczne). Rozdziały 5–8 prezentują sposób uruchamiania symulacji, eksperymenty porównawcze, wyniki oraz ich analizę. Rozdział 9 zawiera podsumowanie oraz wnioski.
@@ -171,18 +201,15 @@ Gra \textit{Settlers of Catan} od wielu lat stanowi obiekt zainteresowania zaró
 
 \subsection{Catanatron}
 
-\textit{Catanatron} jest jednym z najbardziej zaawansowanych otwartych środowisk symulacyjnych dla gry \textit{Settlers of Catan}. Projekt został zaprojektowany z myślą o masowym uruchamianiu symulacji oraz testowaniu algorytmów decyzyjnych, w szczególności metod opartych na uczeniu przez wzmacnianie. Architektura systemu umożliwia łatwą integrację własnych agentów poprzez zunifikowany interfejs gracza. Dodatkowo środowisko udostępnia wrapper kompatybilny z OpenAI Gym, co pozwala na wykorzystanie istniejących bibliotek RL.  
-Źródło: dokumentacja projektu Catanatron [1].
+\textit{Catanatron} jest jednym z najbardziej zaawansowanych otwartych środowisk symulacyjnych dla gry \textit{Settlers of Catan}. Projekt został zaprojektowany z myślą o masowym uruchamianiu symulacji oraz testowaniu algorytmów decyzyjnych, w szczególności metod opartych na uczeniu przez wzmacnianie. Architektura systemu umożliwia łatwą integrację własnych agentów poprzez zunifikowany interfejs gracza. Dodatkowo środowisko udostępnia wrapper kompatybilny z OpenAI Gym, co pozwala na wykorzystanie istniejących bibliotek RL. [1].
 
 \subsection{JSettlers}
 
-\textit{JSettlers} to starszy, lecz istotny projekt implementujący grę Catan w języku Java. System zawiera zarówno silnik gry, jak i proste boty regułowe. Projekt ten był wielokrotnie wykorzystywany jako punkt wyjścia w pracach badawczych i dydaktycznych, szczególnie w kontekście gier wieloagentowych.  
-Źródło: oficjalna strona projektu [2].
+\textit{JSettlers} to starszy, lecz istotny projekt implementujący grę Catan w języku Java. System zawiera zarówno silnik gry, jak i proste boty regułowe. Projekt ten był wielokrotnie wykorzystywany jako punkt wyjścia w pracach badawczych i dydaktycznych, szczególnie w kontekście gier wieloagentowych. [2].
 
 \subsection{CatanAI i projekty eksperymentalne}
 
-Istnieją również projekty badawcze i studenckie, takie jak \textit{CatanAI}, implementujące grę w Pythonie wraz z agentami opartymi o heurystyki, Reinforcement Learning lub Monte Carlo Tree Search. Projekty te często nie są zoptymalizowane wydajnościowo, lecz służą jako środowiska eksperymentalne do testowania algorytmów.  
-Źródło: repozytorium GitHub CatanAI [3].
+Istnieją również projekty badawcze i studenckie, takie jak \textit{CatanAI}, implementujące grę w Pythonie wraz z agentami opartymi o heurystyki, Reinforcement Learning lub Monte Carlo Tree Search. Projekty te często nie są zoptymalizowane wydajnościowo, lecz służą jako środowiska eksperymentalne do testowania algorytmów. [3].
 
 \subsection{Tabela porównawcza istniejących rozwiązań}
 
@@ -437,7 +464,7 @@ Testy zostały zaimplementowane w oparciu o \textbf{GoogleTest/GMock} (pobierane
 
 W projekcie dostępna jest opcjonalna konfiguracja diagnostyczna \texttt{ENABLE\_ASAN}, która dodaje flagi AddressSanitizer przy kompilatorach GNU/Clang, co ułatwia wykrywanie błędów pamięci w trakcie rozwoju.
 
-Do analizy przebiegu rozgrywek wykorzystywany jest zapis zdarzeń w formacie \textbf{JSONL} (logger w C++), a do odtwarzania i wizualizacji logów przygotowano narzędzie w \textbf{Python} (interfejs Tkinter). Pozwala to odseparować lekki, wydajny runtime symulacji od narzędzi analitycznych.
+Do analizy przebiegu rozgrywek wykorzystywany jest zapis zdarzeń w formacie \textbf{JSONL} (logger w C++) [15], a do odtwarzania i wizualizacji logów przygotowano narzędzie w \textbf{Python} (interfejs Tkinter). Pozwala to odseparować lekki, wydajny runtime symulacji od narzędzi analitycznych.
 
 
 \section{Struktura projektu}
@@ -583,6 +610,55 @@ Odtwarzacz jest wykorzystywany do:
 \item analizy jakości strategii (np. decyzje o blokowaniu rozbójnikiem, handlu z bankiem i budowie).
 \end{itemize}
 
+\section{Jak przeprowadzać rozgrywki}
+
+Poniżej opisano praktyczny sposób uruchamiania serii gier oraz odtwarzania zapisanych rozgrywek.
+
+\textbf{Uruchamianie serii gier (program \texttt{run}).} Program uruchomieniowy (katalog \texttt{runs/}, plik \texttt{run.cpp}) uruchamia się z linii poleceń w następujący sposób:
+
+\begin{verbatim}
+run [opcje] <flaga_gracza0> <flaga_gracza1>
+\end{verbatim}
+
+Argumenty pozycyjne to \textbf{flagi botów}: gracz 0 i gracz 1. Dostępne flagi to m.in.\ \texttt{rp} (RandomPlayer), \texttt{it1}--\texttt{it5} (boty heurystyczne), \texttt{para} (ParaPlayer), \texttt{psit5} (ParaSettleIt5Player), \texttt{ab} (AlphaBetaPlayer), \texttt{or} (OneResourcePlayer), \texttt{dev} (DevPlayer), \texttt{road} (RoadPlayer). Pełną listę oraz opis opcji wyświetla polecenie \texttt{run -h} (lub \texttt{run --help}).
+
+Ważniejsze opcje:
+\begin{itemize}
+\item \textbf{\texttt{-n N}} lub \textbf{\texttt{--games N}} -- liczba rozgrywek do przeprowadzenia (domyślnie 1);
+\item \textbf{\texttt{--switch}} (lub \textbf{\texttt{--swap}}) -- przełączanie stron co drugą grę (gracz 0 i gracz 1 zamieniają się miejscami), co redukuje efekt pierwszeństwa strony;
+\item \textbf{\texttt{--no-dump}} -- wyłączenie zapisu logów JSONL (zalecane przy dużej liczbie gier, gdy nie potrzebujemy replayu);
+\item \textbf{\texttt{--dump}} -- włączenie zapisu (domyślne); każda rozgrywka zapisuje jeden plik w katalogu \texttt{./logs} (np.\ \texttt{game\_YYYYMMDD\_HHMMSS\_*.jsonl}).
+\end{itemize}
+
+Przykłady:
+\begin{itemize}
+\item jedna gra It4 vs It5 z zapisem logu: \texttt{run it4 it5};
+\item 1000 gier Para vs Random bez logów: \texttt{run -n 1000 --no-dump para rp};
+\item 500 gier z przełączaniem stron i zapisem: \texttt{run -n 500 --switch ab it5}.
+\end{itemize}
+
+\textbf{Odtwarzanie i wizualizacja (replay viewer).} Narzędzie \texttt{utils/replay\_viewer.py} wczytuje plik JSONL wygenerowany przez Dumper i wizualizuje przebieg gry. Uruchomienie:
+
+\begin{verbatim}
+python utils/replay_viewer.py [sciezka/do/pliku.jsonl]
+\end{verbatim}
+
+Jeśli nie podano ścieżki, otwiera się okno wyboru pliku. Opcja \textbf{\texttt{-lr}} (lub \textbf{\texttt{--last-replay}}) automatycznie wybiera najnowszy plik \texttt{*.jsonl} z katalogów \texttt{logs/} lub \texttt{build/logs/} i uruchamia odtwarzacz z włączonym auto-odtwarzaniem.
+
+W oknie odtwarzacza: suwak pozwala przewijać stany gry (początek, kolejne tury); klawisze strzałek zmieniają klatkę; spacja włącza lub zatrzymuje auto-odtwarzanie. Wyświetlane są: plansza (heksy z zasobami i numerami, rozbójnik, drogi, osady i miasta, porty), tabele graczy (punkty zwycięstwa, zasoby, karty rozwoju, premie) oraz log zdarzeń dla bieżącej tury. Dzięki temu można krok po kroku prześledzić rozgrywkę i zlokalizować błędy lub nieoczekiwane zachowania botów.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{example_game1.png}
+\caption{Przykład działania odtwarzacza: po lewej stronie stan planszy na początku tury 26 w której wypadła siódemka i gracz It4 przestawił rozbójnika na inny heks}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{example_game2.png}
+\caption{Stan planszy na początku tury 27.}
+\end{figure}
+
 
 \chapter{Testowanie i weryfikacja poprawności}
 
@@ -694,7 +770,7 @@ It3 dodaje \textbf{świadomą fazę początkową} oraz \textbf{celowe ustawianie
 
 \subsubsection{it4 -- karty rozwoju i deterministyczny wybór budowy}
 
-It4 wprowadza \textbf{inteligentne używanie kart rozwoju} oraz \textbf{deterministyczny wybór lokalizacji} zamiast losowego rozstrzygania remisów. Dla każdego typu karty (Rycerz, Monopol, Rozwój itd.) stosowana jest odrębna logika: Rycerze --- blokada przeciwnika i premia Największa Armia, karty zasobowe --- pod kątem odblokowania budowy miasta lub osady, karty VP --- jako bezpośredni zysk punktowy. Uwzględniane jest \textbf{ryzyko przed rzutem} (7): unika się akcji, które mocno powiększają rękę przed rzutem. Budowa (miasto, osada, droga) wybierana jest deterministycznie na podstawie \textbf{potencjału produkcyjnego} i użyteczności sieci dróg; priorytety dostosowują się do fazy gry.
+It4 wprowadza \textbf{inteligentne używanie kart rozwoju} oraz \textbf{deterministyczny wybór lokalizacji} zamiast losowego rozstrzygania remisów podczas budowy osad i miast. Dla każdego typu karty (Rycerz, Monopol, Rozwój itd.) stosowana jest odrębna logika: Rycerze --- blokada przeciwnika i premia Największa Armia, karty zasobowe --- pod kątem odblokowania budowy miasta lub osady, karty VP --- jako bezpośredni zysk punktowy. Uwzględniane jest \textbf{ryzyko przed rzutem} (7): unika się akcji, które mocno powiększają rękę przed rzutem. Budowa (miasto, osada, droga) wybierana jest deterministycznie na podstawie \textbf{potencjału produkcyjnego} i użyteczności sieci dróg; priorytety dostosowują się do fazy gry.
 
 \subsubsection{it5 -- ocena pozycji i jednokrokowy lookahead}
 
@@ -772,7 +848,7 @@ Kluczowym elementem implementacji AlphaBetaPlayer jest \textbf{automatyczna symu
 2. \textbf{Obliczanie oczekiwanej produkcji}: Funkcja iteruje przez wszystkie węzły (osady i miasta) należące do danego gracza. Dla każdego węzła:
 \begin{itemize}
 \item Określa typ struktury (osada lub miasto), gdzie miasta mają mnożnik produkcji równy 2, a osady 1,
-\item Sprawdza wszystkie sąsiednie heksy produkcyjne (pomijając pustynie i morza),
+\item Sprawdza wszystkie sąsiednie heksy produkcyjne (pomijając pustynie),
 \item Dla każdego heksa pobiera liczbę \textbf{pipsów} (odzwierciedlającą prawdopodobieństwo wystąpienia danej liczby na kostkach),
 \item Oblicza oczekiwaną produkcję dla danego typu zasobu jako \newline \texttt{(pips × multiplier) / 12}, gdzie dzielenie przez 12 normalizuje wartość do oczekiwanej produkcji na turę.
 \end{itemize}
@@ -925,9 +1001,9 @@ W celu kompleksowej oceny skuteczności botów wprowadzono następujące metryki
 \textbf{Metryki dodatkowe}
 \begin{itemize}
 \item Procent nierozegranych rozgrywek: NW (No Winner)
-\item Częstość zdobycia premii Najdłuższa Droga i Największa Armia: \\ Longest Road\% (LR\%) i Largest Army\% (LA\%)
+\item Częstość zdobycia premii Najdłuższa Droga i Największa Armia: \\ LR\% (Longest Road) i LA\% (Largest Army)
 \item Średnia liczba zakupionych kart rozwoju: Avg DevCards
-\item Średnia produkcja zasobów: ProdScore
+\item Średnia produkcja zasobów: ProdScore. Metryka potencjału produkcyjnego gracza na turę, wyznaczana ze stanu planszy po zakończeniu rozgrywki, w skali ważonej. Dla każdego pola zasobowego przy osadzie lub mieście: iloczyn liczby sposobów wyrzucenia danej sumy oczek (pips, z 36) i wagi zasobu (Ruda: 14, Zboże: 13, Cegła: 12, Drewno: 12, Wełna: 11). Miasta liczą się 2×, osady 1×. Porty dodają +35 (3:1) lub +70 (2:1).
 \end{itemize}
 
 \section{Scenariusze testowe}
@@ -946,7 +1022,7 @@ W pierwszym scenariuszu \textbf{wszystkie boty} (kolejne iteracje, wersje parame
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}
 \hline
-Opponent & Win Rate vs Random & NW\% & Avg Turns & LossVP (Random) & LossVP (Bot) & Longest Road\% (Bot) & Largest Army\% (Bot) & Avg DevCards & ProdScore \\
+Opponent & Win Rate & NW\% & Avg Turns & LossVP (Random) & LossVP (Bot) & LR\% (Bot) & LA\% (Bot) & Avg DevCards & ProdScore \\
 \hline
 It1 & 56.0\% & 7.6\% & 448.5 & 6.81 & 7.51 & 51.2\% & 58.9\% & 3.0 & 730.4 \\
 \hline
@@ -982,7 +1058,7 @@ Wzrost skuteczności botów heurystycznych nie ma charakteru liniowego. Iteracje
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{rp_progression.png}
+\includegraphics[width=\textwidth]{rp_progression.png}
 \caption{Skuteczność kolejnych botów przeciwko graczowi losowemu.}
 \end{figure}
 
@@ -998,7 +1074,7 @@ Warto zauważyć, że niektóre strategie wyspecjalizowane (OneResourcePlayer: 1
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{rp_tempo.png}
+\includegraphics[width=\textwidth]{rp_tempo.png}
 \caption{Zależność tempa rozgrywki od jakości strategii}
 \end{figure}
 
@@ -1012,7 +1088,7 @@ Szczególnie interesujące są wyniki dla strategii wyspecjalizowanych: DevPlaye
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{rp_dominance.png}
+\includegraphics[width=\textwidth]{rp_dominance.png}
 \caption{Średnia liczba VP przeciwnika przy przegranej}
 \end{figure}
 
@@ -1030,11 +1106,17 @@ Wszystkie te metryki łącznie pokazują, że poprawa jakości botów przekłada
 
 \subsection{Scenariusz 2: Analiza iteracyjnego rozwoju heurystyk}
 
-[TODO: do poprawy]
+W scenariuszu 2 zestawiono iteracje botów heurystycznych w układzie „każdy z każdym” w celu weryfikacji, czy kolejne modyfikacje heurystyk (opisane w rozdziale 7.2) prowadzą do poprawy wyników również w bezpośrednim starciu z innymi wersjami, a nie wyłącznie przeciwko RandomPlayer. Każda para odpowiada testowi wpływu konkretnego rozszerzenia:
 
-W scenariuszu 2 zestawiono iteracje botów heurystycznych w układzie „poprzednik-następnik” w celu weryfikacji, czy kolejne modyfikacje heurystyk prowadzą do poprawy wyników również w bezpośrednim starciu z innymi wersjami (a nie wyłącznie przeciwko RandomPlayer). Oznaczenia: A - pierwszy bot starcia, B - drugi.
+\begin{itemize}
+\item \textbf{It1 vs It2} --- wpływ wprowadzenia \textbf{handlu z bankiem} i \textbf{celu zakupu} (It2: handel w kierunku osady/miasta, wykrywanie portów). It2 wygrywa 61.9\%, co potwierdza, że sama optymalizacja handlu znacząco poprawia wynik względem sztywnej hierarchii It1.
+\item \textbf{It2 vs It3} --- wpływ \textbf{ustawień początkowych} (produkcja, różnorodność, porty) oraz \textbf{celowego ustawiania rozbójnika} (maksymalizacja szkody dla przeciwnika). It3 wygrywa 93.6\%; ten największy skok jakościowy pokazuje, że dobra faza początkowa i kontrola rozbójnika są kluczowe.
+\item \textbf{It3 vs It4} --- wpływ \textbf{kart rozwoju} (logika Rycerz/Monopol/zasobowe) oraz \textbf{deterministycznego wyboru budowy} (potencjał produkcyjny, unikanie ryzyka przed rzutem 7). It4 wygrywa 66.0\%.
+\item \textbf{It4 vs It5} --- wpływ \textbf{jednokrokowej symulacji} (lookahead) i \textbf{zunifikowanej oceny pozycji} zamiast sztywnych priorytetów oraz \textbf{deterministycznego odrzucania} przy siódemce. It5 wygrywa 74.2\%.
+\item \textbf{It1 vs It5} --- łączny efekt wszystkich warstw heurystyk: It5 osiąga 99.9\% zwycięstw, co ilustruje przewagę oceny konsekwencji ruchu i pełnego zestawu mechanizmów nad prostą hierarchią It1.
+\end{itemize}
 
-\subsection{Podsumowanie danych}
+\subsubsection{Podsumowanie danych}
 
 \begin{table}[h]
 \centering
@@ -1064,23 +1146,42 @@ It1 vs It5 & 0.1\% & 99.9\% & 114.9 & 3.58 & 14.00 & 14.0\% & 73.5\% & 1.1\% & 9
 \end{table}
 
 
-\subsection{Kluczowe wnioski}
+\subsubsection{Kluczowe wnioski}
 
-Wyniki wskazują na monotoniczną poprawę w układzie iteracyjnym: w każdej z rozpatrywanych par nowsza iteracja uzyskuje wyższy współczynnik zwycięstw niż iteracja wcześniejsza. Największy skok jakościowy dotyczy przejścia It2 → It3 (w parze It2 vs It3 It3 wygrywa 93.6\% rozgrywek), co jest spójne z obserwacjami ze scenariusza 1.
-
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
-\includegraphics[width=0.8\textwidth]{scenario2_1.png}
-\caption{Porównanie wyników par botów w scenariuszu 2}
+\includegraphics[width=\textwidth]{scenario2_pairwise_comparison.png}
+\caption{Porównanie wyników par botów w scenariuszu 2 (Win Rate).}
 \end{figure}
 
-Wraz ze wzrostem jakości botów skraca się również średnia długość rozgrywki. Różnice są szczególnie widoczne dla przejścia It2 → It3, natomiast dla późniejszych wersji (It3–It5) tempo stabilizuje się na poziomie około 130–185 tur.
-
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
-\includegraphics[width=0.8\textwidth]{scenario2_2.png}
-\caption{Porównanie średniej liczby tur w scenariuszu 2}
+\includegraphics[width=\textwidth]{scenario2_tempo.png}
+\caption{Porównanie średniej liczby tur (Avg Turns) dla wybranych par botów w scenariuszu 2.}
 \end{figure}
+
+Wyniki wskazują na \textbf{monotoniczną poprawę} w układzie iteracyjnym: w każdej z rozpatrywanych par nowsza iteracja uzyskuje wyższy współczynnik zwycięstw niż iteracja wcześniejsza. Interpretacja w świetle heurystyk z rozdziału 7.2:
+
+\begin{itemize}
+\item \textbf{It1 $\rightarrow$ It2:} Wprowadzenie handlu z bankiem i celu zakupu daje ok.\ 26 punktów procentowych przewagi (61.9\% vs 35.8\% dla It2). Średnia liczba tur spada z ok.\ 340 do ok.\ 182 w kolejnej parze, co potwierdza szybsze domykanie partii przez lepszą alokację zasobów.
+\item \textbf{It2 $\rightarrow$ It3:} Ustawienia początkowe i rozbójnik powodują \textbf{jakościowy skok} --- It3 wygrywa 93.6\% z It2. Spadek średniej liczby tur (ok.\ 182) oraz wyższy ProdScore It3 (1017.3 vs 400.5) pokazują, że lepsza pozycja startowa i blokowanie produkcji przeciwnika dają więcej zasobów.
+\item \textbf{It3 $\rightarrow$ It4:} Karty rozwoju i deterministyczny wybór budowy dają It4 wyraźną przewagę (66.0\%), przy podobnym tempie (ok.\ 184 tury). Wzrost wykorzystania premii (np.\ Najdłuższa Droga 75.4\% dla It4) odzwierciedla lepsze wykorzystanie kart i lokalizacji.
+\item \textbf{It4 $\rightarrow$ It5:} Jednokrokowy lookahead i zunifikowana ocena pozycji pozwalają It5 wygrywać 74.2\% z It4 przy krótszych rozgrywkach (ok.\ 134 tury). It5 lepiej wykorzystuje Największą Armię (88.6\% vs 11.4\%), co wskazuje na skuteczniejszą strategię kartową i ocenę konsekwencji ruchu.
+\end{itemize}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{scenario2_largest_army.png}
+\caption{Największa Armia (LA\%) w parach iteracji.}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{scenario2_longest_road.png}
+\caption{Najdłuższa Droga (LR\%) w parach iteracji.}
+\end{figure}
+
+\textbf{Najciekawsze momenty z wykresów premii.} Na wykresie \textbf{Największa Armia (LA\%)} wyróżniają się dwa skoki: przejście It2 $\rightarrow$ It3 (It2 tylko 5,8\%, It3 aż 91,1\%) oraz It4 $\rightarrow$ It5 (It4 11,4\%, It5 88,6\%). Potwierdza to, że poprawki strategii dołączone do It3 i It5 silnie sprzyjają zdobywaniu premii przez karty rozwoju. W parze It3 vs It4 It4 ma nieco niższy LA\% (46,3\%) niż It3 (52,5\%) --- It4 bardziej koncentruje się na deterministycznym wyborze budowy i Najdłuższej Drodze niż na rycerzach. Na wykresie \textbf{Najdłuższa Droga (LR\%)} widać stopniowy wzrost od It1 do It4 (It4 osiąga 82,0\% w parze z It5), a następnie wyraźne odwrócenie w parze It4 vs It5: It5 ma tylko 17,8\% LR\%, podczas gdy It4 82,0\%. It5 priorytetyzuje karty rozwoju i Największą Armię (88,6\% LA\%), więc w tej parze premia drogowa przechodzi na It4; mimo to It5 wygrywa 74,2\% rozgrywek, co ilustruje, że wybór strategii (droga vs armia) zależy od heurystyk, a zwycięstwo nie wymaga przewagi we wszystkich metrykach.
 
 \subsubsection{Scenariusz 3: AlphaBetaPlayer}
 
@@ -1152,13 +1253,13 @@ Wyniki pokazują wyraźny, monotoniczny spadek współczynnika zwycięstw AlphaB
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{ab_win_rate_progression.png}
+\includegraphics[width=\textwidth]{ab_win_rate_progression.png}
 \caption{Skuteczność AlphaBetaPlayer w zależności od jakości przeciwnika}
 \end{figure}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{ab_tempo.png}
+\includegraphics[width=\textwidth]{ab_tempo.png}
 \caption{Tempo rozgrywki AlphaBeta vs różni przeciwnicy}
 \end{figure}
 
@@ -1168,13 +1269,13 @@ Wyniki pokazują wyraźny, monotoniczny spadek współczynnika zwycięstw AlphaB
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.85\textwidth]{ab_largest_army.png}
+\includegraphics[width=\textwidth]{ab_largest_army.png}
 \caption{Częstotliwość zdobycia premii Największa Armia.}
 \end{figure}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.85\textwidth]{ab_longest_road.png}
+\includegraphics[width=\textwidth]{ab_longest_road.png}
 \caption{Częstotliwość zdobycia w premii Najdłuższa Droga.}
 \end{figure}
 
@@ -1186,7 +1287,7 @@ Szczególnie interesujący jest wzorzec dla premii \emph{Największa Armia}: Alp
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{ab_production.png}
+\includegraphics[width=\textwidth]{ab_production.png}
 \caption{Porównanie produkcji zasobów AlphaBeta vs przeciwnicy.}
 \end{figure}
 
@@ -1196,7 +1297,7 @@ AlphaBeta utrzymuje przewagę produkcyjną przeciwko wszystkim przeciwnikom, ale
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{ab_dominance.png}
+\includegraphics[width=\textwidth]{ab_dominance.png}
 \caption{Średnia liczba VP gracza przy przegranej}
 \end{figure}
 
@@ -1259,7 +1360,7 @@ Istotna jest obserwacja, że It3Player stanowi punkt przełomowy. Spadek współ
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{orBot.png}
+\includegraphics[width=\textwidth]{orBot.png}
 \caption{Skuteczność strategii monosurowcowej w zależności od jakości przeciwnika}
 \end{figure}
 
@@ -1311,7 +1412,7 @@ DevPlayer osiąga bardzo wysokie współczynniki zwycięstw przeciwko It1Player 
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{devplayer_effectiveness.png}
+\includegraphics[width=\textwidth]{devplayer_effectiveness.png}
 \caption{Skuteczność DevPlayer w zależności od jakości przeciwnika}
 \end{figure}
 
@@ -1325,13 +1426,13 @@ Najciekawszym momentem w analizie jest starcie DevPlayer vs It4Player, które ko
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{devplayer_dev_cards.png}
+\includegraphics[width=\textwidth]{devplayer_dev_cards.png}
 \caption{Średnia liczba kupionych kart rozwoju przez DevPlayer i przeciwników}
 \end{figure}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{devplayer_largest_army.png}
+\includegraphics[width=\textwidth]{devplayer_largest_army.png}
 \caption{Częstość zdobycia premii Największa Armia przez DevPlayer i przeciwników}
 \end{figure}
 
@@ -1383,7 +1484,7 @@ RoadPlayer osiąga doskonałe wyniki przeciwko prostym botom (100\% vs It1, 99.2
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{road_effectiveness.png}
+\includegraphics[width=\textwidth]{road_effectiveness.png}
 \caption{Skuteczność RoadPlayer w zależności od jakości przeciwnika}
 \end{figure}
 
@@ -1393,7 +1494,7 @@ RoadPlayer pokazuje dramatyczny spadek skuteczności między It3Player a It4Play
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{road_longest_road.png}
+\includegraphics[width=\textwidth]{road_longest_road.png}
 \caption{Częstość zdobycia premii Najdłuższa Droga przez RoadPlayer i przeciwników}
 \end{figure}
 
@@ -1407,7 +1508,7 @@ Analiza wyników wszystkich trzech strategii wyspecjalizowanych (OneResourcePlay
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.8\textwidth]{scenario4_all.png}
+\includegraphics[width=\textwidth]{scenario4_all.png}
 \caption{Porównanie skuteczności strategii wyspecjalizowanych}
 \end{figure}
 
@@ -1450,6 +1551,7 @@ W warstwie eksperymentalnej wartościowe byłoby także uzupełnienie analiz o e
 \bibitem{12} Python documentation — \texttt{tkinter}, https://docs.python.org/3/library/tkinter.html
 \bibitem{13} Refactoring Guru — Command (design pattern), https://refactoring.guru/design-patterns/command
 \bibitem{14} Refactoring Guru — Strategy (design pattern), https://refactoring.guru/design-patterns/strategy
+\bibitem{15} Documentation for the JSON Lines text file format, https://jsonlines.org/
 \end{thebibliography}
 
 \end{document}
