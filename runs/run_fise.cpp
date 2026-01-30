@@ -165,7 +165,7 @@ void print_order_summary(std::ostream& os,
 } // namespace
 
 int main() {
-    const size_t gamesPerOrder = 100;
+    const size_t gamesPerOrder = 1000;
 
     const std::vector<std::string> flags = {
         "rp", "it1", "it2", "it3", "it4", "it5",
