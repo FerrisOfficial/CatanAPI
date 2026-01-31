@@ -130,9 +130,8 @@ ctest --test-dir build -V
 
 ## 📈 Performance
 
-- Single game: ~50ms
+- Single game: ~20ms
 - 1000 games: ~1 minute
-- Memory usage: ~10MB per game
 - Scales linearly with game count
 
 ## 🤝 Contributing
