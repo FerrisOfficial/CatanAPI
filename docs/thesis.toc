@@ -12,28 +12,28 @@
 \contentsline {chapter}{\numberline {1.}Wstęp}{9}{chapter.1}%
 \contentsline {section}{\numberline {1.1.}Wprowadzenie do tematyki gier planszowych i sztucznej inteligencji}{9}{section.1.1}%
 \contentsline {section}{\numberline {1.2.}Gra Catan – charakterystyka i potencjał badawczy}{10}{section.1.2}%
-\contentsline {section}{\numberline {1.3.}Plansza, cel gry i podstawowe zasady}{10}{section.1.3}%
-\contentsline {section}{\numberline {1.4.}Produkcja zasobów i miara pipsów}{13}{section.1.4}%
-\contentsline {section}{\numberline {1.5.}Wariant 1 vs 1 przyjęty w pracy}{14}{section.1.5}%
-\contentsline {section}{\numberline {1.6.}Zalety gry \textit {Catan}}{14}{section.1.6}%
-\contentsline {subsection}{\numberline {1.6.1.}Scena turniejowa i mistrzostwa}{15}{subsection.1.6.1}%
-\contentsline {subsection}{\numberline {1.6.2.}Potencjał badawczy (w kontekście botów)}{15}{subsection.1.6.2}%
-\contentsline {section}{\numberline {1.7.}Cel i zakres pracy}{15}{section.1.7}%
-\contentsline {section}{\numberline {1.8.}Podział pracy i wkład autorów}{16}{section.1.8}%
-\contentsline {section}{\numberline {1.9.}Struktura pracy}{17}{section.1.9}%
-\contentsline {chapter}{\numberline {2.}Przegląd istniejących rozwiązań}{19}{chapter.2}%
-\contentsline {section}{\numberline {2.1.}Istniejące implementacje Catana}{19}{section.2.1}%
-\contentsline {subsection}{\numberline {2.1.1.}Catanatron}{19}{subsection.2.1.1}%
-\contentsline {subsection}{\numberline {2.1.2.}JSettlers}{19}{subsection.2.1.2}%
-\contentsline {subsection}{\numberline {2.1.3.}CatanAI i projekty eksperymentalne}{20}{subsection.2.1.3}%
-\contentsline {subsection}{\numberline {2.1.4.}Tabela porównawcza istniejących rozwiązań}{20}{subsection.2.1.4}%
-\contentsline {section}{\numberline {2.2.}Boty i algorytmy decyzyjne w grach planszowych}{20}{section.2.2}%
-\contentsline {subsection}{\numberline {2.2.1.}Monte Carlo Tree Search}{20}{subsection.2.2.1}%
-\contentsline {subsection}{\numberline {2.2.2.}Uczenie przez wzmacnianie}{20}{subsection.2.2.2}%
-\contentsline {subsection}{\numberline {2.2.3.}Heurystyki i podejścia regułowe}{21}{subsection.2.2.3}%
-\contentsline {section}{\numberline {2.3.}Podsumowanie i uzasadnienie autorskiego podejścia}{21}{section.2.3}%
-\contentsline {subsection}{\numberline {2.3.1.}Uzasadnienie wyborów projektowych}{22}{subsection.2.3.1}%
-\contentsline {subsection}{\numberline {2.3.2.}Podsumowanie}{24}{subsection.2.3.2}%
+\contentsline {section}{\numberline {1.3.}Wariant 1 vs 1 przyjęty w pracy}{10}{section.1.3}%
+\contentsline {section}{\numberline {1.4.}Zalety gry \textit {Catan}}{10}{section.1.4}%
+\contentsline {subsection}{\numberline {1.4.1.}Scena turniejowa i mistrzostwa}{11}{subsection.1.4.1}%
+\contentsline {subsection}{\numberline {1.4.2.}Potencjał badawczy (w kontekście botów)}{11}{subsection.1.4.2}%
+\contentsline {section}{\numberline {1.5.}Cel i zakres pracy}{11}{section.1.5}%
+\contentsline {section}{\numberline {1.6.}Podział pracy i wkład autorów}{12}{section.1.6}%
+\contentsline {section}{\numberline {1.7.}Struktura pracy}{13}{section.1.7}%
+\contentsline {chapter}{\numberline {2.}Zadasy gry i przegląd istniejących rozwiązań}{15}{chapter.2}%
+\contentsline {section}{\numberline {2.1.}Plansza, cel gry i podstawowe zasady}{15}{section.2.1}%
+\contentsline {section}{\numberline {2.2.}Produkcja zasobów i miara pipsów}{18}{section.2.2}%
+\contentsline {section}{\numberline {2.3.}Istniejące implementacje Catana}{19}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1.}Catanatron}{19}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2.}JSettlers}{19}{subsection.2.3.2}%
+\contentsline {subsection}{\numberline {2.3.3.}CatanAI i projekty eksperymentalne}{20}{subsection.2.3.3}%
+\contentsline {subsection}{\numberline {2.3.4.}Tabela porównawcza istniejących rozwiązań}{20}{subsection.2.3.4}%
+\contentsline {section}{\numberline {2.4.}Boty i algorytmy decyzyjne w grach planszowych}{20}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1.}Monte Carlo Tree Search}{20}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2.}Uczenie przez wzmacnianie}{20}{subsection.2.4.2}%
+\contentsline {subsection}{\numberline {2.4.3.}Heurystyki i podejścia regułowe}{21}{subsection.2.4.3}%
+\contentsline {section}{\numberline {2.5.}Podsumowanie i uzasadnienie autorskiego podejścia}{21}{section.2.5}%
+\contentsline {subsection}{\numberline {2.5.1.}Uzasadnienie wyborów projektowych}{22}{subsection.2.5.1}%
+\contentsline {subsection}{\numberline {2.5.2.}Podsumowanie}{24}{subsection.2.5.2}%
 \contentsline {chapter}{\numberline {3.}Analiza problemu i założenia projektowe}{25}{chapter.3}%
 \contentsline {section}{\numberline {3.1.}Wymagania funkcjonalne gry}{25}{section.3.1}%
 \contentsline {section}{\numberline {3.2.}Wymagania niefunkcjonalne (wydajność, testowalność)}{27}{section.3.2}%
@@ -88,35 +88,41 @@
 \contentsline {subsection}{\numberline {7.3.10.}Bot celujący w najdłuższą drogę}{53}{subsection.7.3.10}%
 \contentsline {subsection}{\numberline {7.3.11.}Ustawienie początkowe i logika tury}{54}{subsection.7.3.11}%
 \contentsline {subsection}{\numberline {7.3.12.}Polityka odrzucania i ograniczenia strategii}{54}{subsection.7.3.12}%
-\contentsline {section}{\numberline {7.4.}Boty oparte na algorytmie genetycznym}{54}{section.7.4}%
-\contentsline {subsubsection}{ParaPlayer}{54}{section*.7}%
-\contentsline {subsubsection}{ParaSettleIt5Player}{56}{section*.8}%
+\contentsline {subsubsection}{Bot celujący w budowę miast}{54}{section*.7}%
+\contentsline {section}{\numberline {7.4.}Boty oparte na algorytmie genetycznym}{55}{section.7.4}%
+\contentsline {subsubsection}{ParaPlayer}{55}{section*.8}%
+\contentsline {subsubsection}{ParaSettleIt5Player}{57}{section*.9}%
 \contentsline {chapter}{\numberline {8.}Eksperymenty i analiza wyników}{59}{chapter.8}%
 \contentsline {section}{\numberline {8.1.}Metodologia porównania botów}{59}{section.8.1}%
 \contentsline {subsection}{\numberline {8.1.1.}Metryki oceny skuteczności}{59}{subsection.8.1.1}%
 \contentsline {section}{\numberline {8.2.}Scenariusze testowe}{60}{section.8.2}%
-\contentsline {subsubsection}{Scenariusz 1: Porównanie z graczem losowym}{60}{section*.9}%
-\contentsline {subsubsection}{Podsumowanie danych}{60}{section*.10}%
-\contentsline {subsubsection}{Kluczowe wnioski}{60}{section*.11}%
+\contentsline {subsubsection}{Scenariusz 1: Porównanie z graczem losowym}{60}{section*.10}%
+\contentsline {subsubsection}{Podsumowanie danych}{60}{section*.11}%
+\contentsline {subsubsection}{Kluczowe wnioski}{61}{section*.12}%
 \contentsline {subsection}{\numberline {8.2.1.}Scenariusz 2: Analiza iteracyjnego rozwoju heurystyk}{64}{subsection.8.2.1}%
-\contentsline {subsubsection}{Podsumowanie danych}{64}{section*.12}%
-\contentsline {subsubsection}{Kluczowe wnioski}{65}{section*.13}%
-\contentsline {subsubsection}{Scenariusz 3: AlphaBetaPlayer}{66}{section*.14}%
-\contentsline {subsubsection}{Podsumowanie danych}{67}{section*.15}%
-\contentsline {subsubsection}{Kluczowe wnioski}{67}{section*.16}%
-\contentsline {subsubsection}{Scenariusz 4: Strategie wyspecjalizowane}{70}{section*.17}%
-\contentsline {subsubsection}{OneResourcePlayer}{70}{section*.18}%
-\contentsline {subsubsection}{Podsumowanie danych}{70}{section*.19}%
-\contentsline {subsubsection}{Kluczowe wnioski}{70}{section*.20}%
-\contentsline {subsubsection}{DevPlayer}{72}{section*.21}%
-\contentsline {subsubsection}{Podsumowanie danych}{72}{section*.22}%
-\contentsline {subsubsection}{Kluczowe wnioski}{72}{section*.23}%
-\contentsline {subsubsection}{RoadPlayer}{75}{section*.24}%
-\contentsline {subsubsection}{Podsumowanie danych}{75}{section*.25}%
-\contentsline {subsubsection}{Kluczowe wnioski}{75}{section*.26}%
-\contentsline {subsubsection}{Podsumowanie Scenariusza 4: Porównanie strategii wyspecjalizowanych}{77}{section*.27}%
-\contentsline {chapter}{\numberline {9.}Podsumowanie i wnioski}{81}{chapter.9}%
-\contentsline {section}{\numberline {9.1.}Ocena realizacji celów pracy}{81}{section.9.1}%
-\contentsline {section}{\numberline {9.2.}Wnioski z części badawczej}{81}{section.9.2}%
-\contentsline {section}{\numberline {9.3.}Możliwości dalszego rozwoju systemu}{82}{section.9.3}%
-\contentsline {chapter}{Bibliografia}{83}{chapter*.28}%
+\contentsline {subsubsection}{Podsumowanie danych}{65}{section*.13}%
+\contentsline {subsubsection}{Kluczowe wnioski}{66}{section*.14}%
+\contentsline {subsubsection}{Scenariusz 3: AlphaBetaPlayer}{67}{section*.15}%
+\contentsline {subsubsection}{Podsumowanie danych}{68}{section*.16}%
+\contentsline {subsubsection}{Kluczowe wnioski}{68}{section*.17}%
+\contentsline {subsubsection}{Scenariusz 4: Strategie wyspecjalizowane}{71}{section*.18}%
+\contentsline {subsubsection}{OneResourcePlayer}{71}{section*.19}%
+\contentsline {subsubsection}{Podsumowanie danych}{71}{section*.20}%
+\contentsline {subsubsection}{Kluczowe wnioski}{71}{section*.21}%
+\contentsline {subsubsection}{DevPlayer}{72}{section*.22}%
+\contentsline {subsubsection}{Podsumowanie danych}{73}{section*.23}%
+\contentsline {subsubsection}{Kluczowe wnioski}{73}{section*.24}%
+\contentsline {subsubsection}{RoadPlayer}{75}{section*.25}%
+\contentsline {subsubsection}{Podsumowanie danych}{75}{section*.26}%
+\contentsline {subsubsection}{Kluczowe wnioski}{75}{section*.27}%
+\contentsline {subsubsection}{Podsumowanie Scenariusza 4: Porównanie strategii wyspecjalizowanych}{76}{section*.28}%
+\contentsline {subsubsection}{CityRushPlayer}{78}{section*.29}%
+\contentsline {subsubsection}{Podsumowanie danych}{79}{section*.30}%
+\contentsline {subsubsection}{Kluczowe wnioski}{79}{section*.31}%
+\contentsline {subsubsection}{Scenariusz 5: Przewaga pierwszego ruchu}{81}{section*.32}%
+\contentsline {subsubsection}{Scenariusz 6: Wpływ ustawienia początkowego z algorytmu genetycznego}{82}{section*.33}%
+\contentsline {chapter}{\numberline {9.}Podsumowanie i wnioski}{87}{chapter.9}%
+\contentsline {section}{\numberline {9.1.}Ocena realizacji celów pracy}{87}{section.9.1}%
+\contentsline {section}{\numberline {9.2.}Wnioski z części badawczej}{87}{section.9.2}%
+\contentsline {section}{\numberline {9.3.}Możliwości dalszego rozwoju systemu}{88}{section.9.3}%
+\contentsline {chapter}{Bibliografia}{89}{chapter*.34}%

@@ -35,83 +35,6 @@ Sztuczna inteligencja w kontekście gier planszowych od dziesięcioleci przycią
 
 \textit{Catan} (wcześniej znany jako \textit{The Settlers of Catan}) to strategiczna gra planszowa zaprojektowana przez Klausa Teubera, w której gracze rozwijają osadnictwo na wyspie poprzez pozyskiwanie surowców, handel oraz budowę dróg, osad i miast. Rozgrywka łączy elementy planowania ekonomicznego z umiarkowaną losowością wynikającą z rzutów kośćmi decydujących o produkcji zasobów.
 
-\section{Plansza, cel gry i podstawowe zasady}
-
-Plansza gry \textit{Catan} składa się z heksagonalnych pól reprezentujących różne typy terenu, takich jak lasy, wzgórza, pola uprawne, pastwiska oraz góry, z których każde odpowiada określonemu rodzajowi surowca. Pola te rozmieszczone są w sposób modularny, co powoduje, że każda rozgrywka posiada inną konfigurację przestrzenną. Pomiędzy heksami znajdują się węzły (skrzyżowania), na których gracze mogą budować osady i miasta, oraz krawędzie, na których budowane są drogi.
-
-Każdy typ pola produkcyjnego na planszy odpowiada określonemu surowcowi:
-\begin{itemize}
-\item lasy produkują drewno (\textit{Lumber}),
-\item wzgórza produkują cegłę (\textit{Brick}),
-\item pola uprawne produkują zboże (\textit{Grain}),
-\item pastwiska produkują wełnę (\textit{Wool}),
-\item góry produkują rudę (\textit{Ore}).
-\end{itemize}
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\textwidth]{board.png}
-    \caption{Przykładowa plansza gry Catan}
-\end{figure}
-
-Każdy heks produkcyjny posiada przypisaną losowo liczbę z zakresu 2–12 (z wyjątkiem 7), która odpowiada możliwym sumom wyrzuconym na dwóch sześciennych kościach. Liczby te determinują, kiedy dany heks produkuje surowce — po rzucie kośćmi wszystkie heksy oznaczone liczbą odpowiadającą wyrzuconej sumie generują zasoby dla graczy posiadających przy nich osady lub miasta [7]. Pola pustynne nie generują zasobów i stanowią początkową lokalizację rozbójnika.
-
-\textbf{Rozbójnik} to specjalna figura, która blokuje produkcję surowców z heksu, na którym się znajduje. Gdy gracz wyrzuci sumę 7 na kościach, musi przemieszczyć rozbójnika na wybrany heks (blokując jego produkcję) i może ukraść jedną kartę zasobów od gracza posiadającego osadę lub miasto przy tym heksie.
-
-Celem gry jest zdobycie \textbf{10 punktów zwycięstwa} (15 w wariancie rozgrywki 1 vs 1). Punkty te są przyznawane głównie za budowę osad (1 punkt zwycięstwa) i miast (2 punkty zwycięstwa). 
-
-Osady i miasta muszą być połączone drogami — każda nowa struktura musi być d ostępna przez ciągłą sieć dróg gracza. Ponadto obowiązuje \textbf{zasada dystansu}: osady i miasta różnych graczy (oraz własne) muszą być oddalone od siebie o co najmniej dwie krawędzie.
-
-\medskip
-\begin{figure}[h]
-\centering
-\includegraphics[width=\textwidth]{building_costs.png}
-\caption{Koszty budowy struktur w grze Catan}
-\end{figure}
-
-\bigskip
-\bigbreak
-\bigbreak
-\bigbreak
-
-Każda struktura ma określony koszt budowy wyrażony w surowcach:
-\begin{itemize}
-\item \textbf{Droga}: drewno + cegła (1+1),
-\item \textbf{Osada}: drewno + cegła + wełna + zboże (1+1+1+1),
-\item \textbf{Miasto}: ruda + ruda + ruda + zboże + zboże (3+2) — budowane poprzez modernizację istniejącej osady,
-\item \textbf{Karta rozwoju}: ruda + wełna + zboże (1+1+1).
-\end{itemize}
-
-\textbf{Karty rozwoju} stanowią dodatkowy element strategiczny gry. Po zakupie karty są losowane z talii i mogą być trzech typów: \textbf{Rycerz} (umożliwia przemieszczenie rozbójnika i kradzież zasobu od przeciwnika), \textbf{Postęp} (karty specjalne takie jak Monopol, Rok Obfitości czy Budowa Dróg) oraz \textbf{Punkty zwycięstwa} (ukryte karty dające 1 VP każda, ujawniane dopiero przy osiągnięciu zwycięstwa). Karty Rycerz mogą być zagrywane w dowolnym momencie tury, natomiast karty Postępu i Punkty zwycięstwa są zagrywane przed rzutem kośćmi.
-
-Dodatkowymi źródłami punktów zwycięstwa są premie:
-\begin{itemize}
-\item Premia \textbf{Najdłuższa Droga}. Przyznawana jest graczowi posiadającemu najdłuższy nieprzerwany ciąg połączonych dróg o długości co najmniej pięciu segmentów. Premia ta może zostać odebrana przez innego gracza, jeśli zbuduje on dłuższą drogę.
-\item Premia \textbf{Największa Armia}. Przyznawana jest graczowi, który jako pierwszy użyje co najmniej trzech kart Rycerz i posiada ich więcej niż pozostali gracze. Podobnie jak w przypadku Najdłuższej Drogi, premia ta jest dynamiczna i może przechodzić pomiędzy graczami w trakcie rozgrywki.
-\end{itemize}
-
-Każda z tych premii zapewnia dodatkowe \textbf{2 punkty zwycięstwa}, istotnie wpływając na strategię oraz tempo gry. W dalszej części pracy punkty zwycięstwa będą oznaczane skrótem \textbf{VP} (ang. \textit{Victory Points}). Rozgrywka toczy się w turach, a zwycięstwo następuje natychmiast po osiągnięciu wymaganej liczby punktów przez jednego z graczy.
-
-Podstawowy przebieg tury obejmuje rzut dwiema kośćmi sześciennymi, który determinuje produkcję zasobów na planszy. Gracze otrzymują surowce z tych pól, których numer odpowiada wyrzuconej sumie — osada zapewnia 1 zasób z każdego przylegającego heksu, a miasto 2 zasoby. W przypadku gdy została wyrzucona liczba 7, żaden heks nie produkuje zasobu. Zamiast tego gracze posiadające więcej niż 9 kart zasobów (zgodnie z regułami wariantu 1 vs 1) muszą odrzucić połowę (zaokrąglając w dół), a aktywny gracz przemieszcza rozbójnika na wybrany heks (blokując jego produkcję) i może ukraść jedną kartę zasobów od gracza posiadającego osadę lub miasto przy tym heksie [7].
-
-Następnie możliwe jest wykonywanie akcji budowy, takich jak wznoszenie dróg, osad, miast lub zakup kart rozwoju. W klasycznej wersji gry występuje również handel (z innymi graczami lub z bankiem). Handlowanie z bankiem odbywa się według standardowego kursu 4:1 (cztery dowolne zasoby za jeden wybrany), jednak gracze posiadające osadę lub miasto przy porcie mogą korzystać z lepszych kursów: port 3:1 (trzy dowolne za jeden) lub port 2:1 (dwa konkretne surowce za jeden tego samego typu).
-
-Istotnym elementem gry jest losowość wynikająca z rzutów kośćmi, która wpływa na tempo pozyskiwania zasobów, jednak decyzje strategiczne — wybór lokalizacji budowy, kierunek rozwoju infrastruktury oraz zarządzanie zasobami — mają kluczowe znaczenie dla długoterminowego sukcesu. Ta kombinacja \textbf{niepełnej informacji, losowości i planowania} sprawia, że \textit{Catan} stanowi interesujące środowisko badawcze dla analizy algorytmów decyzyjnych i strategii gry.
-
-\section{Produkcja zasobów i miara pipsów}
-
-Jak wspomniano wcześniej, każde pole produkcyjne (heks) na planszy posiada przypisaną liczbę z zakresu 2–12 (z wyjątkiem 7). Ze względu na różną liczbę kombinacji prowadzących do danej sumy, poszczególne liczby mają odmienne prawdopodobieństwo wystąpienia. W praktyce wprowadza się miarę \textbf{pipsów} (z ang. \textit{pips}, dosłownie: oczka na kości), która odzwierciedla częstość występowania danej liczby:
-
-\begin{itemize}
-\item \textbf{2 lub 12}: 1 pips (1 kombinacja: 1+1 lub 6+6),
-\item \textbf{3 lub 11}: 2 pipsy (2 kombinacje: 1+2, 2+1 lub 5+6, 6+5),
-\item \textbf{4 lub 10}: 3 pipsy (3 kombinacje),
-\item \textbf{5 lub 9}: 4 pipsy (4 kombinacje),
-\item \textbf{6 lub 8}: 5 pipsów (5 kombinacji).
-\end{itemize}
-
-Miara pipsów stanowi użyteczne narzędzie analityczne, ponieważ bezpośrednio odzwierciedla \textbf{wartość oczekiwaną produkcji} z danego pola. Heksy o wyższych pipsach generują zasoby częściej, co czyni je bardziej wartościowymi celami w fazie ustawień początkowych oraz podczas oceny potencjału produkcyjnego pozycji gracza. Pojęcie to będzie wykorzystywane w dalszej części pracy przy opisie strategii botów, które oceniają jakość lokalizacji budowy oraz prognozują przyszłą produkcję zasobów. W szerszej perspektywie pipsy stanowią również praktyczną miarę ograniczającą wpływ losowości na długoterminowy wynik rozgrywki, co jest często omawiane w analizach relacji „luck vs skill” w Catanie [10].
-
 \section{Wariant 1 vs 1 przyjęty w pracy}
 
 W niniejszej pracy analizowana jest wersja gry \textit{Catan} w wariancie 1 vs 1. W wariancie tym pominięto handel pomiędzy graczami, ponieważ w rozgrywce dwuosobowej traci on swój negocjacyjny charakter, a często sprowadza się do decyzji trywialnych lub symetrycznych.
@@ -191,9 +114,94 @@ Praca została zrealizowana zespołowo. Poniżej przedstawiono podział zadań m
 
 \section{Struktura pracy}
 
-Rozdział 2 przedstawia przegląd istniejących rozwiązań i prac naukowych związanych z symulacją gry \textit{Catan} oraz projektowaniem botów. Rozdział 3 definiuje założenia wariantu 1 vs 1 oraz wymagania projektowe silnika. W rozdziale 4 opisano architekturę i szczegóły implementacji (model stanu, system akcji, mechanizm cofania oraz narzędzia diagnostyczne). Rozdziały 5–8 prezentują sposób uruchamiania symulacji, eksperymenty porównawcze, wyniki oraz ich analizę. Rozdział 9 zawiera podsumowanie oraz wnioski.
+Rozdział 2 przedstawia przegląd istniejących rozwiązań i prac naukowych związanych z symulacją gry \textit{Catan} oraz projektowaniem botów. Rozdział 3 definiuje założenia wariantu 1 vs 1 oraz wymagania projektowe silnika. W rozdziale 4 opisano architekturę i szczegóły implementacji (model stanu, system akcji, mechanizm cofania oraz narzędzia diagnostyczne).
 
-\chapter{Przegląd istniejących rozwiązań}
+Rozdział 5 dotyczy symulowania i odtwarzania rozgrywek: uruchamianie serii gier (program \texttt{run}), format rejestracji JSONL oraz narzędzie replay viewer do wizualizacji zapisanych partii. Rozdział 6 opisuje strategię testowania, testy jednostkowe i integracyjne oraz walidację zgodności silnika z zasadami gry. Rozdział 7 przedstawia projekt i implementację botów --- gracza losowego (baseline), boty heurystyczne It1--It5, bota alpha-beta, strategie wyspecjalizowane (OneResourcePlayer, DevPlayer, RoadPlayer, CityRushPlayer) oraz boty parametryzowane (ParaPlayer, ParaSettleIt5Player) z treningiem ewolucyjnym. Rozdział 8 zawiera metodologię porównania botów oraz scenariusze eksperymentalne (porównanie z graczem losowym, AlphaBeta vs heurystyki, strategie wyspecjalizowane, przewaga pierwszego ruchu). Rozdział 9 podsumowuje pracę: ocenę realizacji celów, wnioski z części badawczej oraz możliwości dalszego rozwoju.
+
+\chapter{Zadasy gry i przegląd istniejących rozwiązań}
+
+\section{Plansza, cel gry i podstawowe zasady}
+
+Plansza gry \textit{Catan} składa się z heksagonalnych pól reprezentujących różne typy terenu, takich jak lasy, wzgórza, pola uprawne, pastwiska oraz góry, z których każde odpowiada określonemu rodzajowi surowca. Pola te rozmieszczone są w sposób modularny, co powoduje, że każda rozgrywka posiada inną konfigurację przestrzenną. Pomiędzy heksami znajdują się węzły (skrzyżowania), na których gracze mogą budować osady i miasta, oraz krawędzie, na których budowane są drogi.
+
+Każdy typ pola produkcyjnego na planszy odpowiada określonemu surowcowi:
+\begin{itemize}
+\item lasy produkują drewno (\textit{Lumber}),
+\item wzgórza produkują cegłę (\textit{Brick}),
+\item pola uprawne produkują zboże (\textit{Grain}),
+\item pastwiska produkują wełnę (\textit{Wool}),
+\item góry produkują rudę (\textit{Ore}).
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{board.png}
+    \caption{Przykładowa plansza gry Catan}
+\end{figure}
+
+Każdy heks produkcyjny posiada przypisaną losowo liczbę z zakresu 2–12 (z wyjątkiem 7), która odpowiada możliwym sumom wyrzuconym na dwóch sześciennych kościach. Liczby te determinują, kiedy dany heks produkuje surowce — po rzucie kośćmi wszystkie heksy oznaczone liczbą odpowiadającą wyrzuconej sumie generują zasoby dla graczy posiadających przy nich osady lub miasta [7]. Pola pustynne nie generują zasobów i stanowią początkową lokalizację rozbójnika.
+
+\textbf{Rozbójnik} to specjalna figura, która blokuje produkcję surowców z heksu, na którym się znajduje. Gdy gracz wyrzuci sumę 7 na kościach, musi przemieszczyć rozbójnika na wybrany heks (blokując jego produkcję) i może ukraść jedną kartę zasobów od gracza posiadającego osadę lub miasto przy tym heksie.
+
+Celem gry jest zdobycie \textbf{10 punktów zwycięstwa} (15 w wariancie rozgrywki 1 vs 1). Punkty te są przyznawane głównie za budowę osad (1 punkt zwycięstwa) i miast (2 punkty zwycięstwa). 
+
+Osady i miasta muszą być połączone drogami — każda nowa struktura musi być d ostępna przez ciągłą sieć dróg gracza. Ponadto obowiązuje \textbf{zasada dystansu}: osady i miasta różnych graczy (oraz własne) muszą być oddalone od siebie o co najmniej dwie krawędzie.
+
+\medskip
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{building_costs.png}
+\caption{Koszty budowy struktur w grze Catan}
+\end{figure}
+
+Każda struktura ma określony koszt budowy wyrażony w surowcach:
+\begin{itemize}
+\item \textbf{Droga}: drewno + cegła (1+1),
+\item \textbf{Osada}: drewno + cegła + wełna + zboże (1+1+1+1),
+\item \textbf{Miasto}: ruda + ruda + ruda + zboże + zboże (3+2) — budowane poprzez modernizację istniejącej osady,
+\item \textbf{Karta rozwoju}: ruda + wełna + zboże (1+1+1).
+\end{itemize}
+
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+\bigskip
+
+\textbf{Karty rozwoju} stanowią dodatkowy element strategiczny gry. Po zakupie karty są losowane z talii i mogą być trzech typów: \textbf{Rycerz} (umożliwia przemieszczenie rozbójnika i kradzież zasobu od przeciwnika), \textbf{Postęp} (karty specjalne takie jak Monopol, Rok Obfitości czy Budowa Dróg) oraz \textbf{Punkty zwycięstwa} (ukryte karty dające 1 VP każda, ujawniane dopiero przy osiągnięciu zwycięstwa). Karty Rycerz mogą być zagrywane w dowolnym momencie tury, natomiast karty Postępu i Punkty zwycięstwa są zagrywane przed rzutem kośćmi.
+
+Dodatkowymi źródłami punktów zwycięstwa są premie:
+\begin{itemize}
+\item Premia \textbf{Najdłuższa Droga}. Przyznawana jest graczowi posiadającemu najdłuższy nieprzerwany ciąg połączonych dróg o długości co najmniej pięciu segmentów. Premia ta może zostać odebrana przez innego gracza, jeśli zbuduje on dłuższą drogę.
+\item Premia \textbf{Największa Armia}. Przyznawana jest graczowi, który jako pierwszy użyje co najmniej trzech kart Rycerz i posiada ich więcej niż pozostali gracze. Podobnie jak w przypadku Najdłuższej Drogi, premia ta jest dynamiczna i może przechodzić pomiędzy graczami w trakcie rozgrywki.
+\end{itemize}
+
+Każda z tych premii zapewnia dodatkowe \textbf{2 punkty zwycięstwa}, istotnie wpływając na strategię oraz tempo gry. W dalszej części pracy punkty zwycięstwa będą oznaczane skrótem \textbf{VP} (ang. \textit{Victory Points}). Rozgrywka toczy się w turach, a zwycięstwo następuje natychmiast po osiągnięciu wymaganej liczby punktów przez jednego z graczy.
+
+Podstawowy przebieg tury obejmuje rzut dwiema kośćmi sześciennymi, który determinuje produkcję zasobów na planszy. Gracze otrzymują surowce z tych pól, których numer odpowiada wyrzuconej sumie — osada zapewnia 1 zasób z każdego przylegającego heksu, a miasto 2 zasoby. W przypadku gdy została wyrzucona liczba 7, żaden heks nie produkuje zasobu. Zamiast tego gracze posiadające więcej niż 9 kart zasobów (zgodnie z regułami wariantu 1 vs 1) muszą odrzucić połowę (zaokrąglając w dół), a aktywny gracz przemieszcza rozbójnika na wybrany heks (blokując jego produkcję) i może ukraść jedną kartę zasobów od gracza posiadającego osadę lub miasto przy tym heksie [7].
+
+Następnie możliwe jest wykonywanie akcji budowy, takich jak wznoszenie dróg, osad, miast lub zakup kart rozwoju. W klasycznej wersji gry występuje również handel (z innymi graczami lub z bankiem). Handlowanie z bankiem odbywa się według standardowego kursu 4:1 (cztery dowolne zasoby za jeden wybrany), jednak gracze posiadające osadę lub miasto przy porcie mogą korzystać z lepszych kursów: port 3:1 (trzy dowolne za jeden) lub port 2:1 (dwa konkretne surowce za jeden tego samego typu).
+
+Istotnym elementem gry jest losowość wynikająca z rzutów kośćmi, która wpływa na tempo pozyskiwania zasobów, jednak decyzje strategiczne — wybór lokalizacji budowy, kierunek rozwoju infrastruktury oraz zarządzanie zasobami — mają kluczowe znaczenie dla długoterminowego sukcesu. Ta kombinacja \textbf{niepełnej informacji, losowości i planowania} sprawia, że \textit{Catan} stanowi interesujące środowisko badawcze dla analizy algorytmów decyzyjnych i strategii gry.
+
+\section{Produkcja zasobów i miara pipsów}
+
+Jak wspomniano wcześniej, każde pole produkcyjne (heks) na planszy posiada przypisaną liczbę z zakresu 2–12 (z wyjątkiem 7). Ze względu na różną liczbę kombinacji prowadzących do danej sumy, poszczególne liczby mają odmienne prawdopodobieństwo wystąpienia. W praktyce wprowadza się miarę \textbf{pipsów} (z ang. \textit{pips}, dosłownie: oczka na kości), która odzwierciedla częstość występowania danej liczby:
+
+\begin{itemize}
+\item \textbf{2 lub 12}: 1 pips (1 kombinacja: 1+1 lub 6+6),
+\item \textbf{3 lub 11}: 2 pipsy (2 kombinacje: 1+2, 2+1 lub 5+6, 6+5),
+\item \textbf{4 lub 10}: 3 pipsy (3 kombinacje),
+\item \textbf{5 lub 9}: 4 pipsy (4 kombinacje),
+\item \textbf{6 lub 8}: 5 pipsów (5 kombinacji).
+\end{itemize}
+
+Miara pipsów stanowi użyteczne narzędzie analityczne, ponieważ bezpośrednio odzwierciedla \textbf{wartość oczekiwaną produkcji} z danego pola. Heksy o wyższych pipsach generują zasoby częściej, co czyni je bardziej wartościowymi celami w fazie ustawień początkowych oraz podczas oceny potencjału produkcyjnego pozycji gracza. Pojęcie to będzie wykorzystywane w dalszej części pracy przy opisie strategii botów, które oceniają jakość lokalizacji budowy oraz prognozują przyszłą produkcję zasobów. W szerszej perspektywie pipsy stanowią również praktyczną miarę ograniczającą wpływ losowości na długoterminowy wynik rozgrywki, co jest często omawiane w analizach relacji „luck vs skill” w Catanie [10].
 
 \section{Istniejące implementacje Catana}
 
@@ -295,7 +303,7 @@ W praktyce jest to realizacja idei wzorca \textit{Command}: boty generują opis 
 
 \textbf{Generowanie akcji legalnych w jednym miejscu.} Silnik udostępnia zestaw funkcji generujących akcje możliwe w danym stanie (np. budowa drogi/osady/miasta, handel z bankiem, zakup i zagrywanie kart rozwoju, akcje fazy początkowej). Dzięki temu boty nie implementują reguł gry w swoich klasach (co prowadziłoby do powielania logiki i ryzyka rozbieżności), lecz wybierają spośród akcji wygenerowanych przez silnik. Jest to uzasadnione zarówno testowalnością (reguły w jednym miejscu), jak i poprawnością eksperymentów (każdy bot działa w tym samym zbiorze dopuszczalnych decyzji).
 
-\textbf{Rozdzielenie silnika i strategii graczy przez interfejs \texttt{IPlayer}.} Boty implementują spójny interfejs decyzji dla poszczególnych etapów tury (\texttt{getInitialPlacement()}, \texttt{get2InitialPlacement()}, \texttt{getDevAction()}, \texttt{getDiscardAction()}, \texttt{getMoveRobber()}, \texttt{getTurnAction()}). Pozwala to:
+\textbf{Rozdzielenie silnika i strategii graczy przez interfejs \texttt{IPlayer}.} Boty implementują spójny interfejs decyzji dla poszczególnych etapów tury \newline (\texttt{getInitialPlacement()}, \texttt{get2InitialPlacement()}, \texttt{getDevAction()}, \newline \texttt{getDiscardAction()}, \texttt{getMoveRobber()}, \texttt{getTurnAction()}). Pozwala to:
 \begin{itemize}
 \item porównywać strategie przy identycznym „kontrakcie” wejścia/wyjścia,
 \item wymieniać boty bez zmian w silniku,
@@ -507,7 +515,7 @@ Pakowanie pól zostało opisane jawnie w komentarzach w pliku nagłówkowym i je
 Heks (\texttt{PackedHex}) koduje:
 
 \begin{itemize}
-\item numer Catana w bitach 0–3,
+\item liczba produkcyjna (liczba na heksie przypisana podczas generowania planszy) w bitach 0–3,
 \item typ zasobu w bitach 4–6,
 \item wartości produkcji przypisane do graczy w bitach 7–12 (po 3 bity na gracza).
 \end{itemize}
@@ -959,6 +967,15 @@ Przy konieczności odrzucania kart w wyniku wyrzucenia liczby 7 bot w pierwszej 
 
 Strategia RoadPlayer jest \textbf{wrażliwa na ograniczenia przestrzenne planszy}. Skuteczne blokowanie kluczowych węzłów przez przeciwnika lub przerwanie ciągłości sieci znacząco obniża jej skuteczność. Ponadto jednostronna koncentracja na infrastrukturze drogowej może prowadzić do utraty tempa zdobywania punktów zwycięstwa, szczególnie w starciu z botami preferującymi rozwój ekonomiczny i budowę miast. Wyniki uzyskane przez RoadPlayer potwierdzają, że silna specjalizacja w jednym aspekcie gry nie gwarantuje przewagi nad strategiami zbalansowanymi.
 
+\subsubsection{Bot celujący w budowę miast}
+
+CityRushPlayer stanowi czwartą strategię eksperymentalną, której celem jest weryfikacja hipotezy, że \textbf{priorytetowe dążenie do budowy miast} (2 punkty zwycięstwa każda) może --- przy sensownym ustawieniu początkowym i reszcie logiki zbalansowanej --- skutkować szybkim tempem zdobywania punktów i dobrą skutecznością przeciwko części przeciwników.
+
+\textbf{Ustawienie początkowe.} Bot dziedziczy po It5Player, lecz nadpisuje wybór pierwszej i drugiej osady oraz drogi. Ocena węzła jest nastawiona na \textbf{miasta}: premiowana jest produkcja zboża i rud oraz w mniejszym stopniu cegły i drewna, wełny. Dodatkowo stosowana jest jawna ``skłonność do miasta'': suma (pipsy rud $\times$ 6 + pipsy zboża $\times$ 6), co faworyzuje lokalizacje z silnym dostępem do rud i zboża. Drugie ustawienie wybierane jest komplementarnie do pierwszego (premia za pokrycie brakujących surowców, silna premia za dostęp do cegły i drewna, aby uniknąć zablokowania budowy dróg i osad). Premiowane są porty, w tym port 2:1 na rudę i na zboże. Jednocześnie stosowana jest kara za węzły bez cegły i drewna (oraz za drugie ustawienie bez uzupełnienia tych surowców), tak aby bot nie utknął bez możliwości rozbudowy infrastruktury.
+
+\textbf{Logika tury.} W fazie głównej CityRushPlayer zachowuje tożsamość ``city rush'' w jednym punkcie: \textbf{jeśli wśród legalnych akcji jest budowa miasta, bot zawsze wybiera budowę miasta} (pierwszą dostępną). W pozostałych sytuacjach (brak możliwości budowy miasta, wybór między drogą, osadą, handlem, kartą rozwoju itd.) bot korzysta z pełnej logiki It5Player --- łącznie z zakupem kart rozwoju, rozbójnikiem i zbalansowaną oceną pozycji. Dzięki temu strategia nie rezygnuje z kart rozwoju ani z rozbójnika; jedynie faworyzuje miasto, gdy jest ono dostępne.
+
+\textbf{Pozostałe fazy.} Odrzucanie kart, ruch rozbójnika i zagranie karty rozwoju realizowane są przez It5Player, bez specjalizacji CityRush.
 
 \section{Boty oparte na algorytmie genetycznym}
 
@@ -1043,37 +1060,75 @@ W pierwszym scenariuszu \textbf{wszystkie boty} (kolejne iteracje, wersje parame
 
 \begin{table}[h]
 \centering
-\caption{Porównanie wyników w parach botów}
+\caption{Porównanie wyników w parach botów – metryki podstawowe}
 \medskip
-\label{tab:pairwise-summary}
+\label{tab:scenario1-summary}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|c|c|c|c|}
 \hline
-Opponent & Win Rate & NW\% & Avg Turns & LossVP (Random) & LossVP (Bot) & LR\% (Bot) & LA\% (Bot) & Avg DevCards & ProdScore \\
+Opponent & Win Rate & NW\% & Avg Turns & LossVP (Random) & LossVP (Bot) & Avg DevCards & ProdScore \\
 \hline
-It1 & 56.0\% & 7.6\% & 448.5 & 6.81 & 7.51 & 51.2\% & 58.9\% & 3.0 & 730.4 \\
+It1 & 56.0\% & 7.6\% & 448.5 & 6.81 & 7.51 & 3.0 & 730.4 \\
 \hline
-It2 & 73.3\% & 3.6\% & 381.0 & 6.23 & 8.48 & 64.4\% & 62.0\% & 3.0 & 864.3 \\
+It2 & 73.3\% & 3.6\% & 381.0 & 6.23 & 8.48 & 3.0 & 864.3 \\
 \hline
-It3 & 98.7\% & 0.3\% & 180.3 & 3.98 & 11.50 & 83.7\% & 91.9\% & 3.2 & 1003.2 \\
+It3 & 98.7\% & 0.3\% & 180.3 & 3.98 & 11.50 & 3.2 & 1003.2 \\
 \hline
-It4 & 96.9\% & 1.6\% & 192.6 & 3.64 & 9.80 & 94.6\% & 86.7\% & 3.0 & 1190.3 \\
+It4 & 96.9\% & 1.6\% & 192.6 & 3.64 & 9.80 & 3.0 & 1190.3 \\
 \hline
-It5 & 100.0\% & 0.0\% & 115.3 & 3.21 & -- & 71.5\% & 98.5\% & 3.7 & 1096.4 \\
+It5 & 100.0\% & 0.0\% & 115.3 & 3.21 & -- & 3.7 & 1096.4 \\
 \hline
-Para & 99.5\% & 0.0\% & 125.1 & 3.34 & 4.80 & 90.2\% & 25.9\% & 9.9 & 1267.8 \\
+Para & 99.5\% & 0.0\% & 125.1 & 3.34 & 4.80 & 9.9 & 1267.8 \\
 \hline
-ParaSettleIt5 & 100.0\% & 0.0\% & 111.0 & 3.21 & -- & 68.3\% & 98.8\% & 3.7 & 1111.5 \\
+ParaSettleIt5 & 100.0\% & 0.0\% & 111.0 & 3.21 & -- & 3.7 & 1111.5 \\
 \hline
-OneResourcePlayer & 99.8\% & 0.0\% & 159.9 & 3.79 & 11.50 & 82.0\% & 92.4\% & 2.9 & 1117.0 \\
+OneResourcePlayer & 99.8\% & 0.0\% & 159.9 & 3.79 & 11.50 & 2.9 & 1117.0 \\
 \hline
-DevPlayer & 99.8\% & 0.1\% & 166.1 & 4.00 & 12.00 & 52.8\% & 99.7\% & 4.6 & 1064.8 \\
+DevPlayer & 99.8\% & 0.1\% & 166.1 & 4.00 & 12.00 & 4.6 & 1064.8 \\
 \hline
-RoadPlayer & 100.0\% & 0.0\% & 132.7 & 3.22 & -- & 94.5\% & 98.6\% & 3.6 & 1051.0 \\
+RoadPlayer & 100.0\% & 0.0\% & 132.7 & 3.22 & -- & 3.6 & 1051.0 \\
 \hline
-CityRushPlayer & 100.0\% & 0.0\% & 116.1 & 3.23 & -- & 72.7\% & 97.7\% & 3.5 & 1076.1 \\
+CityRushPlayer & 100.0\% & 0.0\% & 116.1 & 3.23 & -- & 3.5 & 1076.1 \\
 \hline
-AlphaBeta & 100.0\% & 0.0\% & 108.7 & 2.97 & -- & 96.2\% & 91.8\% & 2.5 & 1168.2 \\
+AlphaBeta & 100.0\% & 0.0\% & 108.7 & 2.97 & -- & 2.5 & 1168.2 \\
+\hline
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Porównanie wyników w parach botów – premie}
+\medskip
+\label{tab:scenario1-bonuses}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|}
+\hline
+Opponent & LR\% (Bot) & LA\% (Bot) \\
+\hline
+It1 & 51.2\% & 58.9\% \\
+\hline
+It2 & 64.4\% & 62.0\% \\
+\hline
+It3 & 83.7\% & 91.9\% \\
+\hline
+It4 & 94.6\% & 86.7\% \\
+\hline
+It5 & 71.5\% & 98.5\% \\
+\hline
+Para & 90.2\% & 25.9\% \\
+\hline
+ParaSettleIt5 & 68.3\% & 98.8\% \\
+\hline
+OneResourcePlayer & 82.0\% & 92.4\% \\
+\hline
+DevPlayer & 52.8\% & 99.7\% \\
+\hline
+RoadPlayer & 94.5\% & 98.6\% \\
+\hline
+CityRushPlayer & 72.7\% & 97.7\% \\
+\hline
+AlphaBeta & 96.2\% & 91.8\% \\
 \hline
 \end{tabular}%
 }
@@ -1149,26 +1204,44 @@ W scenariuszu 2 zestawiono iteracje botów heurystycznych w układzie „każdy 
 
 \begin{table}[h]
 \centering
-\caption{Porównanie wyników w parach botów}
+\caption{Porównanie wyników w parach botów – metryki podstawowe}
 \medskip
-\label{tab:pairwise-summary}
+\label{tab:scenario2-summary}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccccccccccccc}
+\begin{tabular}{lcccccccccc}
 \hline
 Pair &
 Win\% A & Win\% B &
 Avg Turns &
 LossVP A & LossVP B &
-LR\% A & LR\% B &
-LA\% A & LA\% B &
-DevCards A & DevCards B &
+Avg DevCards A & Avg DevCards B &
 ProdScore A & ProdScore B \\
 \hline
-It1 vs It2 & 35.8\% & 61.9\% & 339.8 & 6.24 & 7.96 & 37.4\% & 62.6\% & 45.8\% & 52.3\% & 2.3 & 2.6 & 589.1 & 832.1 \\
-It2 vs It3 & 5.8\% & 93.6\% & 181.9 & 5.06 & 11.28 & 31.4\% & 68.5\% & 5.8\% & 91.1\% & 0.9 & 3.2 & 400.5 & 1017.3 \\
-It3 vs It4 & 32.4\% & 66.0\% & 184.4 & 9.11 & 9.89 & 24.6\% & 75.4\% & 52.5\% & 46.3\% & 2.5 & 2.5 & 817.7 & 1127.4 \\
-It4 vs It5 & 25.7\% & 74.2\% & 134.2 & 9.54 & 11.04 & 82.0\% & 17.8\% & 11.4\% & 88.6\% & 1.7 & 3.4 & 958.1 & 1070.6 \\
-It1 vs It5 & 0.1\% & 99.9\% & 114.9 & 3.58 & 14.00 & 14.0\% & 73.5\% & 1.1\% & 98.2\% & 0.6 & 3.7 & 266.5 & 1096.8 \\
+It1 vs It2 & 35.8\% & 61.9\% & 339.8 & 6.24 & 7.96 & 2.3 & 2.6 & 589.1 & 832.1 \\
+It2 vs It3 & 5.8\% & 93.6\% & 181.9 & 5.06 & 11.28 & 0.9 & 3.2 & 400.5 & 1017.3 \\
+It3 vs It4 & 32.4\% & 66.0\% & 184.4 & 9.11 & 9.89 & 2.5 & 2.5 & 817.7 & 1127.4 \\
+It4 vs It5 & 25.7\% & 74.2\% & 134.2 & 9.54 & 11.04 & 1.7 & 3.4 & 958.1 & 1070.6 \\
+It1 vs It5 & 0.1\% & 99.9\% & 114.9 & 3.58 & 14.00 & 0.6 & 3.7 & 266.5 & 1096.8 \\
+\hline
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Porównanie wyników w parach botów – premie}
+\medskip
+\label{tab:scenario2-bonuses}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccc}
+\hline
+Pair & LR\% A & LR\% B & LA\% A & LA\% B \\
+\hline
+It1 vs It2 & 37.4\% & 62.6\% & 45.8\% & 52.3\% \\
+It2 vs It3 & 31.4\% & 68.5\% & 5.8\% & 91.1\% \\
+It3 vs It4 & 24.6\% & 75.4\% & 52.5\% & 46.3\% \\
+It4 vs It5 & 82.0\% & 17.8\% & 11.4\% & 88.6\% \\
+It1 vs It5 & 14.0\% & 73.5\% & 1.1\% & 98.2\% \\
 \hline
 \end{tabular}%
 }
@@ -1351,35 +1424,71 @@ OneResourcePlayer reprezentuje strategię wyspecjalizowaną, która maksymalizuj
 
 \begin{table}[h]
 \centering
-\caption{Podsumowanie wyników OneResourcePlayer}
+\caption{Podsumowanie wyników OneResourcePlayer – metryki podstawowe}
 \medskip
-\label{tab:pairwise-summary}
+\label{tab:oneresource-summary}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|c|}
 \hline
-Opponent & Win Rate & Avg Turns & LossVP (OR) & LossVP (Opp) & LR\% (OR) & LR\% (Opp) & LA\% (OR) & LA\% (Opp) \\
+Opponent & Win Rate & Avg Turns & LossVP (OR) & LossVP (Opp) \\
 \hline
-It1 & 98.3\% & 160.1 & 9.00 & 4.37 & 82.9\% & 14.7\% & 89.2\% & 8.9\% \\
+It1 & 98.3\% & 160.1 & 9.00 & 4.37 \\
 \hline
-It2 & 95.5\% & 161.1 & 9.82 & 4.93 & 72.8\% & 26.1\% & 89.3\% & 8.8\% \\
+It2 & 95.5\% & 161.1 & 9.82 & 4.93 \\
 \hline
-It3 & 56.8\% & 148.6 & 8.43 & 9.36 & 43.4\% & 56.5\% & 51.9\% & 47.6\% \\
+It3 & 56.8\% & 148.6 & 8.43 & 9.36 \\
 \hline
-It4 & 36.4\% & 146.6 & 8.23 & 10.09 & 22.2\% & 77.8\% & 46.9\% & 51.8\% \\
+It4 & 36.4\% & 146.6 & 8.23 & 10.09 \\
 \hline
-It5 & 19.0\% & 116.9 & 7.24 & 11.21 & 39.0\% & 55.8\% & 12.1\% & 87.8\% \\
+It5 & 19.0\% & 116.9 & 7.24 & 11.21 \\
 \hline
-DevPlayer & 51.1\% & 149.2 & 8.74 & 10.14 & 67.4\% & 30.1\% & 12.5\% & 87.5\% \\
+DevPlayer & 51.1\% & 149.2 & 8.74 & 10.14 \\
 \hline
-RoadPlayer & 22.5\% & 125.9 & 7.45 & 10.28 & 18.3\% & 81.3\% & 22.1\% & 77.6\% \\
+RoadPlayer & 22.5\% & 125.9 & 7.45 & 10.28 \\
 \hline
-CityRushPlayer & 25.3\% & 117.3 & 7.28 & 10.96 & 42.9\% & 51.5\% & 16.4\% & 83.5\% \\
+CityRushPlayer & 25.3\% & 117.3 & 7.28 & 10.96 \\
 \hline
-Para & 34.8\% & 127.8 & 7.73 & 6.14 & 32.2\% & 67.2\% & 60.6\% & 33.5\% \\
+Para & 34.8\% & 127.8 & 7.73 & 6.14 \\
 \hline
-ParaSettleIt5 & 18.2\% & 113.2 & 7.19 & 11.24 & 38.9\% & 54.7\% & 11.1\% & 88.7\% \\
+ParaSettleIt5 & 18.2\% & 113.2 & 7.19 & 11.24 \\
 \hline
-AlphaBeta & 11.1\% & 111.1 & 6.93 & 10.60 & 14.6\% & 85.2\% & 23.2\% & 76.8\% \\
+AlphaBeta & 11.1\% & 111.1 & 6.93 & 10.60 \\
+\hline
+\end{tabular}
+}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Podsumowanie wyników OneResourcePlayer – premie}
+\medskip
+\label{tab:oneresource-bonuses}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+Opponent & LR\% (OR) & LR\% (Opp) & LA\% (OR) & LA\% (Opp) \\
+\hline
+It1 & 82.9\% & 14.7\% & 89.2\% & 8.9\% \\
+\hline
+It2 & 72.8\% & 26.1\% & 89.3\% & 8.8\% \\
+\hline
+It3 & 43.4\% & 56.5\% & 51.9\% & 47.6\% \\
+\hline
+It4 & 22.2\% & 77.8\% & 46.9\% & 51.8\% \\
+\hline
+It5 & 39.0\% & 55.8\% & 12.1\% & 87.8\% \\
+\hline
+DevPlayer & 67.4\% & 30.1\% & 12.5\% & 87.5\% \\
+\hline
+RoadPlayer & 18.3\% & 81.3\% & 22.1\% & 77.6\% \\
+\hline
+CityRushPlayer & 42.9\% & 51.5\% & 16.4\% & 83.5\% \\
+\hline
+Para & 32.2\% & 67.2\% & 60.6\% & 33.5\% \\
+\hline
+ParaSettleIt5 & 38.9\% & 54.7\% & 11.1\% & 88.7\% \\
+\hline
+AlphaBeta & 14.6\% & 85.2\% & 23.2\% & 76.8\% \\
 \hline
 \end{tabular}
 }
@@ -1399,8 +1508,6 @@ Istotna jest obserwacja, że It3Player stanowi punkt przełomowy. Spadek współ
 \caption{Skuteczność strategii monosurowcowej w zależności od jakości przeciwnika}
 \end{figure}
 
-[TODO: skuteczność powraca dla para]
-
 \subsubsection{DevPlayer}
 
 DevPlayer reprezentuje strategię opartą na priorytetowym skupieniu się na zakupie kart rozwoju oraz szybkim osiąganiu związanych z nimi bonusów, takich jak premia \textit{Największa Armia} oraz karty punktów zwycięstwa. Eksperyment weryfikuje hipotezę, czy taka strategia pośrednia może stanowić skuteczną alternatywę dla klasycznej ekspansji terytorialnej przeciwko różnym poziomom przeciwników.
@@ -1409,35 +1516,71 @@ DevPlayer reprezentuje strategię opartą na priorytetowym skupieniu się na zak
 
 \begin{table}[h]
 \centering
-\caption{Podsumowanie wyników DevPlayer}
+\caption{Podsumowanie wyników DevPlayer – metryki podstawowe}
 \medskip
-\label{tab:pairwise-summary}
+\label{tab:devplayer-summary}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|c|c|c|}
 \hline
-Opponent & Win Rate & Avg Turns & LossVP (Dev) & LossVP (Opp) & LR\% (Dev) & LR\% (Opp) & LA\% (Dev) & LA\% (Opp) & Avg DevC Dev & Avg DevC Opp \\
+Opponent & Win Rate & Avg Turns & LossVP (Dev) & LossVP (Opp) & Avg DevC Dev & Avg DevC Opp \\
 \hline
-It1 & 98.8\% & 164.4 & 11.00 & 4.57 & 52.6\% & 36.1\% & 98.9\% & 1.0\% & 4.5 & 0.6 \\
+It1 & 98.8\% & 164.4 & 11.00 & 4.57 & 4.5 & 0.6 \\
 \hline
-It2 & 97.5\% & 163.0 & 11.56 & 5.20 & 39.4\% & 53.7\% & 99.4\% & 0.6\% & 4.6 & 0.6 \\
+It2 & 97.5\% & 163.0 & 11.56 & 5.20 & 4.6 & 0.6 \\
 \hline
-It3 & 68.1\% & 172.1 & 10.44 & 10.22 & 23.2\% & 76.5\% & 90.7\% & 9.3\% & 3.4 & 1.7 \\
+It3 & 68.1\% & 172.1 & 10.44 & 10.22 & 3.4 & 1.7 \\
 \hline
-It4 & 45.8\% & 183.2 & 10.16 & 11.05 & 8.1\% & 91.9\% & 90.8\% & 9.2\% & 3.4 & 1.8 \\
+It4 & 45.8\% & 183.2 & 10.16 & 11.05 & 3.4 & 1.8 \\
 \hline
-It5 & 24.9\% & 129.0 & 8.61 & 10.96 & 23.6\% & 72.4\% & 59.8\% & 40.2\% & 2.6 & 2.4 \\
+It5 & 24.9\% & 129.0 & 8.61 & 10.96 & 2.6 & 2.4 \\
 \hline
-OneResourcePlayer & 52.7\% & 147.5 & 10.38 & 8.46 & 33.3\% & 63.5\% & 89.7\% & 10.3\% & 3.5 & 1.6 \\
+OneResourcePlayer & 52.7\% & 147.5 & 10.38 & 8.46 & 3.5 & 1.6 \\
 \hline
-RoadPlayer & 27.1\% & 139.6 & 9.52 & 10.98 & 6.8\% & 92.8\% & 73.9\% & 26.1\% & 3.0 & 2.1 \\
+RoadPlayer & 27.1\% & 139.6 & 9.52 & 10.98 & 3.0 & 2.1 \\
 \hline
-CityRushPlayer & 31.0\% & 135.6 & 8.84 & 10.87 & 28.5\% & 69.1\% & 65.0\% & 35.0\% & 2.7 & 2.3 \\
+CityRushPlayer & 31.0\% & 135.6 & 8.84 & 10.87 & 2.7 & 2.3 \\
 \hline
-Para & 58.0\% & 160.4 & 8.46 & 5.54 & 20.9\% & 78.6\% & 92.3\% & 7.5\% & 3.2 & 3.4 \\
+Para & 58.0\% & 160.4 & 8.46 & 5.54 & 3.2 & 3.4 \\
 \hline
-ParaSettleIt5 & 23.6\% & 129.2 & 8.52 & 11.31 & 23.1\% & 73.2\% & 54.4\% & 45.6\% & 2.6 & 2.4 \\
+ParaSettleIt5 & 23.6\% & 129.2 & 8.52 & 11.31 & 2.6 & 2.4 \\
 \hline
-AlphaBeta & 18.3\% & 122.6 & 4.64 & 10.56 & 8.2\% & 91.6\% & 74.3\% & 25.7\% & 2.9 & 2.0 \\
+AlphaBeta & 18.3\% & 122.6 & 4.64 & 10.56 & 2.9 & 2.0 \\
+\hline
+\end{tabular}
+}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Podsumowanie wyników DevPlayer – premie}
+\medskip
+\label{tab:devplayer-bonuses}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+Opponent & LR\% (Dev) & LR\% (Opp) & LA\% (Dev) & LA\% (Opp) \\
+\hline
+It1 & 52.6\% & 36.1\% & 98.9\% & 1.0\% \\
+\hline
+It2 & 39.4\% & 53.7\% & 99.4\% & 0.6\% \\
+\hline
+It3 & 23.2\% & 76.5\% & 90.7\% & 9.3\% \\
+\hline
+It4 & 8.1\% & 91.9\% & 90.8\% & 9.2\% \\
+\hline
+It5 & 23.6\% & 72.4\% & 59.8\% & 40.2\% \\
+\hline
+OneResourcePlayer & 33.3\% & 63.5\% & 89.7\% & 10.3\% \\
+\hline
+RoadPlayer & 6.8\% & 92.8\% & 73.9\% & 26.1\% \\
+\hline
+CityRushPlayer & 28.5\% & 69.1\% & 65.0\% & 35.0\% \\
+\hline
+Para & 20.9\% & 78.6\% & 92.3\% & 7.5\% \\
+\hline
+ParaSettleIt5 & 23.1\% & 73.2\% & 54.4\% & 45.6\% \\
+\hline
+AlphaBeta & 8.2\% & 91.6\% & 74.3\% & 25.7\% \\
 \hline
 \end{tabular}
 }
@@ -1489,7 +1632,7 @@ RoadPlayer reprezentuje strategię opartą na aktywnym rozbudowaniu sieci dróg 
 \centering
 \caption{Podsumowanie wyników RoadPlayer}
 \medskip
-\label{tab:pairwise-summary}
+\label{tab:roadplayer-summary}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}
 \hline
@@ -1565,6 +1708,106 @@ OneResourcePlayer wykazuje najsłabsze wyniki spośród trzech strategii wyspecj
 
 Wszystkie trzy strategie wykazują przepaść kompetencyjną między It3Player a It4Player, co potwierdza, że wprowadzenie strategii ustawień początkowych oraz aktywnego wykorzystania rozbójnika w It3 wystarcza, aby zneutralizować przewagę wynikającą z jednostronnej specjalizacji. Przeciwko zaawansowanym botom (It5, ParaSettleIt5, AlphaBeta) żadna ze strategii wyspecjalizowanych nie osiąga współczynnika zwycięstw powyżej 50\%, co jednoznacznie potwierdza, że \textbf{zbalansowane strategie są bardziej skuteczne niż jednostronna specjalizacja w długoterminowej perspektywie}.
 
+\subsubsection{CityRushPlayer}
+
+CityRushPlayer reprezentuje strategię nastawioną na priorytetową budowę miast (2 punkty zwycięstwa za miasto) przy ustawieniach początkowych faworyzujących zboże i rudę oraz zbalansowanej logice It5 w pozostałych decyzjach. Eksperyment weryfikuje, czy takie podejście pozwala osiągnąć szybkie tempo zdobywania punktów i dobrą skuteczność przeciwko różnym przeciwnikom.
+
+\subsubsection{Podsumowanie danych}
+
+\begin{table}[h]
+\centering
+\caption{Podsumowanie wyników CityRushPlayer}
+\medskip
+\label{tab:cityrush-summary}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+Opponent & Win\% & Turns & LossVP(C) & LossVP(O) & LR\%(C) & LR\%(O) & LA\%(C) & LA\%(O) & DevC(C) & DevC(O) & Prod(C) & Prod(O) \\
+\hline
+It1 & 99.9\% & 116.2 & 5.00 & 3.61 & 72.4\% & 15.9\% & 97.0\% & 2.1\% & 3.6 & 0.6 & 1079.3 & 257.9 \\
+\hline
+It2 & 99.7\% & 118.2 & 11.67 & 4.21 & 58.3\% & 33.7\% & 97.7\% & 1.8\% & 3.7 & 0.5 & 1093.1 & 300.1 \\
+\hline
+It3 & 85.3\% & 131.7 & 10.95 & 8.35 & 39.8\% & 59.3\% & 85.9\% & 14.0\% & 3.2 & 1.7 & 1063.5 & 706.7 \\
+\hline
+It4 & 70.5\% & 137.7 & 11.00 & 9.30 & 18.2\% & 81.7\% & 83.1\% & 16.8\% & 3.1 & 1.8 & 1035.7 & 946.4 \\
+\hline
+It5 & 45.7\% & 114.8 & 9.85 & 9.83 & 48.5\% & 49.0\% & 38.7\% & 61.1\% & 2.4 & 2.6 & 978.0 & 990.6 \\
+\hline
+OneResourcePlayer & 74.4\% & 118.6 & 10.82 & 7.51 & 50.7\% & 44.6\% & 83.8\% & 16.0\% & 3.2 & 1.7 & 1025.8 & 806.3 \\
+\hline
+DevPlayer & 69.8\% & 132.8 & 10.71 & 8.55 & 72.5\% & 24.7\% & 36.7\% & 63.3\% & 2.3 & 2.7 & 1083.3 & 816.6 \\
+\hline
+RoadPlayer & 49.6\% & 119.1 & 10.62 & 8.94 & 21.8\% & 77.4\% & 62.3\% & 37.7\% & 2.8 & 2.2 & 1025.8 & 949.6 \\
+\hline
+Para & 94.1\% & 122.5 & 9.42 & 4.62 & 67.9\% & 25.5\% & 96.0\% & 3.4\% & 2.8 & 5.4 & 1062.0 & 412.5 \\
+\hline
+ParaSettleIt5 & 70.0\% & 122.8 & 10.62 & 8.17 & 63.6\% & 29.0\% & 56.3\% & 43.7\% & 2.7 & 2.3 & 1050.2 & 913.1 \\
+\hline
+AlphaBeta & 37.4\% & 112.1 & 10.08 & 9.77 & 23.9\% & 75.3\% & 58.4\% & 41.3\% & 2.6 & 2.1 & 941.2 & 1063.1 \\
+\hline
+\end{tabular}
+}
+\end{table}
+
+\subsubsection{Kluczowe wnioski}
+
+\textbf{Skuteczność CityRushPlayer w zależności od przeciwnika}
+
+CityRushPlayer osiąga bardzo wysokie współczynniki zwycięstw przeciwko słabym botom (99.9\% vs It1, 99.7\% vs It2) oraz wyraźną przewagę przeciwko It3 (85.3\%) i It4 (70.5\%). Spadek skuteczności następuje stopniowo: przeciwko It5 win rate wynosi 45.7\% (niemal remis), a przeciwko AlphaBeta jedynie 37.4\%. Wyróżnia się wynik przeciwko ParaPlayer (94.1\%) --- CityRush wygrywa zdecydowanie częściej niż Para, przy wyższej średniej produkcji (ProdScore 1062.0 vs 412.5) i dominacji w premii \textit{Największa Armia} (96.0\% vs 3.4\%). Przeciwko ParaSettleIt5 CityRush osiąga 70.0\%, a przeciwko OneResourcePlayer i DevPlayer odpowiednio 74.4\% i 69.8\%. W starciu z RoadPlayer wynik jest niemal remisowy (49.6\% vs 50.4\%).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{cityrush_effectiveness.png}
+\caption{Skuteczność CityRushPlayer w zależności od jakości przeciwnika}
+\end{figure}
+
+\textbf{Premia Największa Armia i produkcja}
+
+CityRushPlayer często dominuje w premii \textit{Największa Armia} przeciwko słabszym botom (97.0\% vs It1, 97.7\% vs It2, 96.0\% vs Para) oraz utrzymuje wysokie wartości przeciwko It3--It4 (85.9\%, 83.1\%). Przeciwko It5 i silniejszym przeciwnikom przewaga w tej premii maleje (38.7\% vs It5, 58.4\% vs AlphaBeta). Średnia liczba tur do zakończenia rozgrywek (112--138) jest zbliżona do innych zbalansowanych botów, co potwierdza, że strategia ``city rush'' nie wydłuża rozgrywek w sposób typowy dla skrajnie wyspecjalizowanych botów.
+
+\textbf{Podsumowanie Scenariusza 4: Porównanie strategii wyspecjalizowanych}
+
+Scenariusz 4 porównuje cztery strategie wyspecjalizowane (OneResource, Dev, Road, CityRush) w starciu z tym samym zestawem przeciwników. Trzy skrajnie wyspecjalizowane boty osiągają wysokie win rate przeciwko słabym przeciwnikom, lecz ich skuteczność gwałtownie spada przy silniejszych (przepaść kompetencyjna między It3 a It4/It5). CityRushPlayer, łącząc priorytet budowy miast z logiką It5, wypada wyraźnie lepiej i utrzymuje przewagę m.in.\ przeciwko Para i ParaSettleIt5. Wniosek: umiarkowana specjalizacja jest odporniejsza niż skrajna; najbardziej skuteczne pozostają strategie zbalansowane.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{scenario4_all.png}
+\caption{Przepaść kompetencyjna czterech strategii wyspecjalizowanych (OneResource, Dev, Road, CityRush) --- współczynnik zwycięstw w zależności od przeciwnika.}
+\end{figure}
+
+\subsubsection{Scenariusz 5: Przewaga pierwszego ruchu}
+
+Ostatni scenariusz poświęcony jest bezpośredniej ocenie \textbf{efektu miejsca} --- czyli tego, jak bardzo bycie graczem rozpoczynającym wpływa na szansę zwycięstwa w danej parze botów.
+
+Dla każdej pary graczy (A, B) dysponujemy dwiema wartościami: odsetkiem wygranych A w rozgrywkach, w których A jest graczem pierwszym, oraz odsetkiem wygranych A w rozgrywkach, w których A jest graczem drugim (równoważnie: wygranymi B, gdy B jest pierwszy). \textbf{Różnica} tych dwóch wartości mierzy przewagę pierwszego ruchu z perspektywy gracza A przeciwko B: wartość dodatnia oznacza, że A zyskuje na byciu pierwszym, ujemna --- że A zyskuje na byciu drugim. Różnice te zestawiono w macierz $13 \times 13$ (Random, It1--It5, Para, ParaSettle, AlphaBeta, OneResource, Dev, Road, CityRush) i zwizualizowano jako heatmapę.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{heatmap.png}
+\caption{Heatmapa przewagi pierwszego ruchu}
+\end{figure}
+
+Z heatmapy wynika, że w wielu parach występuje \textbf{umiarkowana przewaga pierwszego ruchu} (wartości dodatnie, do kilkunastu punktów procentowych). W parach o dużej dysproporcji sił (np.\ silny bot vs Random) obie perspektywy dają temu samemu botowi blisko 100\% lub 0\%, więc różnica jest bliska zeru. Wyróżnia się \textbf{OneResourcePlayer}: dla niego bycie graczem pierwszym jest szczególnie ważne, ponieważ strategia monosurowcowa opiera się na zajęciu konkretnego typu lokalizacji (np.\ silne pole jednego surowca) oraz dostępie do portu 2:1. Jako gracz rozpoczynający bot może zarezerwować optymalne miejsce pod tę taktykę, podczas gdy w roli drugiego przeciwnik często zdąży zablokować kluczowe hexy lub port, co znacząco osłabia skuteczność strategii. W wyrównanych starciach (np.\ It5 vs ParaSettle, AlphaBeta vs It5) efekt miejsca jest widoczny i może sięgać kilku--kilkunastu punktów procentowych. Scenariusz ten potwierdza, że \textbf{kolejność ustawień ma istotny wpływ na wynik} w wielu konfiguracjach i uzasadnia stosowanie przełączania stron w eksperymentach porównawczych (Scenariusze 1--4).
+
+\subsubsection{Scenariusz 6: Wpływ ustawienia początkowego z algorytmu genetycznego}
+
+W tym scenariuszu metodę \textbf{placeInitialSettlement} gracza ParaSetit5Player (wyuczoną algorytmem genetycznym przeciwko It5) nadpisano u \textbf{wszystkich} botów. Następnie każdy zmodyfikowany bot został wytrenowany przeciwko It5 oraz rozegrano po 1000 rund \textbf{przed} i \textbf{po} tej zamianie. Oś $Y$ na wykresie pokazuje \textbf{różnicę} współczynnika zwycięstw przeciwko It5 (po minus przed) w punktach procentowych: słupki dodatnie oznaczają poprawę, ujemne --- pogorszenie.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{PrzedPoGen.png}
+\caption{Różnica współczynnika zwycięstw przeciwko It5 po nadpisaniu placeInitialSettlement wersją z ParaSetit5Player i ponownym treningu (po 1000 rund przed i po).}
+\end{figure}
+
+\textbf{Analiza wyników}
+
+U \textbf{11 z 13} botów zastosowanie ustawienia początkowego z algorytmu genetycznego i ponowny trening dały \textbf{poprawę} wyniku przeciwko It5. Największy przyrost osiągnęły boty wyspecjalizowane i silne: \textbf{OneResourcePlayer} (+8,8 p.p.), \textbf{DevPlayer} (+7,0 p.p.), \textbf{AlphaBetaPlayer} (+4,5 p.p.) oraz \textbf{It4Player} (+4,4 p.p.). Umiarkowaną poprawę widać u It2, It3, It5, RoadPlayer i CityRushPlayer (ok.\ +1--3 p.p.). Dla \textbf{Random}, \textbf{It1} i \textbf{Para} zmiana była znikoma (+0,1--0,3 p.p.) --- u bardzo słabych lub już zoptymalizowanych strategii lepsze ustawienie początkowe ma ograniczony wpływ na końcowy win rate.
+
+Jedynym botem z \textbf{pogorszeniem} jest \textbf{ParaSettleIt5Player} ($-1{,}2$ p.p.) --- źródło samego ustawienia początkowego. Możliwa interpretacja: oryginalna metoda placeInitialSettlement ParaSetit5 była już dobrze dopasowana do reszty jego logiki; przeniesienie jej do ``klonu'' i ponowny trening mógł prowadzić do lekkiego przeuczenia lub innej interakcji z pełną strategią, bądź warianty treningu przed/po nie są w pełni porównywalne dla tego samego gracza.
+
+Można z tego wyciągnąć wniosek, że ustawienie początkowe wyuczone algorytmem genetycznym (ParaSetit5 vs It5), po nadpisaniu nim metody placeInitialSettlement u pozostałych botów i ponownym treningu przeciwko It5, w zdecydowanej większości przypadków \textbf{zwiększa} ich skuteczność przeciwko It5. Korzyść jest największa dla botów wyspecjalizowanych (OneResource, Dev) oraz silnych (AlphaBeta, It4), co wskazuje, że dla tych strategii jakość ustawienia początkowego ma istotny wpływ na wynik rozgrywki.
 
 \chapter{Podsumowanie i wnioski}
 \section{Ocena realizacji celów pracy}

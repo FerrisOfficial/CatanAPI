@@ -822,6 +822,15 @@ Przy konieczności odrzucania kart w wyniku wyrzucenia liczby 7 bot w pierwszej 
 
 Strategia RoadPlayer jest **wrażliwa na ograniczenia przestrzenne planszy**. Skuteczne blokowanie kluczowych węzłów przez przeciwnika lub przerwanie ciągłości sieci znacząco obniża jej skuteczność. Ponadto jednostronna koncentracja na infrastrukturze drogowej może prowadzić do utraty tempa zdobywania punktów zwycięstwa, szczególnie w starciu z botami preferującymi rozwój ekonomiczny i budowę miast. Wyniki uzyskane przez RoadPlayer potwierdzają, że silna specjalizacja w jednym aspekcie gry nie gwarantuje przewagi nad strategiami zbalansowanymi.
 
+#### 7.4.3. Bot celujący w budowę miast
+
+CityRushPlayer stanowi czwartą strategię eksperymentalną, której celem jest weryfikacja hipotezy, że **priorytetowe dążenie do budowy miast** (2 punkty zwycięstwa każda) może — przy sensownym ustawieniu początkowym i reszcie logiki zbalansowanej — skutkować szybkim tempem zdobywania punktów i dobrą skutecznością przeciwko części przeciwników.
+
+**Ustawienie początkowe.** Bot dziedziczy po It5Player, lecz nadpisuje wybór pierwszej i drugiej osady oraz drogi. Ocena węzła jest nastawiona na **miasta**: premiowana jest produkcja zboża i rud oraz w mniejszym stopniu cegły i drewna, wełny. Dodatkowo stosowana jest jawna „skłonność do miasta”: suma (pipsy rud × 6 + pipsy zboża × 6), co faworyzuje lokalizacje z silnym dostępem do rud i zboża. Drugie ustawienie wybierane jest komplementarnie do pierwszego (premia za pokrycie brakujących surowców, silna premia za dostęp do cegły i drewna, aby uniknąć zablokowania budowy dróg i osad). Premiowane są porty, w tym port 2:1 na rudę i na zboże. Jednocześnie stosowana jest kara za węzły bez cegły i drewna (oraz za drugie ustawienie bez uzupełnienia tych surowców), tak aby bot nie utknął bez możliwości rozbudowy infrastruktury.
+
+**Logika tury.** W fazie głównej CityRushPlayer zachowuje tożsamość „city rush” w jednym punkcie: **jeśli wśród legalnych akcji jest budowa miasta, bot zawsze wybiera budowę miasta** (pierwszą dostępną). W pozostałych sytuacjach (brak możliwości budowy miasta, wybór między drogą, osadą, handlem, kartą rozwoju itd.) bot korzysta z pełnej logiki It5Player — łącznie z zakupem kart rozwoju, rozbójnikiem i zbalansowaną oceną pozycji. Dzięki temu strategia nie rezygnuje z kart rozwoju ani z rozbójnika; jedynie faworyzuje miasto, gdy jest ono dostępne.
+
+**Pozostałe fazy.** Odrzucanie kart, ruch rozbójnika i zagranie karty rozwoju realizowane są przez It5Player, bez specjalizacji CityRush.
 
 ### 7.5. Boty oparte na algorytmie genetycznym
 
@@ -935,7 +944,7 @@ Analiza dodatkowych metryk pozwala na głębsze zrozumienie charakterystyki stra
 
 **Premie strategiczne:** Współczynniki zdobycia premii *Najdłuższa Droga* i *Największa Armia* pokazują wyraźne różnice w podejściu strategicznym. Boty heurystyczne (It3–It5) osiągają wysokie wartości dla obu premii (71–95% dla Najdłuższej Drogi, 87–99% dla Największej Armii), co wskazuje na zbalansowane podejście. ParaPlayer wyróżnia się bardzo wysokim współczynnikiem Najdłuższej Drogi (90.2%), ale niskim dla Największej Armii (25.9%), co jest związane z jego strategią ekspansji terytorialnej kosztem kart rozwoju. DevPlayer pokazuje odwrotny wzorzec — dominuje w Największej Armii (99.7%), ale osiąga jedynie 52.8% dla Najdłuższej Drogi, co odzwierciedla jego specjalizację w strategii kartowej.
 
-**Karty rozwoju:** Średnia liczba zakupionych kart rozwoju waha się od 2.5 (AlphaBeta) do 9.9 (ParaPlayer). ParaPlayer wyróżnia się zdecydowanie najwyższą wartością, co jest konsekwencją jego strategii opartej na eksploracji różnych opcji decyzyjnych. Większość botów heurystycznych utrzymuje wartość w zakresie 2.9–3.7 kart na rozgrywkę, podczas gdy DevPlayer, zgodnie ze swoją specjalizacją, osiąga 4.6 kart.
+**Karty rozwoju:** Średnia liczba niezagranych kart rozwoju pozostałych na koniec gry waha się od 2.5 (AlphaBeta) do 9.9 (ParaPlayer). ParaPlayer wyróżnia się zdecydowanie najwyższą wartością, co sugeruje, że jego strategia często kończy rozgrywki zanim wykorzysta wszystkie zakupione karty rozwoju. Większość botów heurystycznych utrzymuje wartość w zakresie 2.9–3.7 kart pozostałych na koniec gry, podczas gdy DevPlayer, mimo swojej specjalizacji w kartach rozwoju, zatrzymuje średnio 4.6 kart, co może wynikać z priorytetowego kończenia gry poprzez inne źródła punktów zwycięstwa.
 
 **Produkcja zasobów:** Metryka ProdScore pokazuje wyraźną progresję wraz z poprawą jakości botów. It1 osiąga 730.4, podczas gdy It4 osiąga najwyższą wartość wśród botów heurystycznych (1190.3). ParaPlayer osiąga najwyższą wartość w całym zestawie (1267.8), co potwierdza skuteczność jego zbalansowanego podejścia strategicznego. AlphaBetaPlayer osiąga 1168.2, co jest wartością wyższą niż większość botów heurystycznych, co wskazuje na efektywne wykorzystanie zasobów przez algorytm przeszukiwania drzewa gry.
 
@@ -1102,7 +1111,7 @@ DevPlayer reprezentuje strategię opartą na priorytetowym skupieniu się na zak
 
 **Przewaga strategii w starciu z prostszymi botami**
 
-DevPlayer osiąga bardzo wysokie współczynniki zwycięstw przeciwko It1Player (98.8%) oraz It2Player (97.5%), co potwierdza skuteczność strategii opartej na kartach rozwoju w starciu z botami o niskiej jakości decyzyjnej. Kluczowym elementem sukcesu jest niemal całkowita dominacja w premii *Największa Armia* — DevPlayer zdobywa ją w 98.9% rozgrywek przeciwko It1 oraz 99.4% przeciwko It2, podczas gdy przeciwnicy osiągają tę premię w mniej niż 1% przypadków. Dodatkowo bot zakupuje średnio 4.5–4.6 kart rozwoju na rozgrywkę, co jest znacznie wyższym wynikiem niż u przeciwników (0.6 karty).
+DevPlayer osiąga bardzo wysokie współczynniki zwycięstw przeciwko It1Player (98.8%) oraz It2Player (97.5%), co potwierdza skuteczność strategii opartej na kartach rozwoju w starciu z botami o niskiej jakości decyzyjnej. Kluczowym elementem sukcesu jest niemal całkowita dominacja w premii *Największa Armia* — DevPlayer zdobywa ją w 98.9% rozgrywek przeciwko It1 oraz 99.4% przeciwko It2, podczas gdy przeciwnicy osiągają tę premię w mniej niż 1% przypadków. Dodatkowo bot ma w recę średnio 4.5–4.6 kart rozwoju na koniec rozgrywki, co jest znacznie wyższym wynikiem niż u przeciwników (0.6 karty).
 
 ![Skuteczność DevPlayer w zależności od przeciwnika](devplayer_effectiveness.png)
 Rysunek: Skuteczność DevPlayer w zależności od jakości przeciwnika.
@@ -1121,7 +1130,7 @@ Rysunek: Średnia liczba kupionych kart rozwoju przez DevPlayer i przeciwników.
 ![Częstość zdobycia premii Największa Armia przez DevPlayer](devplayer_largest_army.png)
 Rysunek: Częstość zdobycia premii Największa Armia przez DevPlayer i przeciwników.
 
-Przedstawione wykresy pozwalają lepiej zrozumieć sposób działania strategii DevPlayer. Pierwszy wykres pokazuje, że DevPlayer konsekwentnie kupuje więcej kart rozwoju niż przeciwnicy — przeciwko It1 i It2 osiąga średnio 4.5–4.6 kart na rozgrywkę, podczas gdy przeciwnicy jedynie 0.6 karty. Jednak wraz ze wzrostem jakości przeciwnika różnica ta maleje: przeciwko It3–It4 DevPlayer kupuje 3.4 karty, a przeciwnicy już 1.7–1.8 kart. Szczególnie interesujące jest starcie z ParaPlayer, gdzie przeciwnik faktycznie kupuje więcej kart (3.4) niż DevPlayer (3.2), co pokazuje, że zaawansowane boty potrafią efektywnie włączyć strategię kartową do swojej zbalansowanej taktyki.
+Przedstawione wykresy pozwalają lepiej zrozumieć sposób działania strategii DevPlayer. Pierwszy wykres pokazuje, że DevPlayer konsekwentnie kupuje więcej kart rozwoju niż przeciwnicy — przeciwko It1 i It2 zostaje 4.5–4.6 kart na rozgrywkę, podczas gdy przeciwnikowi jedynie 0.6 karty. Jednak wraz ze wzrostem jakości przeciwnika różnica ta maleje: przeciwko It3–It4 DevPlayer kupuje 3.4 karty, a przeciwnicy już 1.7–1.8 kart. Szczególnie interesujące jest starcie z ParaPlayer, gdzie przeciwnik faktycznie kupuje więcej kart (3.4) niż DevPlayer (3.2), co pokazuje, że zaawansowane boty potrafią efektywnie włączyć strategię kartową do swojej zbalansowanej taktyki.
 
 Drugi wykres pokazuje, że mimo częstego zdobywania przez DevPlayer premii Największa Armia przeciwko większości przeciwników, przewaga w tym aspekcie nie przekłada się bezpośrednio na proporcjonalny współczynnik zwycięstw. W starciach z It5 oraz ParaSettleIt5 odsetek zdobywania tej premii spada odpowiednio do 59.8% i 54.4%, co wskazuje, że bardziej zaawansowane boty potrafią skutecznie rywalizować również w obszarze strategii kartowej. Co więcej, przeciwko AlphaBetaPlayer dominacja DevPlayer w premii *Największa Armia* ponownie wzrasta do 74.3%, co sugeruje, że algorytm przeszukiwania drzewa gry ma inne priorytety strategiczne niż iteracyjne heurystyki.
 
@@ -1163,31 +1172,69 @@ RoadPlayer pokazuje dramatyczny spadek skuteczności między It3Player a It4Play
 
 Szczególnie istotna jest obserwacja wyników dotyczących premii Najdłuższa Droga. RoadPlayer wygrywa 47.5% rozgrywek przeciwko It5Player, mimo że osiąga 77.1% wykorzystania Najdłuższej Drogi. Z kolei przeciwko It4Player RoadPlayer wygrywa 68.2%, mimo że osiąga 48.3% wykorzystania Najdłuższej Drogi (It4Player ma 51.7%). To pokazuje, że sama premia Najdłuższa Droga nie gwarantuje zwycięstwa — potrzebne są również osady, miasta oraz efektywne wykorzystanie innych mechanizmów gry, takich jak Największa Armia. It5Player wygrywa dzięki lepszej produkcji zasobów (ProdScore: 1044.1 vs 946.5) oraz lepszemu wykorzystaniu Największej Armii (66.5% vs 33.5%), co pokazuje, że zbalansowane strategie są bardziej skuteczne niż jednostronna specjalizacja.
 
+#### CityRushPlayer
+
+CityRushPlayer reprezentuje strategię nastawioną na priorytetową budowę miast (2 punkty zwycięstwa za miasto) przy ustawieniach początkowych faworyzujących zboże i rudę oraz zbalansowanej logice It5 w pozostałych decyzjach. Eksperyment weryfikuje, czy takie podejście pozwala osiągnąć szybkie tempo zdobywania punktów i dobrą skuteczność przeciwko różnym przeciwnikom.
+
+#### Podsumowanie danych
+
+| Opponent | Win Rate CityRush | Avg Turns | LossVP CityRush | LossVP Opp | Longest Road% CityRush | Longest Road% Opp | Largest Army% CityRush | Largest Army% Opp | Avg DevCards CityRush | Avg DevCards Opp | ProdScore CityRush | ProdScore Opp |
+|------------|-------------------|-----------|-----------------|------------|------------------------|-------------------|------------------------|-------------------|----------------------|-----------------|--------------------|---------------|
+| It1 | 99.9% | 116.2 | 5.00 | 3.61 | 72.4% | 15.9% | 97.0% | 2.1% | 3.6 | 0.6 | 1079.3 | 257.9 |
+| It2 | 99.7% | 118.2 | 11.67 | 4.21 | 58.3% | 33.7% | 97.7% | 1.8% | 3.7 | 0.5 | 1093.1 | 300.1 |
+| It3 | 85.3% | 131.7 | 10.95 | 8.35 | 39.8% | 59.3% | 85.9% | 14.0% | 3.2 | 1.7 | 1063.5 | 706.7 |
+| It4 | 70.5% | 137.7 | 11.00 | 9.30 | 18.2% | 81.7% | 83.1% | 16.8% | 3.1 | 1.8 | 1035.7 | 946.4 |
+| It5 | 45.7% | 114.8 | 9.85 | 9.83 | 48.5% | 49.0% | 38.7% | 61.1% | 2.4 | 2.6 | 978.0 | 990.6 |
+| OneResourcePlayer | 74.4% | 118.6 | 10.82 | 7.51 | 50.7% | 44.6% | 83.8% | 16.0% | 3.2 | 1.7 | 1025.8 | 806.3 |
+| DevPlayer | 69.8% | 132.8 | 10.71 | 8.55 | 72.5% | 24.7% | 36.7% | 63.3% | 2.3 | 2.7 | 1083.3 | 816.6 |
+| RoadPlayer | 49.6% | 119.1 | 10.62 | 8.94 | 21.8% | 77.4% | 62.3% | 37.7% | 2.8 | 2.2 | 1025.8 | 949.6 |
+| Para | 94.1% | 122.5 | 9.42 | 4.62 | 67.9% | 25.5% | 96.0% | 3.4% | 2.8 | 5.4 | 1062.0 | 412.5 |
+| ParaSettleIt5 | 70.0% | 122.8 | 10.62 | 8.17 | 63.6% | 29.0% | 56.3% | 43.7% | 2.7 | 2.3 | 1050.2 | 913.1 |
+| AlphaBeta | 37.4% | 112.1 | 10.08 | 9.77 | 23.9% | 75.3% | 58.4% | 41.3% | 2.6 | 2.1 | 941.2 | 1063.1 |
+
+#### Kluczowe wnioski
+
+**Skuteczność CityRushPlayer w zależności od przeciwnika**
+
+CityRushPlayer osiąga bardzo wysokie współczynniki zwycięstw przeciwko słabym botom (99.9% vs It1, 99.7% vs It2) oraz wyraźną przewagę przeciwko It3 (85.3%) i It4 (70.5%). Spadek skuteczności następuje stopniowo: przeciwko It5 win rate wynosi 45.7% (niemal remis), a przeciwko AlphaBeta jedynie 37.4%. Wyróżnia się wynik przeciwko ParaPlayer (94.1%) — CityRush wygrywa zdecydowanie częściej niż Para, przy wyższej średniej produkcji (ProdScore 1062.0 vs 412.5) i dominacji w premii *Największa Armia* (96.0% vs 3.4%). Przeciwko ParaSettleIt5 CityRush osiąga 70.0%, a przeciwko OneResourcePlayer i DevPlayer odpowiednio 74.4% i 69.8%. W starciu z RoadPlayer wynik jest niemal remisowy (49.6% vs 50.4%).
+
+![Skuteczność CityRushPlayer w zależności od jakości przeciwnika](cityrush_effectiveness.png)
+
+**Premia Największa Armia i produkcja**
+
+CityRushPlayer często dominuje w premii *Największa Armia* przeciwko słabszym botom (97.0% vs It1, 97.7% vs It2, 96.0% vs Para) oraz utrzymuje wysokie wartości przeciwko It3–It4 (85.9%, 83.1%). Przeciwko It5 i silniejszym przeciwnikom przewaga w tej premii maleje (38.7% vs It5, 58.4% vs AlphaBeta). Średnia liczba tur do zakończenia rozgrywek (112–138) jest zbliżona do innych zbalansowanych botów, co potwierdza, że strategia „city rush” nie wydłuża rozgrywek w sposób typowy dla skrajnie wyspecjalizowanych botów.
+
 **Podsumowanie Scenariusza 4: Porównanie strategii wyspecjalizowanych**
 
-Analiza wyników wszystkich trzech strategii wyspecjalizowanych (OneResourcePlayer, DevPlayer, RoadPlayer) pokazuje wyraźne wzorce w ich skuteczności przeciwko różnym poziomom przeciwników. Wszystkie trzy strategie osiągają wysokie współczynniki zwycięstw przeciwko słabym botom (It1–It2: 95–100%), jednak tracą skuteczność przeciwko zaawansowanym botom (It4+: 11–68%). 
+Scenariusz 4 porównuje cztery strategie wyspecjalizowane (OneResource, Dev, Road, CityRush) w starciu z tym samym zestawem przeciwników. Trzy skrajnie wyspecjalizowane boty osiągają wysokie win rate przeciwko słabym przeciwnikom, lecz ich skuteczność gwałtownie spada przy silniejszych (przepaść kompetencyjna między It3 a It4/It5). CityRushPlayer, łącząc priorytet budowy miast z logiką It5, wypada wyraźnie lepiej i utrzymuje przewagę m.in. przeciwko Para i ParaSettleIt5. Wniosek: umiarkowana specjalizacja jest odporniejsza niż skrajna; najbardziej skuteczne pozostają strategie zbalansowane.
 
-![alt text](../plots/scenario4_all_specialized_gap.png)
-
-RoadPlayer okazuje się najbardziej skuteczną strategią wyspecjalizowaną — osiąga 86.7% zwycięstw przeciwko It3Player oraz 68.2% przeciwko It4Player, podczas gdy OneResourcePlayer osiąga odpowiednio 56.8% i 36.4%, a DevPlayer 69.1% i 49.3%. Wyniki te wskazują, że strategia drogowa jest bardziej elastyczna niż strategia monosurowcowa czy strategia oparta na kartach rozwoju. Jest to związane z tym, że rozbudowa dróg pełni w Catanie kluczową rolę — nie tylko umożliwia zdobycie premii *Najdłuższa Droga*, ale również generuje nowe lokalizacje dla osad, które przynoszą zarówno punkty zwycięstwa, jak i dodatkową produkcję zasobów. 
-
-Drugim najlepszym graczem w tym zestawieniu jest DevPlayer. Strategia tego bota opiera się na priorytetowym wydawaniu zasobów na karty rozwoju kosztem budowy miast i osad. Należy zauważyć, że karty "Punkt Zwycięstwa" stanowią jedynie 20% talii (5 kart na 25), natomiast 52% stanowią karty Rycerza. DevPlayer, realizując swoją wąskoukierunkowaną taktykę, kontynuuje zakup kart rozwoju nawet po osiągnięciu znaczącej przewagi w kartach Rycerza, podczas gdy zbalansowany bot ograniczyłby dalsze inwestycje w tym obszarze. Skutkuje to słabszym rozwojem gospodarczym. Z powyższej analizy można wywnioskować, że spośród dwóch dodatkowych premii premia *Najdłuższa Droga* okazuje się bardziej opłacalna strategicznie.
-
-OneResourcePlayer wykazuje najsłabsze wyniki spośród trzech strategii wyspecjalizowanych. Strategia monosurowcowa, mimo że zapewnia przewagę w postaci portu 2:1 oraz skoncentrowanej produkcji jednego zasobu, okazuje się zbyt jednowymiarowa — zaawansowani przeciwnicy skutecznie wykorzystują rozbójnika do blokowania kluczowych pól produkcyjnych, a przewaga w jednym surowcu nie kompensuje niedoborów w pozostałych obszarach gry. Wyniki te pokazują, że dywersyfikacja źródeł zasobów oraz elastyczność strategiczna są kluczowe w starciu z zaawansowanymi przeciwnikami.
-
-Wszystkie trzy strategie wykazują przepaść kompetencyjną między It3Player a It4Player, co potwierdza, że wprowadzenie strategii ustawień początkowych oraz aktywnego wykorzystania rozbójnika w It3 wystarcza, aby zneutralizować przewagę wynikającą z jednostronnej specjalizacji. Przeciwko zaawansowanym botom (It5, ParaSettleIt5, AlphaBeta) żadna ze strategii wyspecjalizowanych nie osiąga współczynnika zwycięstw powyżej 50%, co jednoznacznie potwierdza, że **zbalansowane strategie są bardziej skuteczne niż jednostronna specjalizacja w długoterminowej perspektywie**.
+![alt text](scenario4_all.png)
+Rysunek: Przepaść kompetencyjna czterech strategii wyspecjalizowanych (OneResource, Dev, Road, CityRush) — współczynnik zwycięstw w zależności od przeciwnika.
 
 #### 8.2.5 Scenariusz 5: Przewaga pierwszego ruchu
 
 Ostatni scenariusz poświęcony jest bezpośredniej ocenie **efektu miejsca** — czyli tego, jak bardzo bycie graczem rozpoczynającym wpływa na szansę zwycięstwa w danej parze botów.
 
-Dla każdej pary graczy (A, B) dysponujemy dwiema wartościami: odsetkiem wygranych A w rozgrywkach, w których A jest graczem pierwszym, oraz odsetkiem wygranych A w rozgrywkach, w których A jest graczem drugim (równoważnie: wygranymi B, gdy B jest pierwszy). **Różnica** tych dwóch wartości mierzy przewagę pierwszego ruchu z perspektywy gracza A przeciwko B: wartość dodatnia oznacza, że A zyskuje na byciu pierwszym, ujemna — że A zyskuje na byciu drugim. Różnice te zestawiono w macierz 13×13 (Random, It1–It5, Para, ParaSettle, AlphaBeta, OneResource, Dev, Road, CityRush) i zwizualizowano jako heatmapę (skala od −30 do +30 punktów procentowych, czerwień — korzyść gracza z osi Y z bycia pierwszym, niebieski — korzyść z bycia drugim).
+Dla każdej pary graczy (A, B) dysponujemy dwiema wartościami: odsetkiem wygranych A w rozgrywkach, w których A jest graczem pierwszym, oraz odsetkiem wygranych A w rozgrywkach, w których A jest graczem drugim (równoważnie: wygranymi B, gdy B jest pierwszy). **Różnica** tych dwóch wartości mierzy przewagę pierwszego ruchu z perspektywy gracza A przeciwko B: wartość dodatnia oznacza, że A zyskuje na byciu pierwszym, ujemna — że A zyskuje na byciu drugim. Różnice te zestawiono w macierz 13×13 (Random, It1–It5, Para, ParaSettle, AlphaBeta, OneResource, Dev, Road, CityRush) i zwizualizowano jako heatmapę.
 
 ![Heatmapa przewagi pierwszego ruchu](heatmap.png)
 
-Na osi pionowej znajduje się **gracz rozpoczynający**, na osi poziomej — **gracz drugi**. Kolor w komórce (i, j) odpowiada przewadze gracza i z bycia pierwszym w starciu z graczem j: czerwienie oznaczają, że w tej parze pierwszy ruch daje mu wyraźną korzyść, odcienie niebieskie — że korzystniejsza jest dla niego rola gracza drugiego. Wartości bliskie zera (białe) oznaczają, że w danej parze kolejność ma niewielki wpływ na wynik. Na przekątnej (ten sam bot przeciwko sobie) wartości wynikają z symetrii: np. przy remisie 50–50 różnica wynosi 0; przy nierównowadze (np. It1 vs It1 ok. 43% gdy pierwszy) przekątna może być ujemna.
+Z heatmapy wynika, że w wielu parach występuje **umiarkowana przewaga pierwszego ruchu** (wartości dodatnie, do kilkunastu punktów procentowych). W parach o dużej dysproporcji sił (np. silny bot vs Random) obie perspektywy dają temu samemu botowi blisko 100% lub 0%, więc różnica jest bliska zeru. Wyróżnia się **OneResourcePlayer**: dla niego bycie graczem pierwszym jest szczególnie ważne, ponieważ strategia monosurowcowa opiera się na zajęciu konkretnego typu lokalizacji (np. silne pole jednego surowca) oraz dostępie do portu 2:1. Jako gracz rozpoczynający bot może zarezerwować optymalne miejsce pod tę taktykę, podczas gdy w roli drugiego przeciwnik często zdąży zablokować kluczowe hexy lub port, co znacząco osłabia skuteczność strategii. W wyrównanych starciach (np. It5 vs ParaSettle, AlphaBeta vs It5) efekt miejsca jest widoczny i może sięgać kilku–kilkunastu punktów procentowych. Scenariusz ten potwierdza, że **kolejność ustawień ma istotny wpływ na wynik** w wielu konfiguracjach i uzasadnia stosowanie przełączania stron w eksperymentach porównawczych (Scenariusze 1–4).
 
-Z heatmapy wynika, że w wielu parach występuje **umiarkowana przewaga pierwszego ruchu** (wartości dodatnie, do kilkunastu punktów procentowych). W parach o dużej dysproporcji sił (np. silny bot vs Random) obie perspektywy dają temu samemu botowi blisko 100% lub 0%, więc różnica jest bliska zeru. W wyrównanych starciach (np. It5 vs ParaSettle, AlphaBeta vs It5) efekt miejsca jest widoczny i może sięgać kilku–kilkunastu punktów procentowych. Scenariusz ten potwierdza, że **kolejność ustawień ma istotny wpływ na wynik** w wielu konfiguracjach i uzasadnia stosowanie przełączania stron w eksperymentach porównawczych (Scenariusze 1–4).
+#### 8.2.6 Scenariusz 6: Wpływ ustawienia początkowego z algorytmu genetycznego
+
+W tym scenariuszu metodę **placeInitialSettlement** gracza ParaSetit5Player (wyuczoną algorytmem genetycznym przeciwko It5) nadpisano u **wszystkich** botów. Następnie każdy zmodyfikowany bot został wytrenowany przeciwko It5 oraz rozegrano po 1000 rund **przed** i **po** tej zamianie. Oś Y na wykresie pokazuje **różnicę** współczynnika zwycięstw przeciwko It5 (po minus przed) w punktach procentowych: słupki dodatnie oznaczają poprawę, ujemne — pogorszenie.
+
+![Porównanie wyników It5 przed i po zastosowaniu ustawienia początkowego z algorytmu genetycznego](PrzedPoGen.png)
+Rysunek: Różnica współczynnika zwycięstw przeciwko It5 po nadpisaniu placeInitialSettlement wersją z ParaSetit5Player i ponownym treningu (po 1000 rund przed i po).
+
+**Analiza wyników**
+
+U **11 z 13** botów zastosowanie ustawienia początkowego z algorytmu genetycznego i ponowny trening dały **poprawę** wyniku przeciwko It5. Największy przyrost osiągnęły boty wyspecjalizowane i silne: **OneResourcePlayer** (+8,8 p.p.), **DevPlayer** (+7,0 p.p.), **AlphaBetaPlayer** (+4,5 p.p.) oraz **It4Player** (+4,4 p.p.). Umiarkowaną poprawę widać u It2, It3, It5, RoadPlayer i CityRushPlayer (ok. +1–3 p.p.). Dla **Random**, **It1** i **Para** zmiana była znikoma (+0,1–0,3 p.p.) — u bardzo słabych lub już zoptymalizowanych strategii lepsze ustawienie początkowe ma ograniczony wpływ na końcowy win rate.
+
+Jedynym botem z **pogorszeniem** jest **ParaSettleIt5Player** (−1,2 p.p.) — źródło samego ustawienia początkowego. Możliwa interpretacja: oryginalna metoda placeInitialSettlement ParaSetit5 była już dobrze dopasowana do reszty jego logiki; przeniesienie jej do „klonu” i ponowny trening mógł prowadzić do lekkiego przeuczenia lub innej interakcji z pełną strategią, bądź warianty treningu przed/po nie są w pełni porównywalne dla tego samego gracza.
+
+Można zrobić wniosek, że ustawienie początkowe wyuczone algorytmem genetycznym (ParaSetit5 vs It5), po nadpisaniu nim metody placeInitialSettlement u pozostałych botów i ponownym treningu przeciwko It5, w zdecydowanej większości przypadków **zwiększa** ich skuteczność przeciwko It5. Korzyść jest największa dla botów wyspecjalizowanych (OneResource, Dev) oraz silnych (AlphaBeta, It4), co wskazuje, że dla tych strategii jakość ustawienia początkowego ma istotny wpływ na wynik rozgrywki.
 
 ## 9. Podsumowanie i wnioski
 ### 9.1. Ocena realizacji celów pracy

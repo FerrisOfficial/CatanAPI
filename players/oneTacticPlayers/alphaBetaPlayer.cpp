@@ -83,19 +83,16 @@ ExpectedRollGain expected_roll_gain(const Board::BoardState& board, PlayerId sel
 }
 
 constexpr int RESOURCE_COUNT = 5;
-constexpr int FP_SCALE = 36; // 1 jednostka = 1/36 zasobu na turę
+constexpr int FP_SCALE = 36;
 
 static inline int resourceIndex(Resource r) {
     return static_cast<int>(r);
 }
 
 struct ExpectedStateFP {
-    // reszta (0..35) w jednostkach 1/36 dla każdego zasobu
     std::array<int, RESOURCE_COUNT> remainderFP{0,0,0,0,0};
 };
 
-// Liczy expected produkcję w fixed-point (1/36) dla playerId i OD RAZU aplikuje do ręki (tylko całe karty).
-// Zwraca addFP (ile 1/36 wpadło w tej turze per zasób).
 std::array<int, RESOURCE_COUNT>
 addExpectedResourcesFP(Board::BoardState& board,
                        PlayerId playerId,
@@ -116,7 +113,6 @@ addExpectedResourcesFP(Board::BoardState& board,
         const auto structure = Board::Node::unpackStructure(node);
         const int multiplier = (structure == StructureType::City) ? 2 : 1;
 
-        // Node ma do 3 sąsiadujących heksów
         for (uint8_t i = 0; i < 3; ++i) {
             const HexId hexId = Board::Node::unpackAdjacentHex(node, i);
             if (hexId == HexIdNone || hexId >= HEX_COUNT) continue;
@@ -129,23 +125,20 @@ addExpectedResourcesFP(Board::BoardState& board,
             if (resource == Resource::NoResource) continue;
 
             const uint8_t pips = dice_pips(Board::Hex::unpackCatanNumber(hex));
-            if (pips == 0) continue; // np. pusty / 7
+            if (pips == 0) continue;
 
             const int idx = resourceIndex(resource);
             if (idx < 0 || idx >= RESOURCE_COUNT) continue;
 
-            // fixed-point: expected = multiplier * pips / 36
-            // przechowujemy licznik (multiplier * pips) jako "1/36"
             addFP[idx] += multiplier * static_cast<int>(pips);
         }
     }
 
-    // 2) zamień fixed-point na całe karty + zachowaj resztę
     for (int i = 0; i < RESOURCE_COUNT; ++i) {
         int totalFP = expectedState.remainderFP[i] + addFP[i];
 
-        const int gain = totalFP / FP_SCALE;       // ile całych kart
-        expectedState.remainderFP[i] = totalFP % FP_SCALE; // reszta 0..35
+        const int gain = totalFP / FP_SCALE;
+        expectedState.remainderFP[i] = totalFP % FP_SCALE;
 
         if (gain > 0) {
             resources[i] = std::min(255, resources[i] + gain);
