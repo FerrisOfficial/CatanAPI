@@ -56,7 +56,6 @@ RESOURCE_COLORS = {
     "NoResource": "#e6d3a3",  # desert
 }
 
-# Colors for player resource table text (slightly darker than tile fills for readability).
 RESOURCE_TEXT_COLORS = {
     "brick": "#c1442e",
     "lumber": "#2f7d32",
@@ -66,9 +65,9 @@ RESOURCE_TEXT_COLORS = {
 }
 
 PLAYER_COLORS = {
-    0: "#2b6cb0",  # blue
-    1: "#c53030",  # red
-    2: "#4a5568",  # NoPlayer
+    0: "#2b6cb0",
+    1: "#c53030",
+    2: "#4a5568",
 }
 
 
@@ -365,7 +364,7 @@ class BoardRenderer:
             (52, 53, None),  # 3:1
         ]
 
-        port_color = "#f5deb3"  # beige
+        port_color = "#f5deb3"
         port_width = 70
         port_height = 40
         port_distance = 60  # distance from nodes to port center

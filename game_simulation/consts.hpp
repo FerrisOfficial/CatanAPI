@@ -1,40 +1,38 @@
 #pragma once
 
-#include <cstdint>
 #include <array>
+#include <cstdint>
 
-constexpr int NODE_COUNT = 54; 
-constexpr int EDGE_COUNT = 72; 
-constexpr int HEX_COUNT = 19; 
+constexpr int NODE_COUNT = 54;
+constexpr int EDGE_COUNT = 72;
+constexpr int HEX_COUNT = 19;
 
 using NodeId = uint8_t;
 using EdgeId = uint8_t;
-using HexId = uint8_t; 
+using HexId = uint8_t;
 using DiceNumber = uint8_t;
 
+constexpr DiceNumber ROBBER_DICE_NUMBER = 7;
+constexpr uint8_t MAX_RESOURCES_BEFORE_DISCARD = 9;
 constexpr HexId HexIdNone = 0x1F;
 constexpr EdgeId EdgeIdNone = 0x7F;
 
-enum class PlayerId : uint8_t { 
-    Player0 = 0, 
-    Player1 = 1,
-    NoPlayer = 2
+enum class PlayerId : uint8_t { Player0 = 0, Player1 = 1, NoPlayer = 2 };
+
+enum Resource : uint8_t {
+    Brick = 0,
+    Lumber = 1,
+    Wool = 2,
+    Grain = 3,
+    Ore = 4,
+    NoResource = 5
 };
 
-enum Resource : uint8_t { 
-    Brick = 0, 
-    Lumber = 1, 
-    Wool = 2, 
-    Grain = 3, 
-    Ore = 4,
-    NoResource = 5 
-}; 
-
-enum class DevType : uint8_t { 
-    Knight = 0, 
-    RoadBuilding = 1, 
-    YearOfPlenty = 2, 
-    Monopoly = 3, 
+enum class DevType : uint8_t {
+    Knight = 0,
+    RoadBuilding = 1,
+    YearOfPlenty = 2,
+    Monopoly = 3,
     VictoryPoint = 4,
     NoDev = 5
 };
@@ -53,66 +51,91 @@ enum class BuyableType : uint8_t {
     DevCard = 3
 };
 
-constexpr std::array<std::array<uint8_t,5>,4> StructureCost {{
-    {1,1,0,0,0}, // Road
-    {1,1,1,1,0}, // Settlement
-    {0,0,0,2,3},  // City
-    {0,0,1,1,1}   // DevCard
+constexpr std::array<std::array<uint8_t, 5>, 4> StructureCost{{
+    {1, 1, 0, 0, 0},  // Road
+    {1, 1, 1, 1, 0},  // Settlement
+    {0, 0, 0, 2, 3},  // City
+    {0, 0, 1, 1, 1}   // DevCard
 }};
 
 enum class ActionType : uint8_t {
     NoAction = 0,
 
     // Turn flow
-    RollDice = 1, // Arg1: dice value (2-12)
-    EndTurn = 2, // None
+    RollDice = 1,  // Arg1: dice value (2-12)
+    EndTurn = 2,   // None
 
     // Robber
-    MoveRobber = 3, // Arg1: HexId to move the robber to
-    StealResource = 4, // None
-    DiscardResources = 5, // Resources that player chose to discard
+    MoveRobber = 3,        // Arg1: HexId to move the robber to
+    StealResource = 4,     // None
+    DiscardResources = 5,  // Resources that player chose to discard
 
     // Buying/Building
-    BuildRoad = 6, // Arg1: EdgeId to build road on
-    BuildSettlement = 7, // Arg1: NodeId to build settlement on
-    BuildCity = 8, // Arg1: NodeId to upgrade settlement to city
-    BuyDevCard = 9, // None
+    BuildRoad = 6,        // Arg1: EdgeId to build road on
+    BuildSettlement = 7,  // Arg1: NodeId to build settlement on
+    BuildCity = 8,        // Arg1: NodeId to upgrade settlement to city
+    BuyDevCard = 9,       // None
 
     // Playing Development Cards
-    PlayDevCardKnight = 10, // Arg1: HexId to move the robber to
-    PlayDevCardRoadBuilding = 11, // Arg1: EdgeId to build first road on, Arg2: EdgeId to build second road on
-    PlayDevCardYearOfPlenty = 12, // Agr1: Resource type (0-4) for first resource, Arg2: Resource type (0-4) for second resource
-    PlayDevCardMonopoly = 13, // Arg1: Resource type (0-4)
+    PlayDevCardKnight = 10,        // Arg1: HexId to move the robber to
+    PlayDevCardRoadBuilding = 11,  // Arg1: EdgeId to build first road on, Arg2:
+                                   // EdgeId to build second road on
+    PlayDevCardYearOfPlenty =
+        12,                    // Agr1: Resource type (0-4) for first resource,
+                               // Arg2: Resource type (0-4) for second resource
+    PlayDevCardMonopoly = 13,  // Arg1: Resource type (0-4)
 
     // Trading
-    TradeBank = 14, // Arg1: Give bank resource type (0-4), Arg2: Take resource type (0-4), Arg3: trade ratio (2-4)
-    ReceiveResources = 15, // Resources, Arg1: Resource type (0-4), Arg2: amount to give
+    TradeBank = 14,  // Arg1: Give bank resource type (0-4), Arg2: Take resource
+                     // type (0-4), Arg3: trade ratio (2-4)
+    ReceiveResources =
+        15,  // Resources, Arg1: Resource type (0-4), Arg2: amount to give
 
     // Setup
-    PlaceInitialStructures = 16, // Arg1: NodeId to place settlement on, Arg2: EdgeId to place road on
-    Place2InitialStructures = 17 // Arg1: NodeId to place settlement on, Arg2: EdgeId to place road on
+    PlaceInitialStructures = 16,  // Arg1: NodeId to place settlement on, Arg2:
+                                  // EdgeId to place road on
+    Place2InitialStructures = 17  // Arg1: NodeId to place settlement on, Arg2:
+                                  // EdgeId to place road on
 };
 
 inline const char* actionTypeName(ActionType type) {
     switch (type) {
-    case ActionType::NoAction: return "NoAction";
-    case ActionType::RollDice: return "RollDice";
-    case ActionType::EndTurn: return "EndTurn";
-    case ActionType::MoveRobber: return "MoveRobber";
-    case ActionType::StealResource: return "StealResource";
-    case ActionType::DiscardResources: return "DiscardResources";
-    case ActionType::BuildRoad: return "BuildRoad";
-    case ActionType::BuildSettlement: return "BuildSettlement";
-    case ActionType::BuildCity: return "BuildCity";
-    case ActionType::BuyDevCard: return "BuyDevCard";
-    case ActionType::PlayDevCardKnight: return "PlayDevCardKnight";
-    case ActionType::PlayDevCardRoadBuilding: return "PlayDevCardRoadBuilding";
-    case ActionType::PlayDevCardYearOfPlenty: return "PlayDevCardYearOfPlenty";
-    case ActionType::PlayDevCardMonopoly: return "PlayDevCardMonopoly";
-    case ActionType::TradeBank: return "TradeBank";
-    case ActionType::ReceiveResources: return "ReceiveResources";
-    case ActionType::PlaceInitialStructures: return "PlaceInitialStructures";
-    case ActionType::Place2InitialStructures: return "Place2InitialStructures";
+        case ActionType::NoAction:
+            return "NoAction";
+        case ActionType::RollDice:
+            return "RollDice";
+        case ActionType::EndTurn:
+            return "EndTurn";
+        case ActionType::MoveRobber:
+            return "MoveRobber";
+        case ActionType::StealResource:
+            return "StealResource";
+        case ActionType::DiscardResources:
+            return "DiscardResources";
+        case ActionType::BuildRoad:
+            return "BuildRoad";
+        case ActionType::BuildSettlement:
+            return "BuildSettlement";
+        case ActionType::BuildCity:
+            return "BuildCity";
+        case ActionType::BuyDevCard:
+            return "BuyDevCard";
+        case ActionType::PlayDevCardKnight:
+            return "PlayDevCardKnight";
+        case ActionType::PlayDevCardRoadBuilding:
+            return "PlayDevCardRoadBuilding";
+        case ActionType::PlayDevCardYearOfPlenty:
+            return "PlayDevCardYearOfPlenty";
+        case ActionType::PlayDevCardMonopoly:
+            return "PlayDevCardMonopoly";
+        case ActionType::TradeBank:
+            return "TradeBank";
+        case ActionType::ReceiveResources:
+            return "ReceiveResources";
+        case ActionType::PlaceInitialStructures:
+            return "PlaceInitialStructures";
+        case ActionType::Place2InitialStructures:
+            return "Place2InitialStructures";
     }
     return "UnknownAction";
 }
@@ -127,10 +150,9 @@ enum class PortType : uint8_t {
     NoPort = 6
 };
 
-const NodeId brickPortsNodes[2] = { 15, 25 };
-const NodeId lumberPortsNodes[2] = { 36, 46 };
-const NodeId woolPortsNodes[2] = { 7, 8 };
-const NodeId grainPortsNodes[2] = { 49, 50 };
-const NodeId orePortsNodes[2] = { 38, 39 };
-const NodeId threeForOnePortsNodes[8] = { 2, 3, 5, 6, 16, 27, 52, 53 };
-
+const NodeId brickPortsNodes[2] = {15, 25};
+const NodeId lumberPortsNodes[2] = {36, 46};
+const NodeId woolPortsNodes[2] = {7, 8};
+const NodeId grainPortsNodes[2] = {49, 50};
+const NodeId orePortsNodes[2] = {38, 39};
+const NodeId threeForOnePortsNodes[8] = {2, 3, 5, 6, 16, 27, 52, 53};

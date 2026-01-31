@@ -1,4 +1,5 @@
 #include "it1Player.hpp"
+
 #include <vector>
 
 Action::PackedAction It1Player::getTurnAction() {
@@ -23,24 +24,37 @@ Action::PackedAction It1Player::getTurnAction() {
 
     for (const auto a : actions) {
         switch (Action::unpackType(a)) {
-            case ActionType::BuildCity: cityActions.push_back(a); break;
-            case ActionType::BuildSettlement: settlementActions.push_back(a); break;
-            case ActionType::BuildRoad: roadActions.push_back(a); break;
-            case ActionType::BuyDevCard: devActions.push_back(a); break;
-            case ActionType::EndTurn: endTurnActions.push_back(a); break;
+            case ActionType::BuildCity:
+                cityActions.push_back(a);
+                break;
+            case ActionType::BuildSettlement:
+                settlementActions.push_back(a);
+                break;
+            case ActionType::BuildRoad:
+                roadActions.push_back(a);
+                break;
+            case ActionType::BuyDevCard:
+                devActions.push_back(a);
+                break;
+            case ActionType::EndTurn:
+                endTurnActions.push_back(a);
+                break;
             default:
-                // Trades and any other legal actions should still be considered (randomly),
-                // but only after we fail to find the higher-priority build/buy options.
+                // Trades and any other legal actions should still be considered
+                // (randomly), but only after we fail to find the
+                // higher-priority build/buy options.
                 otherActions.push_back(a);
                 break;
         }
     }
 
-    const auto pick_random = [](const std::vector<Action::PackedAction>& pool) -> Action::PackedAction {
+    const auto pick_random = [](const std::vector<Action::PackedAction>& pool)
+        -> Action::PackedAction {
         if (pool.empty()) {
             return Action::getEmptyAction();
         }
-        int idx = RandomDevice::uniform_u32_range(0, static_cast<uint32_t>(pool.size()) - 1);
+        int idx = RandomDevice::uniform_u32_range(
+            0, static_cast<uint32_t>(pool.size()) - 1);
         return pool[idx];
     };
 
@@ -51,7 +65,9 @@ Action::PackedAction It1Player::getTurnAction() {
     if (!otherActions.empty()) return pick_random(otherActions);
     if (!endTurnActions.empty()) return pick_random(endTurnActions);
 
-    // Fall back to pure-random among all legal actions (e.g., RollDice, TradeBank, etc.).
-    int idx = RandomDevice::uniform_u32_range(0, static_cast<uint32_t>(actions.size()) - 1);
+    // Fall back to pure-random among all legal actions (e.g., RollDice,
+    // TradeBank, etc.).
+    int idx = RandomDevice::uniform_u32_range(
+        0, static_cast<uint32_t>(actions.size()) - 1);
     return actions[idx];
 }

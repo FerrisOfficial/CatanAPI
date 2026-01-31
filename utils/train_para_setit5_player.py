@@ -11,7 +11,7 @@ Example (after building):
 Notes:
 - Runner is invoked with --switch to reduce seat bias.
 - Candidate cfg is passed via env CATAN_PARA_SETIT5_CFG (safe for parallel evaluation).
-- On Ctrl+C, the best known cfg is always written to ./players/paraSetit5Player.cfg.
+- On Ctrl+C, the best known cfg is always written to ./players/parametricPlayers/paraSetit5Player.cfg.
 """
 
 from __future__ import annotations
@@ -550,7 +550,7 @@ def main() -> int:
     args = ap.parse_args()
 
     repo_root = Path(__file__).resolve().parents[1]
-    canonical_cfg = repo_root / "players" / "paraSetit5Player.cfg"
+    canonical_cfg = repo_root / "players" / "parametricPlayers" / "paraSetit5Player.cfg"
 
     run_exe = args.run_exe
     if run_exe is None:

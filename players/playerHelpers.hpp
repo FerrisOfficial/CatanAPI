@@ -2,12 +2,12 @@
 
 #include <array>
 #include <cstdint>
-#include "../game_simulation/board.hpp"
-#include "../game_simulation/player.hpp"
-#include "../game_simulation/actions.hpp"
-#include "../game_simulation/consts.hpp"
 
-// Forward declarations
+#include "game_simulation/actions.hpp"
+#include "game_simulation/board.hpp"
+#include "game_simulation/consts.hpp"
+#include "game_simulation/player.hpp"
+
 enum class PlayerId : uint8_t;
 
 namespace PlayerHelpers {
@@ -28,7 +28,8 @@ uint8_t hand_count(const std::array<uint8_t, 5>& have);
 
 std::array<uint8_t, 5> cost_for(BuyableType b);
 
-uint16_t deficit(const std::array<uint8_t, 5>& have, const std::array<uint8_t, 5>& need);
+uint16_t deficit(const std::array<uint8_t, 5>& have,
+                 const std::array<uint8_t, 5>& need);
 
 // Board evaluation
 int node_production_score(const Board::BoardState* board, NodeId nodeId);
@@ -40,7 +41,8 @@ int settlement_potential_score(const Board::BoardState* board, PlayerId pid);
 // Board queries
 bool node_distance_rule_ok(const Board::BoardState* board, NodeId nodeId);
 
-bool node_is_adjacent_to_own_road(const Board::BoardState* board, PlayerId pid, NodeId nodeId);
+bool node_is_adjacent_to_own_road(const Board::BoardState* board, PlayerId pid,
+                                  NodeId nodeId);
 
 // Position evaluation
 int evaluate_position(const Board::BoardState* board, PlayerId selfId);
@@ -48,4 +50,4 @@ int evaluate_position(const Board::BoardState* board, PlayerId selfId);
 // Action utilities
 bool is_deterministic_action(Action::PackedAction a);
 
-} // namespace PlayerHelpers
+}  // namespace PlayerHelpers

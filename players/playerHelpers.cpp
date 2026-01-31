@@ -1,26 +1,37 @@
 #include "playerHelpers.hpp"
 
-#include "../game_simulation/board.hpp"
-#include "../game_simulation/player.hpp"
-
 #include <algorithm>
 #include <limits>
+
+#include "game_simulation/board.hpp"
+#include "game_simulation/player.hpp"
 
 namespace PlayerHelpers {
 
 uint8_t dice_pips(uint8_t diceNumber) {
     switch (diceNumber) {
-        case 2:  return 1;
-        case 3:  return 2;
-        case 4:  return 3;
-        case 5:  return 4;
-        case 6:  return 5;
-        case 8:  return 5;
-        case 9:  return 4;
-        case 10: return 3;
-        case 11: return 2;
-        case 12: return 1;
-        default: return 0; // includes 7 and invalid
+        case 2:
+            return 1;
+        case 3:
+            return 2;
+        case 4:
+            return 3;
+        case 5:
+            return 4;
+        case 6:
+            return 5;
+        case 8:
+            return 5;
+        case 9:
+            return 4;
+        case 10:
+            return 3;
+        case 11:
+            return 2;
+        case 12:
+            return 1;
+        default:
+            return 0;  // includes 7 and invalid
     }
 }
 
@@ -53,10 +64,12 @@ std::array<uint8_t, 5> cost_for(BuyableType b) {
     return {c[0], c[1], c[2], c[3], c[4]};
 }
 
-uint16_t deficit(const std::array<uint8_t, 5>& have, const std::array<uint8_t, 5>& need) {
+uint16_t deficit(const std::array<uint8_t, 5>& have,
+                 const std::array<uint8_t, 5>& need) {
     uint16_t d = 0;
     for (size_t i = 0; i < 5; ++i) {
-        if (have[i] < need[i]) d = static_cast<uint16_t>(d + (need[i] - have[i]));
+        if (have[i] < need[i])
+            d = static_cast<uint16_t>(d + (need[i] - have[i]));
     }
     return d;
 }
@@ -67,12 +80,18 @@ int node_production_score(const Board::BoardState* board, NodeId nodeId) {
 
     auto res_weight = [](Resource r) -> int {
         switch (r) {
-            case Resource::Ore: return 14;
-            case Resource::Grain: return 13;
-            case Resource::Brick: return 12;
-            case Resource::Lumber: return 12;
-            case Resource::Wool: return 11;
-            default: return 0;
+            case Resource::Ore:
+                return 14;
+            case Resource::Grain:
+                return 13;
+            case Resource::Brick:
+                return 12;
+            case Resource::Lumber:
+                return 12;
+            case Resource::Wool:
+                return 11;
+            default:
+                return 0;
         }
     };
 
@@ -89,8 +108,10 @@ int node_production_score(const Board::BoardState* board, NodeId nodeId) {
 
     const auto pt = Board::Node::unpackPortType(node);
     if (pt != PortType::NoPort) {
-        if (pt == PortType::ThreeForOne) s += 35;
-        else s += 70;
+        if (pt == PortType::ThreeForOne)
+            s += 35;
+        else
+            s += 70;
     }
 
     return s;
@@ -114,7 +135,8 @@ int production_score_for_player(const Board::BoardState* board, PlayerId pid) {
 bool node_distance_rule_ok(const Board::BoardState* board, NodeId nodeId) {
     if (nodeId >= NODE_COUNT) return false;
     const auto node = board->nodes[nodeId];
-    if (Board::Node::unpackStructure(node) != StructureType::NoStructure) return false;
+    if (Board::Node::unpackStructure(node) != StructureType::NoStructure)
+        return false;
 
     for (int i = 0; i < 3; ++i) {
         const EdgeId e = Board::Node::unpackAdjacentEdge(node, i);
@@ -125,14 +147,16 @@ bool node_distance_rule_ok(const Board::BoardState* board, NodeId nodeId) {
         for (NodeId adj : {a, b}) {
             if (adj == nodeId || adj >= NODE_COUNT) continue;
             const auto st = Board::Node::unpackStructure(board->nodes[adj]);
-            if (st == StructureType::Settlement || st == StructureType::City) return false;
+            if (st == StructureType::Settlement || st == StructureType::City)
+                return false;
         }
     }
 
     return true;
 }
 
-bool node_is_adjacent_to_own_road(const Board::BoardState* board, PlayerId pid, NodeId nodeId) {
+bool node_is_adjacent_to_own_road(const Board::BoardState* board, PlayerId pid,
+                                  NodeId nodeId) {
     if (nodeId >= NODE_COUNT) return false;
     const auto node = board->nodes[nodeId];
     for (uint8_t i = 0; i < 3; ++i) {
@@ -146,12 +170,14 @@ bool node_is_adjacent_to_own_road(const Board::BoardState* board, PlayerId pid, 
 }
 
 int settlement_potential_score(const Board::BoardState* board, PlayerId pid) {
-    // Approximate how good our next settlement could be from current road network.
-    // Sum top 3 reachable candidate nodes.
+    // Approximate how good our next settlement could be from current road
+    // network. Sum top 3 reachable candidate nodes.
     std::array<int, 3> best = {0, 0, 0};
 
     const auto packed = board->packedPlayers[static_cast<uint8_t>(pid)];
-    if (Player::unpackAvailableStructures(packed, StructureType::Settlement) == 0) return 0;
+    if (Player::unpackAvailableStructures(packed, StructureType::Settlement) ==
+        0)
+        return 0;
 
     for (NodeId n = 0; n < NODE_COUNT; ++n) {
         if (!node_distance_rule_ok(board, n)) continue;
@@ -174,39 +200,53 @@ int settlement_potential_score(const Board::BoardState* board, PlayerId pid) {
 }
 
 int evaluate_position(const Board::BoardState* board, PlayerId selfId) {
-    const PlayerId enemyId = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+    const PlayerId enemyId =
+        (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
 
     const auto selfPacked = board->packedPlayers[static_cast<uint8_t>(selfId)];
-    const auto enemyPacked = board->packedPlayers[static_cast<uint8_t>(enemyId)];
+    const auto enemyPacked =
+        board->packedPlayers[static_cast<uint8_t>(enemyId)];
 
     const int selfVP = effective_vp(board, selfId);
     const int enemyVP = effective_vp(board, enemyId);
     const int vpTerm = 50000 * (selfVP - enemyVP);
 
-    const int prodTerm = 35 * (production_score_for_player(board, selfId) - production_score_for_player(board, enemyId));
-    const int potTerm = 12 * (settlement_potential_score(board, selfId) - settlement_potential_score(board, enemyId));
+    const int prodTerm = 35 * (production_score_for_player(board, selfId) -
+                               production_score_for_player(board, enemyId));
+    const int potTerm = 12 * (settlement_potential_score(board, selfId) -
+                              settlement_potential_score(board, enemyId));
 
     const auto selfHave = unpack_resources(selfPacked);
     const auto enemyHave = unpack_resources(enemyPacked);
     const int selfHand = static_cast<int>(hand_count(selfHave));
     const int enemyHand = static_cast<int>(hand_count(enemyHave));
 
-    // Prefer being closer to building cities/settlements; bank trades should be pulled by this.
-    const int cityDef = static_cast<int>(deficit(selfHave, cost_for(BuyableType::City)));
-    const int settleDef = static_cast<int>(deficit(selfHave, cost_for(BuyableType::Settlement)));
-    const int devDef = static_cast<int>(deficit(selfHave, cost_for(BuyableType::DevCard)));
+    // Prefer being closer to building cities/settlements; bank trades should be
+    // pulled by this.
+    const int cityDef =
+        static_cast<int>(deficit(selfHave, cost_for(BuyableType::City)));
+    const int settleDef =
+        static_cast<int>(deficit(selfHave, cost_for(BuyableType::Settlement)));
+    const int devDef =
+        static_cast<int>(deficit(selfHave, cost_for(BuyableType::DevCard)));
     const int deficitTerm = -2200 * cityDef - 1600 * settleDef - 650 * devDef;
 
-    // Mild hand-size risk management (discard triggers at 10+ when 7 is rolled).
+    // Mild hand-size risk management (discard triggers at 10+ when 7 is
+    // rolled).
     const int overLimit = std::max(0, selfHand - 9);
     const int riskTerm = -180 * overLimit;
 
     const int resTerm = 60 * (selfHand - enemyHand);
 
-    const int devTerm = 250 * (static_cast<int>(Player::totalDevCards(selfPacked)) - static_cast<int>(Player::totalDevCards(enemyPacked)));
-    const int roadLenTerm = 200 * (static_cast<int>(Player::unpackLongestRoadLength(selfPacked)) - static_cast<int>(Player::unpackLongestRoadLength(enemyPacked)));
+    const int devTerm =
+        250 * (static_cast<int>(Player::totalDevCards(selfPacked)) -
+               static_cast<int>(Player::totalDevCards(enemyPacked)));
+    const int roadLenTerm =
+        200 * (static_cast<int>(Player::unpackLongestRoadLength(selfPacked)) -
+               static_cast<int>(Player::unpackLongestRoadLength(enemyPacked)));
 
-    return vpTerm + prodTerm + potTerm + deficitTerm + riskTerm + resTerm + devTerm + roadLenTerm;
+    return vpTerm + prodTerm + potTerm + deficitTerm + riskTerm + resTerm +
+           devTerm + roadLenTerm;
 }
 
 bool is_deterministic_action(Action::PackedAction a) {
@@ -218,9 +258,10 @@ bool is_deterministic_action(Action::PackedAction a) {
         case ActionType::EndTurn:
             return true;
         default:
-            // Avoid actions with RNG side-effects (e.g., BuyDevCard, StealResource)
+            // Avoid actions with RNG side-effects (e.g., BuyDevCard,
+            // StealResource)
             return false;
     }
 }
 
-} // namespace PlayerHelpers
+}  // namespace PlayerHelpers

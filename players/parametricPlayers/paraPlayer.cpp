@@ -1,8 +1,5 @@
 #include "paraPlayer.hpp"
 
-#include "game_simulation/board.hpp"
-#include "utils/randomDevice.hpp"
-
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -16,21 +13,26 @@
 #include <unordered_map>
 #include <vector>
 
+#include "game_simulation/board.hpp"
+#include "utils/randomDevice.hpp"
+
 namespace {
 
 struct ParaParams {
     // --- policy ---
-    double policy_temperature = 0.0; // 0 = greedy, >0 = softmax
-    double policy_epsilon = 0.02;    // exploration (pick random legal action)
-    int policy_top_k = 1;           // if >1, sample from top-k (greedy path)
+    double policy_temperature = 0.0;  // 0 = greedy, >0 = softmax
+    double policy_epsilon = 0.02;     // exploration (pick random legal action)
+    int policy_top_k = 1;             // if >1, sample from top-k (greedy path)
 
-    // Simple within-turn lookahead: evaluate action by value(after action) + gamma * (best_followup - value(after action)).
-    // 1 = old behavior, 2 = consider one follow-up action.
+    // Simple within-turn lookahead: evaluate action by value(after action) +
+    // gamma * (best_followup - value(after action)). 1 = old behavior, 2 =
+    // consider one follow-up action.
     int policy_self_lookahead = 1;
     double policy_lookahead_gamma = 1.0;
 
-    // Optional speed knob: apply expensive lookahead only to top-M actions by a cheap 1-ply score.
-    // 0 = old behavior (lookahead on all actions that use it)
+    // Optional speed knob: apply expensive lookahead only to top-M actions by a
+    // cheap 1-ply score. 0 = old behavior (lookahead on all actions that use
+    // it)
     int policy_lookahead_top_m = 0;
 
     // --- evaluation weights (roughly aligned with It5) ---
@@ -42,7 +44,7 @@ struct ParaParams {
     double w_settle_deficit = -1600.0;
     double w_dev_deficit = -650.0;
 
-    double w_overlimit = -180.0; // (hand - 9)
+    double w_overlimit = -180.0;  // (hand - 9)
     double w_hand_diff = 60.0;
 
     double w_dev_count = 250.0;
@@ -62,7 +64,7 @@ struct ParaParams {
     double w_can_buy_dev = 380.0;
 
     // Game phase shaping (0..1): 1 early, 0 late.
-    double phase_early_vp_threshold = 6.0; // vp <= this => early-ish
+    double phase_early_vp_threshold = 6.0;  // vp <= this => early-ish
 
     // --- production scoring ---
     double res_w_brick = 12.0;
@@ -93,9 +95,9 @@ struct ParaParams {
     double road_heuristic_w = 1.0;
 
     // --- robber ---
-    double robber_enemy_value_w = 120.0; // legacy (kept for backwards compat)
-    double robber_self_value_w = -160.0; // legacy
-    double robber_pips_w = 8.0;          // legacy
+    double robber_enemy_value_w = 120.0;  // legacy (kept for backwards compat)
+    double robber_self_value_w = -160.0;  // legacy
+    double robber_pips_w = 8.0;           // legacy
 
     // Improved robber model (pips-weighted impact).
     double robber_enemy_pips_value_w = 30.0;
@@ -145,14 +147,19 @@ struct ParaParams {
 
         auto trim = [](std::string s) {
             size_t b = 0;
-            while (b < s.size() && std::isspace(static_cast<unsigned char>(s[b]))) ++b;
+            while (b < s.size() &&
+                   std::isspace(static_cast<unsigned char>(s[b])))
+                ++b;
             size_t e = s.size();
-            while (e > b && std::isspace(static_cast<unsigned char>(s[e - 1]))) --e;
+            while (e > b && std::isspace(static_cast<unsigned char>(s[e - 1])))
+                --e;
             return s.substr(b, e - b);
         };
 
         std::unordered_map<std::string, double*> m;
-        auto bind = [&](const char* k, double& v) { m.emplace(std::string(k), &v); };
+        auto bind = [&](const char* k, double& v) {
+            m.emplace(std::string(k), &v);
+        };
 
         bind("policy.temperature", policy_temperature);
         bind("policy.epsilon", policy_epsilon);
@@ -205,7 +212,8 @@ struct ParaParams {
         bind("action.dev_buy_has_trade_penalty", dev_buy_has_trade_penalty);
         bind("action.dev_buy_has_road_penalty", dev_buy_has_road_penalty);
         bind("action.dev_buy_blocks_city_penalty", dev_buy_blocks_city_penalty);
-        bind("action.dev_buy_blocks_settlement_penalty", dev_buy_blocks_settlement_penalty);
+        bind("action.dev_buy_blocks_settlement_penalty",
+             dev_buy_blocks_settlement_penalty);
 
         bind("action.road_heuristic_w", road_heuristic_w);
 
@@ -227,7 +235,8 @@ struct ParaParams {
         bind("init.port_three_for_one_bonus", init_port_three_for_one_bonus);
         bind("init.port_resource_bonus", init_port_resource_bonus);
         bind("init.complement_bonus", init_complement_bonus);
-        bind("init.complement_brick_lumber_bonus", init_complement_brick_lumber_bonus);
+        bind("init.complement_brick_lumber_bonus",
+             init_complement_brick_lumber_bonus);
         bind("init.road_deg_bonus", init_road_deg_bonus);
 
         bind("discard.keep_brick", keep_brick);
@@ -321,16 +330,17 @@ std::string default_config_path() {
 }
 
 std::string resolve_config_path(const std::string& current) {
-    // Training / benchmarking helper: allow overriding the config path per-process.
-    // This is intentionally opt-in so normal gameplay keeps using the canonical file.
-    // Example:
+    // Training / benchmarking helper: allow overriding the config path
+    // per-process. This is intentionally opt-in so normal gameplay keeps using
+    // the canonical file. Example:
     //   set CATAN_PARA_CFG=C:\path\to\cand.cfg
     //   build\runs\run.exe --games 200 para it5
     if (const char* env = std::getenv("CATAN_PARA_CFG")) {
         if (env[0] != '\0') return std::string(env);
     }
 
-    // If we already resolved it once, keep it to avoid repeated upward-search on the hot path.
+    // If we already resolved it once, keep it to avoid repeated upward-search
+    // on the hot path.
     if (!current.empty()) return current;
     return default_config_path();
 }
@@ -356,11 +366,13 @@ std::array<uint8_t, 5> cost_for(BuyableType b) {
     return {c[0], c[1], c[2], c[3], c[4]};
 }
 
-bool has_own_settlement_to_upgrade(const Board::BoardState* board, PlayerId pid) {
+bool has_own_settlement_to_upgrade(const Board::BoardState* board,
+                                   PlayerId pid) {
     for (NodeId n = 0; n < NODE_COUNT; ++n) {
         const auto node = board->nodes[n];
         if (Board::Node::unpackOwner(node) != pid) continue;
-        if (Board::Node::unpackStructure(node) == StructureType::Settlement) return true;
+        if (Board::Node::unpackStructure(node) == StructureType::Settlement)
+            return true;
     }
     return false;
 }
@@ -373,10 +385,12 @@ bool can_afford(const std::array<uint8_t, 5>& have, BuyableType b) {
     return true;
 }
 
-uint16_t deficit(const std::array<uint8_t, 5>& have, const std::array<uint8_t, 5>& need) {
+uint16_t deficit(const std::array<uint8_t, 5>& have,
+                 const std::array<uint8_t, 5>& need) {
     uint16_t d = 0;
     for (size_t i = 0; i < 5; ++i) {
-        if (have[i] < need[i]) d = static_cast<uint16_t>(d + (need[i] - have[i]));
+        if (have[i] < need[i])
+            d = static_cast<uint16_t>(d + (need[i] - have[i]));
     }
     return d;
 }
@@ -391,32 +405,50 @@ int effective_vp(const Board::BoardState* board, PlayerId pid) {
 
 uint8_t dice_pips(uint8_t diceNumber) {
     switch (diceNumber) {
-        case 2:  return 1;
-        case 3:  return 2;
-        case 4:  return 3;
-        case 5:  return 4;
-        case 6:  return 5;
-        case 8:  return 5;
-        case 9:  return 4;
-        case 10: return 3;
-        case 11: return 2;
-        case 12: return 1;
-        default: return 0;
+        case 2:
+            return 1;
+        case 3:
+            return 2;
+        case 4:
+            return 3;
+        case 5:
+            return 4;
+        case 6:
+            return 5;
+        case 8:
+            return 5;
+        case 9:
+            return 4;
+        case 10:
+            return 3;
+        case 11:
+            return 2;
+        case 12:
+            return 1;
+        default:
+            return 0;
     }
 }
 
-int node_production_score(const Board::BoardState* board, NodeId nodeId, const ParaParams& p) {
+int node_production_score(const Board::BoardState* board, NodeId nodeId,
+                          const ParaParams& p) {
     if (nodeId >= NODE_COUNT) return std::numeric_limits<int>::min();
     const auto node = board->nodes[nodeId];
 
     auto res_weight = [&](Resource r) -> double {
         switch (r) {
-            case Resource::Ore: return p.res_w_ore;
-            case Resource::Grain: return p.res_w_grain;
-            case Resource::Brick: return p.res_w_brick;
-            case Resource::Lumber: return p.res_w_lumber;
-            case Resource::Wool: return p.res_w_wool;
-            default: return 0.0;
+            case Resource::Ore:
+                return p.res_w_ore;
+            case Resource::Grain:
+                return p.res_w_grain;
+            case Resource::Brick:
+                return p.res_w_brick;
+            case Resource::Lumber:
+                return p.res_w_lumber;
+            case Resource::Wool:
+                return p.res_w_wool;
+            default:
+                return 0.0;
         }
     };
 
@@ -433,14 +465,17 @@ int node_production_score(const Board::BoardState* board, NodeId nodeId, const P
 
     const auto pt = Board::Node::unpackPortType(node);
     if (pt != PortType::NoPort) {
-        if (pt == PortType::ThreeForOne) s += p.port_three_for_one;
-        else s += p.port_two_for_one;
+        if (pt == PortType::ThreeForOne)
+            s += p.port_three_for_one;
+        else
+            s += p.port_two_for_one;
     }
 
     return static_cast<int>(std::llround(s));
 }
 
-int production_score_for_player(const Board::BoardState* board, PlayerId pid, const ParaParams& p) {
+int production_score_for_player(const Board::BoardState* board, PlayerId pid,
+                                const ParaParams& p) {
     int s = 0;
     for (NodeId n = 0; n < NODE_COUNT; ++n) {
         const auto node = board->nodes[n];
@@ -458,7 +493,8 @@ int production_score_for_player(const Board::BoardState* board, PlayerId pid, co
 bool node_distance_rule_ok(const Board::BoardState* board, NodeId nodeId) {
     if (nodeId >= NODE_COUNT) return false;
     const auto node = board->nodes[nodeId];
-    if (Board::Node::unpackStructure(node) != StructureType::NoStructure) return false;
+    if (Board::Node::unpackStructure(node) != StructureType::NoStructure)
+        return false;
 
     for (int i = 0; i < 3; ++i) {
         const EdgeId e = Board::Node::unpackAdjacentEdge(node, i);
@@ -469,13 +505,15 @@ bool node_distance_rule_ok(const Board::BoardState* board, NodeId nodeId) {
         for (NodeId adj : {a, b}) {
             if (adj == nodeId || adj >= NODE_COUNT) continue;
             const auto st = Board::Node::unpackStructure(board->nodes[adj]);
-            if (st == StructureType::Settlement || st == StructureType::City) return false;
+            if (st == StructureType::Settlement || st == StructureType::City)
+                return false;
         }
     }
     return true;
 }
 
-bool node_is_adjacent_to_own_road(const Board::BoardState* board, PlayerId pid, NodeId nodeId) {
+bool node_is_adjacent_to_own_road(const Board::BoardState* board, PlayerId pid,
+                                  NodeId nodeId) {
     if (nodeId >= NODE_COUNT) return false;
     const auto node = board->nodes[nodeId];
     for (uint8_t i = 0; i < 3; ++i) {
@@ -488,11 +526,14 @@ bool node_is_adjacent_to_own_road(const Board::BoardState* board, PlayerId pid, 
     return false;
 }
 
-int settlement_potential_score(const Board::BoardState* board, PlayerId pid, const ParaParams& p) {
+int settlement_potential_score(const Board::BoardState* board, PlayerId pid,
+                               const ParaParams& p) {
     std::array<int, 3> best = {0, 0, 0};
 
     const auto packed = board->packedPlayers[static_cast<uint8_t>(pid)];
-    if (Player::unpackAvailableStructures(packed, StructureType::Settlement) == 0) return 0;
+    if (Player::unpackAvailableStructures(packed, StructureType::Settlement) ==
+        0)
+        return 0;
 
     for (NodeId n = 0; n < NODE_COUNT; ++n) {
         if (!node_distance_rule_ok(board, n)) continue;
@@ -514,7 +555,8 @@ int settlement_potential_score(const Board::BoardState* board, PlayerId pid, con
     return best[0] + best[1] + best[2];
 }
 
-double early_phase01(const Board::BoardState* board, PlayerId pid, const ParaParams& p) {
+double early_phase01(const Board::BoardState* board, PlayerId pid,
+                     const ParaParams& p) {
     const int vp = effective_vp(board, pid);
     const double thr = std::max(1.0, p.phase_early_vp_threshold);
     // vp <= thr => ~1, vp >= thr+4 => ~0
@@ -522,11 +564,14 @@ double early_phase01(const Board::BoardState* board, PlayerId pid, const ParaPar
     return std::max(0.0, std::min(1.0, 1.0 - x));
 }
 
-double evaluate_position(const Board::BoardState* board, PlayerId selfId, const ParaParams& p) {
-    const PlayerId enemyId = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+double evaluate_position(const Board::BoardState* board, PlayerId selfId,
+                         const ParaParams& p) {
+    const PlayerId enemyId =
+        (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
 
     const auto selfPacked = board->packedPlayers[static_cast<uint8_t>(selfId)];
-    const auto enemyPacked = board->packedPlayers[static_cast<uint8_t>(enemyId)];
+    const auto enemyPacked =
+        board->packedPlayers[static_cast<uint8_t>(enemyId)];
 
     const int selfVP = effective_vp(board, selfId);
     const int enemyVP = effective_vp(board, enemyId);
@@ -542,24 +587,33 @@ double evaluate_position(const Board::BoardState* board, PlayerId selfId, const 
     const int selfHand = static_cast<int>(hand_count(selfHave));
     const int enemyHand = static_cast<int>(hand_count(enemyHave));
 
-    const int cityDef = static_cast<int>(deficit(selfHave, cost_for(BuyableType::City)));
-    const int settleDef = static_cast<int>(deficit(selfHave, cost_for(BuyableType::Settlement)));
-    const int devDef = static_cast<int>(deficit(selfHave, cost_for(BuyableType::DevCard)));
+    const int cityDef =
+        static_cast<int>(deficit(selfHave, cost_for(BuyableType::City)));
+    const int settleDef =
+        static_cast<int>(deficit(selfHave, cost_for(BuyableType::Settlement)));
+    const int devDef =
+        static_cast<int>(deficit(selfHave, cost_for(BuyableType::DevCard)));
 
     const int overLimit = std::max(0, selfHand - 9);
 
-    const int devCntDiff = static_cast<int>(Player::totalDevCards(selfPacked)) - static_cast<int>(Player::totalDevCards(enemyPacked));
-    const int roadLenDiff = static_cast<int>(Player::unpackLongestRoadLength(selfPacked)) - static_cast<int>(Player::unpackLongestRoadLength(enemyPacked));
+    const int devCntDiff = static_cast<int>(Player::totalDevCards(selfPacked)) -
+                           static_cast<int>(Player::totalDevCards(enemyPacked));
+    const int roadLenDiff =
+        static_cast<int>(Player::unpackLongestRoadLength(selfPacked)) -
+        static_cast<int>(Player::unpackLongestRoadLength(enemyPacked));
 
     const double early01 = early_phase01(board, selfId, p);
 
-    const bool canCity = can_afford(selfHave, BuyableType::City)
-        && Player::unpackAvailableStructures(selfPacked, StructureType::City) > 0
-        && has_own_settlement_to_upgrade(board, selfId);
-    const bool canSettle = can_afford(selfHave, BuyableType::Settlement)
-        && Player::unpackAvailableStructures(selfPacked, StructureType::Settlement) > 0;
-    const bool canRoad = can_afford(selfHave, BuyableType::Road)
-        && Player::unpackAvailableStructures(selfPacked, StructureType::Road) > 0;
+    const bool canCity = can_afford(selfHave, BuyableType::City) &&
+                         Player::unpackAvailableStructures(
+                             selfPacked, StructureType::City) > 0 &&
+                         has_own_settlement_to_upgrade(board, selfId);
+    const bool canSettle = can_afford(selfHave, BuyableType::Settlement) &&
+                           Player::unpackAvailableStructures(
+                               selfPacked, StructureType::Settlement) > 0;
+    const bool canRoad =
+        can_afford(selfHave, BuyableType::Road) &&
+        Player::unpackAvailableStructures(selfPacked, StructureType::Road) > 0;
     const bool canDev = can_afford(selfHave, BuyableType::DevCard);
 
     double s = 0.0;
@@ -578,15 +632,21 @@ double evaluate_position(const Board::BoardState* board, PlayerId selfId, const 
     s += p.w_road_len * static_cast<double>(roadLenDiff);
 
     // Hand shaping: important early for tempo (roads/settles), later less so.
-    s += early01 * (
-        p.w_hand_brick * static_cast<double>(selfHave[static_cast<size_t>(Resource::Brick)]) +
-        p.w_hand_lumber * static_cast<double>(selfHave[static_cast<size_t>(Resource::Lumber)]) +
-        p.w_hand_wool * static_cast<double>(selfHave[static_cast<size_t>(Resource::Wool)]) +
-        p.w_hand_grain * static_cast<double>(selfHave[static_cast<size_t>(Resource::Grain)]) +
-        p.w_hand_ore * static_cast<double>(selfHave[static_cast<size_t>(Resource::Ore)])
-    );
+    s += early01 *
+         (p.w_hand_brick * static_cast<double>(
+                               selfHave[static_cast<size_t>(Resource::Brick)]) +
+          p.w_hand_lumber *
+              static_cast<double>(
+                  selfHave[static_cast<size_t>(Resource::Lumber)]) +
+          p.w_hand_wool * static_cast<double>(
+                              selfHave[static_cast<size_t>(Resource::Wool)]) +
+          p.w_hand_grain * static_cast<double>(
+                               selfHave[static_cast<size_t>(Resource::Grain)]) +
+          p.w_hand_ore * static_cast<double>(
+                             selfHave[static_cast<size_t>(Resource::Ore)]));
 
-    // Encourage setting up immediate buys (helps trades and multi-step planning).
+    // Encourage setting up immediate buys (helps trades and multi-step
+    // planning).
     s += p.w_can_build_city * (canCity ? 1.0 : 0.0);
     s += p.w_can_build_settlement * (canSettle ? 1.0 : 0.0);
     s += p.w_can_build_road * (canRoad ? 1.0 : 0.0);
@@ -595,8 +655,9 @@ double evaluate_position(const Board::BoardState* board, PlayerId selfId, const 
     return s;
 }
 
-std::array<bool, 5> resources_at_node(const Board::BoardState* board, NodeId nodeId) {
-    std::array<bool, 5> has {false, false, false, false, false};
+std::array<bool, 5> resources_at_node(const Board::BoardState* board,
+                                      NodeId nodeId) {
+    std::array<bool, 5> has{false, false, false, false, false};
     if (nodeId >= NODE_COUNT) return has;
     const auto node = board->nodes[nodeId];
     for (uint8_t i = 0; i < 3; ++i) {
@@ -611,26 +672,30 @@ std::array<bool, 5> resources_at_node(const Board::BoardState* board, NodeId nod
     return has;
 }
 
-std::array<bool, 5> resources_covered_by_player(const Board::BoardState* board, PlayerId pid) {
-    std::array<bool, 5> has {false, false, false, false, false};
+std::array<bool, 5> resources_covered_by_player(const Board::BoardState* board,
+                                                PlayerId pid) {
+    std::array<bool, 5> has{false, false, false, false, false};
     for (NodeId n = 0; n < NODE_COUNT; ++n) {
         const auto node = board->nodes[n];
         if (Board::Node::unpackOwner(node) != pid) continue;
         const auto st = Board::Node::unpackStructure(node);
-        if (st != StructureType::Settlement && st != StructureType::City) continue;
+        if (st != StructureType::Settlement && st != StructureType::City)
+            continue;
         const auto at = resources_at_node(board, n);
         for (size_t i = 0; i < 5; ++i) has[i] = has[i] || at[i];
     }
     return has;
 }
 
-int score_initial_settlement_node(const Board::BoardState* board, NodeId nodeId, bool secondPlacement,
-                                 const std::array<bool, 5>& alreadyHave, const ParaParams& p) {
+int score_initial_settlement_node(const Board::BoardState* board, NodeId nodeId,
+                                  bool secondPlacement,
+                                  const std::array<bool, 5>& alreadyHave,
+                                  const ParaParams& p) {
     if (nodeId >= NODE_COUNT) return std::numeric_limits<int>::min();
     const auto node = board->nodes[nodeId];
 
     // Collect resource diversity info for the node.
-    std::array<uint8_t, 5> resourceCounts {0, 0, 0, 0, 0};
+    std::array<uint8_t, 5> resourceCounts{0, 0, 0, 0, 0};
     for (uint8_t i = 0; i < 3; ++i) {
         const HexId hexId = Board::Node::unpackAdjacentHex(node, i);
         if (hexId == HexIdNone || hexId >= HEX_COUNT) continue;
@@ -647,7 +712,9 @@ int score_initial_settlement_node(const Board::BoardState* board, NodeId nodeId,
     int duplicatePenalty = 0;
     for (size_t i = 0; i < 5; ++i) {
         unique += (resourceCounts[i] > 0) ? 1 : 0;
-        if (resourceCounts[i] > 1) duplicatePenalty += static_cast<int>(p.init_duplicate_penalty) * static_cast<int>(resourceCounts[i] - 1);
+        if (resourceCounts[i] > 1)
+            duplicatePenalty += static_cast<int>(p.init_duplicate_penalty) *
+                                static_cast<int>(resourceCounts[i] - 1);
     }
     int diversityBonus = static_cast<int>(p.init_diversity_bonus) * unique;
 
@@ -655,36 +722,51 @@ int score_initial_settlement_node(const Board::BoardState* board, NodeId nodeId,
     int portBonus = 0;
     const auto port = Board::Node::unpackPortType(node);
     if (port != PortType::NoPort) {
-        portBonus += static_cast<int>(secondPlacement ? p.init_port_second : p.init_port_first);
-        if (port == PortType::ThreeForOne) portBonus += static_cast<int>(p.init_port_three_for_one_bonus);
-        else portBonus += static_cast<int>(p.init_port_resource_bonus);
+        portBonus += static_cast<int>(secondPlacement ? p.init_port_second
+                                                      : p.init_port_first);
+        if (port == PortType::ThreeForOne)
+            portBonus += static_cast<int>(p.init_port_three_for_one_bonus);
+        else
+            portBonus += static_cast<int>(p.init_port_resource_bonus);
     }
 
     // Complement (2nd settlement covers missing resources).
     int complementBonus = 0;
     if (secondPlacement) {
         for (size_t i = 0; i < 5; ++i) {
-            if (resourceCounts[i] > 0 && !alreadyHave[i]) complementBonus += static_cast<int>(p.init_complement_bonus);
+            if (resourceCounts[i] > 0 && !alreadyHave[i])
+                complementBonus += static_cast<int>(p.init_complement_bonus);
         }
-        if (!alreadyHave[static_cast<size_t>(Resource::Brick)] && resourceCounts[static_cast<size_t>(Resource::Brick)] > 0) {
-            complementBonus += static_cast<int>(p.init_complement_brick_lumber_bonus);
+        if (!alreadyHave[static_cast<size_t>(Resource::Brick)] &&
+            resourceCounts[static_cast<size_t>(Resource::Brick)] > 0) {
+            complementBonus +=
+                static_cast<int>(p.init_complement_brick_lumber_bonus);
         }
-        if (!alreadyHave[static_cast<size_t>(Resource::Lumber)] && resourceCounts[static_cast<size_t>(Resource::Lumber)] > 0) {
-            complementBonus += static_cast<int>(p.init_complement_brick_lumber_bonus);
+        if (!alreadyHave[static_cast<size_t>(Resource::Lumber)] &&
+            resourceCounts[static_cast<size_t>(Resource::Lumber)] > 0) {
+            complementBonus +=
+                static_cast<int>(p.init_complement_brick_lumber_bonus);
         }
     }
 
-    // Base production score from existing helper (already includes ports). Use it as primary signal.
+    // Base production score from existing helper (already includes ports). Use
+    // it as primary signal.
     const int prodScore = node_production_score(board, nodeId, p);
     if (prodScore == std::numeric_limits<int>::min()) return prodScore;
 
-    const double scaledProd = static_cast<double>(prodScore) * p.init_prod_scale;
-    const double total = scaledProd + static_cast<double>(diversityBonus + portBonus + complementBonus - duplicatePenalty);
+    const double scaledProd =
+        static_cast<double>(prodScore) * p.init_prod_scale;
+    const double total =
+        scaledProd + static_cast<double>(diversityBonus + portBonus +
+                                         complementBonus - duplicatePenalty);
     return static_cast<int>(std::llround(total));
 }
 
-int road_degree_bonus(const Board::BoardState* board, NodeId settlementNodeId, EdgeId edgeId, const ParaParams& p) {
-    if (settlementNodeId >= NODE_COUNT || edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) return 0;
+int road_degree_bonus(const Board::BoardState* board, NodeId settlementNodeId,
+                      EdgeId edgeId, const ParaParams& p) {
+    if (settlementNodeId >= NODE_COUNT || edgeId == EdgeIdNone ||
+        edgeId >= EDGE_COUNT)
+        return 0;
     const auto edge = board->edges[edgeId];
     const NodeId a = Board::Edge::unpackAdjacentNode(edge, 0);
     const NodeId b = Board::Edge::unpackAdjacentNode(edge, 1);
@@ -693,10 +775,12 @@ int road_degree_bonus(const Board::BoardState* board, NodeId settlementNodeId, E
     const auto adj = Board::Node::getAdjacentEdges(board->nodes[other]);
     int deg = 0;
     for (auto e : adj) deg += (e != EdgeIdNone) ? 1 : 0;
-    return static_cast<int>(std::llround(p.init_road_deg_bonus * static_cast<double>(deg)));
+    return static_cast<int>(
+        std::llround(p.init_road_deg_bonus * static_cast<double>(deg)));
 }
 
-int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId edgeId) {
+int edge_network_score(const Board::BoardState* board, PlayerId selfId,
+                       EdgeId edgeId) {
     if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) return -10000;
 
     int s = 0;
@@ -710,14 +794,16 @@ int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId e
         const auto owner = Board::Node::unpackOwner(node);
         const auto st = Board::Node::unpackStructure(node);
 
-        if (owner == selfId && (st == StructureType::Settlement || st == StructureType::City)) {
+        if (owner == selfId &&
+            (st == StructureType::Settlement || st == StructureType::City)) {
             s += 200;
         }
 
         for (uint8_t i = 0; i < 3; ++i) {
             const EdgeId e = Board::Node::unpackAdjacentEdge(node, i);
             if (e == EdgeIdNone || e >= EDGE_COUNT) continue;
-            if (Board::Edge::unpackHasRoad(board->edges[e]) && Board::Edge::unpackOwner(board->edges[e]) == selfId) {
+            if (Board::Edge::unpackHasRoad(board->edges[e]) &&
+                Board::Edge::unpackOwner(board->edges[e]) == selfId) {
                 s += 120;
                 break;
             }
@@ -728,17 +814,21 @@ int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId e
     score_node(n1);
 
     if (n0 < NODE_COUNT) {
-        if (Board::Node::unpackPortType(board->nodes[n0]) != PortType::NoPort) s += 10;
+        if (Board::Node::unpackPortType(board->nodes[n0]) != PortType::NoPort)
+            s += 10;
     }
     if (n1 < NODE_COUNT) {
-        if (Board::Node::unpackPortType(board->nodes[n1]) != PortType::NoPort) s += 10;
+        if (Board::Node::unpackPortType(board->nodes[n1]) != PortType::NoPort)
+            s += 10;
     }
 
     return s;
 }
 
-int road_action_score(const Board::BoardState* board, PlayerId selfId, EdgeId edgeId, const ParaParams& p) {
-    if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) return std::numeric_limits<int>::min();
+int road_action_score(const Board::BoardState* board, PlayerId selfId,
+                      EdgeId edgeId, const ParaParams& p) {
+    if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT)
+        return std::numeric_limits<int>::min();
 
     int s = edge_network_score(board, selfId, edgeId);
 
@@ -752,18 +842,31 @@ int road_action_score(const Board::BoardState* board, PlayerId selfId, EdgeId ed
     return s;
 }
 
-double score_one_ply_action(Board::BoardState* board, PlayerId selfId, const ParaParams& p, Action::PackedAction a, double currentEval) {
+double score_one_ply_action(Board::BoardState* board, PlayerId selfId,
+                            const ParaParams& p, Action::PackedAction a,
+                            double currentEval) {
     if (a == Action::getEmptyAction()) return currentEval;
     const auto t = Action::unpackType(a);
     double extra = 0.0;
 
     switch (t) {
-        case ActionType::BuildCity: extra += p.bonus_build_city; break;
-        case ActionType::BuildSettlement: extra += p.bonus_build_settlement; break;
-        case ActionType::BuildRoad: extra += p.bonus_build_road; break;
-        case ActionType::TradeBank: extra += p.bonus_trade_bank; break;
-        case ActionType::EndTurn: extra += p.penalty_end_turn; break;
-        default: break;
+        case ActionType::BuildCity:
+            extra += p.bonus_build_city;
+            break;
+        case ActionType::BuildSettlement:
+            extra += p.bonus_build_settlement;
+            break;
+        case ActionType::BuildRoad:
+            extra += p.bonus_build_road;
+            break;
+        case ActionType::TradeBank:
+            extra += p.bonus_trade_bank;
+            break;
+        case ActionType::EndTurn:
+            extra += p.penalty_end_turn;
+            break;
+        default:
+            break;
     }
 
     if (t == ActionType::BuyDevCard) {
@@ -777,22 +880,34 @@ double score_one_ply_action(Board::BoardState* board, PlayerId selfId, const Par
     return v;
 }
 
-double score_action_with_lookahead(Board::BoardState* board, PlayerId selfId, const ParaParams& p, Action::PackedAction a, double baseEval) {
+double score_action_with_lookahead(Board::BoardState* board, PlayerId selfId,
+                                   const ParaParams& p, Action::PackedAction a,
+                                   double baseEval) {
     if (a == Action::getEmptyAction()) return baseEval;
     const auto t = Action::unpackType(a);
     // No lookahead for EndTurn / BuyDevCard.
-    if (t == ActionType::EndTurn || t == ActionType::BuyDevCard || p.policy_self_lookahead <= 1) {
+    if (t == ActionType::EndTurn || t == ActionType::BuyDevCard ||
+        p.policy_self_lookahead <= 1) {
         return score_one_ply_action(board, selfId, p, a, baseEval);
     }
 
     // First step.
     double extra1 = 0.0;
     switch (t) {
-        case ActionType::BuildCity: extra1 += p.bonus_build_city; break;
-        case ActionType::BuildSettlement: extra1 += p.bonus_build_settlement; break;
-        case ActionType::BuildRoad: extra1 += p.bonus_build_road; break;
-        case ActionType::TradeBank: extra1 += p.bonus_trade_bank; break;
-        default: break;
+        case ActionType::BuildCity:
+            extra1 += p.bonus_build_city;
+            break;
+        case ActionType::BuildSettlement:
+            extra1 += p.bonus_build_settlement;
+            break;
+        case ActionType::BuildRoad:
+            extra1 += p.bonus_build_road;
+            break;
+        case ActionType::TradeBank:
+            extra1 += p.bonus_trade_bank;
+            break;
+        default:
+            break;
     }
 
     board->applyAction(a);
@@ -803,7 +918,8 @@ double score_action_with_lookahead(Board::BoardState* board, PlayerId selfId, co
     double bestFollow = evalAfter;
     const auto next = board->getLegalActions(selfId);
     for (auto a2 : next) {
-        bestFollow = std::max(bestFollow, score_one_ply_action(board, selfId, p, a2, evalAfter));
+        bestFollow = std::max(
+            bestFollow, score_one_ply_action(board, selfId, p, a2, evalAfter));
     }
 
     board->undoLastAction();
@@ -814,21 +930,28 @@ double score_action_with_lookahead(Board::BoardState* board, PlayerId selfId, co
 BuyableType best_target_for_discard(const std::array<uint8_t, 5>& have) {
     auto priority_index = [](BuyableType b) {
         switch (b) {
-            case BuyableType::City: return 0;
-            case BuyableType::Settlement: return 1;
-            case BuyableType::Road: return 2;
-            case BuyableType::DevCard: return 3;
-            default: return 99;
+            case BuyableType::City:
+                return 0;
+            case BuyableType::Settlement:
+                return 1;
+            case BuyableType::Road:
+                return 2;
+            case BuyableType::DevCard:
+                return 3;
+            default:
+                return 99;
         }
     };
 
     BuyableType best = BuyableType::Road;
     uint16_t bestDef = std::numeric_limits<uint16_t>::max();
 
-    for (BuyableType t : {BuyableType::City, BuyableType::Settlement, BuyableType::Road, BuyableType::DevCard}) {
+    for (BuyableType t : {BuyableType::City, BuyableType::Settlement,
+                          BuyableType::Road, BuyableType::DevCard}) {
         const auto need = cost_for(t);
         const auto d = deficit(have, need);
-        if (d < bestDef || (d == bestDef && priority_index(t) < priority_index(best))) {
+        if (d < bestDef ||
+            (d == bestDef && priority_index(t) < priority_index(best))) {
             bestDef = d;
             best = t;
         }
@@ -837,8 +960,10 @@ BuyableType best_target_for_discard(const std::array<uint8_t, 5>& have) {
     return best;
 }
 
-std::array<double, 5> keep_weights_for(BuyableType target, const ParaParams& p) {
-    std::array<double, 5> w = {p.keep_brick, p.keep_lumber, p.keep_wool, p.keep_grain, p.keep_ore};
+std::array<double, 5> keep_weights_for(BuyableType target,
+                                       const ParaParams& p) {
+    std::array<double, 5> w = {p.keep_brick, p.keep_lumber, p.keep_wool,
+                               p.keep_grain, p.keep_ore};
 
     auto add = [&](Resource r, double v) { w[static_cast<size_t>(r)] += v; };
 
@@ -869,13 +994,16 @@ std::array<double, 5> keep_weights_for(BuyableType target, const ParaParams& p) 
     return w;
 }
 
-Action::PackedAction greedy_pick_from_scores(const std::vector<std::pair<double, Action::PackedAction>>& scored, const ParaParams& p) {
+Action::PackedAction greedy_pick_from_scores(
+    const std::vector<std::pair<double, Action::PackedAction>>& scored,
+    const ParaParams& p) {
     if (scored.empty()) return Action::getEmptyAction();
 
     // Epsilon random.
     const double r01 = RandomDevice::uniform_u32_range(0, 1000000) / 1000000.0;
     if (r01 < p.policy_epsilon) {
-        const uint32_t idx = RandomDevice::uniform_u32_range(0, static_cast<uint32_t>(scored.size()) - 1);
+        const uint32_t idx = RandomDevice::uniform_u32_range(
+            0, static_cast<uint32_t>(scored.size()) - 1);
         return scored[idx].second;
     }
 
@@ -895,7 +1023,8 @@ Action::PackedAction greedy_pick_from_scores(const std::vector<std::pair<double,
         }
         if (sum <= 0.0) return scored[0].second;
 
-        const double pick = RandomDevice::uniform_u32_range(0, 1000000) / 1000000.0 * sum;
+        const double pick =
+            RandomDevice::uniform_u32_range(0, 1000000) / 1000000.0 * sum;
         double acc = 0.0;
         for (size_t i = 0; i < scored.size(); ++i) {
             acc += w[i];
@@ -904,7 +1033,8 @@ Action::PackedAction greedy_pick_from_scores(const std::vector<std::pair<double,
         return scored.back().second;
     }
 
-    // Greedy / top-k random among best. (Does not require 'scored' to be sorted.)
+    // Greedy / top-k random among best. (Does not require 'scored' to be
+    // sorted.)
     const int k = std::max(1, p.policy_top_k);
 
     if (k <= 1 || scored.size() == 1) {
@@ -924,12 +1054,15 @@ Action::PackedAction greedy_pick_from_scores(const std::vector<std::pair<double,
     idxs.reserve(scored.size());
     for (size_t i = 0; i < scored.size(); ++i) idxs.push_back(i);
 
-    const auto better = [&](size_t a, size_t b) { return scored[a].first > scored[b].first; };
+    const auto better = [&](size_t a, size_t b) {
+        return scored[a].first > scored[b].first;
+    };
     if (kk < idxs.size()) {
         std::nth_element(idxs.begin(), idxs.begin() + kk, idxs.end(), better);
     }
 
-    const uint32_t pick = RandomDevice::uniform_u32_range(0, static_cast<uint32_t>(kk) - 1);
+    const uint32_t pick =
+        RandomDevice::uniform_u32_range(0, static_cast<uint32_t>(kk) - 1);
     return scored[idxs[pick]].second;
 }
 
@@ -958,7 +1091,8 @@ const ParaParams& get_cached_params() {
     }
 
     // Hot path: reload only when the config file changes.
-    // If last_write_time fails (missing file etc), keep the previously loaded params.
+    // If last_write_time fails (missing file etc), keep the previously loaded
+    // params.
     if (!cfgPath.empty()) {
         try {
             const auto mt = fs::last_write_time(cfgPath);
@@ -976,11 +1110,12 @@ const ParaParams& get_cached_params() {
     return params;
 }
 
-} // namespace
+}  // namespace
 
 ParaPlayer::ParaPlayer() : IPlayer() {}
 
-std::pair<Action::PackedAction, Action::PackedAction> ParaPlayer::getInitialPlacement() {
+std::pair<Action::PackedAction, Action::PackedAction>
+ParaPlayer::getInitialPlacement() {
     const ParaParams& params = get_cached_params();
 
     const PlayerId selfId = boardState->currentPlayer;
@@ -990,7 +1125,8 @@ std::pair<Action::PackedAction, Action::PackedAction> ParaPlayer::getInitialPlac
         return {noAction, noAction};
     }
 
-    // Dedicated placement heuristic: generally stronger than generic eval delta at game start.
+    // Dedicated placement heuristic: generally stronger than generic eval delta
+    // at game start.
     const auto already = resources_covered_by_player(boardState, selfId);
 
     std::vector<std::pair<double, Action::PackedAction>> scored;
@@ -999,7 +1135,8 @@ std::pair<Action::PackedAction, Action::PackedAction> ParaPlayer::getInitialPlac
     for (auto a : actions) {
         const NodeId nodeId = Action::unpackArg1(a);
         const EdgeId edgeId = Action::unpackArg2(a);
-        int s = score_initial_settlement_node(boardState, nodeId, false, already, params);
+        int s = score_initial_settlement_node(boardState, nodeId, false,
+                                              already, params);
         s += road_degree_bonus(boardState, nodeId, edgeId, params);
         scored.push_back({static_cast<double>(s), a});
     }
@@ -1008,7 +1145,8 @@ std::pair<Action::PackedAction, Action::PackedAction> ParaPlayer::getInitialPlac
     return {pick, pick};
 }
 
-std::pair<Action::PackedAction, Action::PackedAction> ParaPlayer::get2InitialPlacement() {
+std::pair<Action::PackedAction, Action::PackedAction>
+ParaPlayer::get2InitialPlacement() {
     const ParaParams& params = get_cached_params();
 
     const PlayerId selfId = boardState->currentPlayer;
@@ -1026,7 +1164,8 @@ std::pair<Action::PackedAction, Action::PackedAction> ParaPlayer::get2InitialPla
     for (auto a : actions) {
         const NodeId nodeId = Action::unpackArg1(a);
         const EdgeId edgeId = Action::unpackArg2(a);
-        int s = score_initial_settlement_node(boardState, nodeId, true, already, params);
+        int s = score_initial_settlement_node(boardState, nodeId, true, already,
+                                              params);
         s += road_degree_bonus(boardState, nodeId, edgeId, params);
         scored.push_back({static_cast<double>(s), a});
     }
@@ -1066,7 +1205,9 @@ Action::PackedAction ParaPlayer::getDiscardAction() {
 
     auto action = Action::getEmptyAction();
 
-    const auto packed = boardState->packedPlayers[static_cast<uint8_t>(boardState->currentPlayer)];
+    const auto packed =
+        boardState
+            ->packedPlayers[static_cast<uint8_t>(boardState->currentPlayer)];
     const uint8_t totalResources = Player::totalResources(packed);
     if (totalResources <= 9) return action;
 
@@ -1078,7 +1219,8 @@ Action::PackedAction ParaPlayer::getDiscardAction() {
 
     std::vector<Resource> pool;
     pool.reserve(totalResources);
-    for (Resource r : {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Grain, Resource::Ore}) {
+    for (Resource r : {Resource::Brick, Resource::Lumber, Resource::Wool,
+                       Resource::Grain, Resource::Ore}) {
         const uint8_t cnt = Player::unpackResource(packed, r);
         for (uint8_t i = 0; i < cnt; ++i) pool.push_back(r);
     }
@@ -1089,7 +1231,8 @@ Action::PackedAction ParaPlayer::getDiscardAction() {
 
     for (uint8_t i = 0; i < toDiscard && i < pool.size(); ++i) {
         const auto r = pool[i];
-        action = Action::packResource(action, r, Action::unpackResource(action, r) + 1);
+        action = Action::packResource(action, r,
+                                      Action::unpackResource(action, r) + 1);
     }
 
     return action;
@@ -1099,7 +1242,8 @@ Action::PackedAction ParaPlayer::getMoveRobber() {
     const ParaParams& params = get_cached_params();
 
     const PlayerId selfId = boardState->currentPlayer;
-    const PlayerId enemyId = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+    const PlayerId enemyId =
+        (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
 
     auto actions = boardState->generateMoveRobberActions(selfId);
     if (actions.empty()) return Action::getEmptyAction();
@@ -1121,13 +1265,15 @@ Action::PackedAction ParaPlayer::getMoveRobber() {
         double s = 0.0;
 
         // New pips-weighted model.
-        s += static_cast<double>(pip) * (params.robber_enemy_pips_value_w * static_cast<double>(enemyVal)
-                                         - params.robber_self_pips_value_w * static_cast<double>(selfVal));
+        s += static_cast<double>(pip) *
+             (params.robber_enemy_pips_value_w * static_cast<double>(enemyVal) -
+              params.robber_self_pips_value_w * static_cast<double>(selfVal));
         if (enemyVal > 0 && selfVal == 0) s += params.robber_enemy_only_bonus;
         if (enemyVal == 0) s -= params.robber_no_enemy_penalty;
         if (r == Resource::NoResource) s -= params.robber_desert_penalty;
 
-        // Keep legacy knobs as minor shaping so older configs still behave reasonably.
+        // Keep legacy knobs as minor shaping so older configs still behave
+        // reasonably.
         s += params.robber_enemy_value_w * static_cast<double>(enemyVal);
         s += params.robber_self_value_w * static_cast<double>(selfVal);
         s += params.robber_pips_w * static_cast<double>(pip);
@@ -1151,25 +1297,30 @@ Action::PackedAction ParaPlayer::getTurnAction() {
 
     const double base = evaluate_position(boardState, selfId, params);
 
-    // 1) If we can build a city/settlement, prefer the best of those by simulation.
+    // 1) If we can build a city/settlement, prefer the best of those by
+    // simulation.
     {
         Action::PackedAction bestBuild = Action::getEmptyAction();
         double bestBuildScore = 0;
         for (auto a : actions) {
             const auto t = Action::unpackType(a);
-            if (t != ActionType::BuildCity && t != ActionType::BuildSettlement) continue;
-            const double s = score_action_with_lookahead(boardState, selfId, params, a, base);
+            if (t != ActionType::BuildCity && t != ActionType::BuildSettlement)
+                continue;
+            const double s = score_action_with_lookahead(boardState, selfId,
+                                                         params, a, base);
             if (s > bestBuildScore) {
                 bestBuildScore = s;
                 bestBuild = a;
             }
         }
-        if (Action::unpackType(bestBuild) == ActionType::BuildCity || Action::unpackType(bestBuild) == ActionType::BuildSettlement) {
+        if (Action::unpackType(bestBuild) == ActionType::BuildCity ||
+            Action::unpackType(bestBuild) == ActionType::BuildSettlement) {
             return bestBuild;
         }
     }
 
-    // 2) Score deterministic actions (roads/trades/end turn) using simulation + short lookahead.
+    // 2) Score deterministic actions (roads/trades/end turn) using simulation +
+    // short lookahead.
     std::vector<std::pair<double, Action::PackedAction>> scored;
     scored.reserve(actions.size());
 
@@ -1189,54 +1340,70 @@ Action::PackedAction ParaPlayer::getTurnAction() {
 
     for (auto a : actions) {
         const auto t = Action::unpackType(a);
-        if (t != ActionType::BuildRoad && t != ActionType::TradeBank && t != ActionType::EndTurn) continue;
+        if (t != ActionType::BuildRoad && t != ActionType::TradeBank &&
+            t != ActionType::EndTurn)
+            continue;
 
-        // Cheap score (1-ply simulation). We'll optionally apply expensive lookahead only to top-M.
+        // Cheap score (1-ply simulation). We'll optionally apply expensive
+        // lookahead only to top-M.
         double s = score_one_ply_action(boardState, selfId, params, a, base);
-        if (t == ActionType::BuildRoad && std::abs(params.road_heuristic_w) > 1e-9) {
+        if (t == ActionType::BuildRoad &&
+            std::abs(params.road_heuristic_w) > 1e-9) {
             const EdgeId e = Action::unpackArg1(a);
-            s += params.road_heuristic_w * static_cast<double>(road_action_score(boardState, selfId, e, params));
+            s +=
+                params.road_heuristic_w * static_cast<double>(road_action_score(
+                                              boardState, selfId, e, params));
         }
         scored.push_back({s, a});
     }
 
-    // Optional: apply expensive lookahead only to top-M actions by the cheap score.
-    if (params.policy_self_lookahead > 1 && params.policy_lookahead_top_m > 0 && scored.size() > 1) {
+    // Optional: apply expensive lookahead only to top-M actions by the cheap
+    // score.
+    if (params.policy_self_lookahead > 1 && params.policy_lookahead_top_m > 0 &&
+        scored.size() > 1) {
         std::vector<size_t> idxs;
         idxs.reserve(scored.size());
         for (size_t i = 0; i < scored.size(); ++i) {
             const auto t = Action::unpackType(scored[i].second);
-            if (t == ActionType::BuildRoad || t == ActionType::TradeBank || t == ActionType::EndTurn) {
+            if (t == ActionType::BuildRoad || t == ActionType::TradeBank ||
+                t == ActionType::EndTurn) {
                 idxs.push_back(i);
             }
         }
 
-        const size_t M = std::min(idxs.size(), static_cast<size_t>(std::max(0, params.policy_lookahead_top_m)));
+        const size_t M = std::min(
+            idxs.size(),
+            static_cast<size_t>(std::max(0, params.policy_lookahead_top_m)));
         if (M > 0 && M < idxs.size()) {
-            std::nth_element(
-                idxs.begin(),
-                idxs.begin() + M,
-                idxs.end(),
-                [&](size_t a, size_t b) { return scored[a].first > scored[b].first; }
-            );
+            std::nth_element(idxs.begin(), idxs.begin() + M, idxs.end(),
+                             [&](size_t a, size_t b) {
+                                 return scored[a].first > scored[b].first;
+                             });
             idxs.resize(M);
         }
 
         for (size_t idx : idxs) {
             const auto a = scored[idx].second;
             const auto t = Action::unpackType(a);
-            double s = score_action_with_lookahead(boardState, selfId, params, a, base);
-            if (t == ActionType::BuildRoad && std::abs(params.road_heuristic_w) > 1e-9) {
+            double s = score_action_with_lookahead(boardState, selfId, params,
+                                                   a, base);
+            if (t == ActionType::BuildRoad &&
+                std::abs(params.road_heuristic_w) > 1e-9) {
                 const EdgeId e = Action::unpackArg1(a);
-                s += params.road_heuristic_w * static_cast<double>(road_action_score(boardState, selfId, e, params));
+                s += params.road_heuristic_w *
+                     static_cast<double>(
+                         road_action_score(boardState, selfId, e, params));
             }
             scored[idx].first = s;
         }
     }
 
-    // 3) Dev-buy heuristic (RNG action): prefer when it doesn't block a deterministic build.
+    // 3) Dev-buy heuristic (RNG action): prefer when it doesn't block a
+    // deterministic build.
     if (Action::unpackType(devBuy) == ActionType::BuyDevCard) {
-        const PlayerId enemyId = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+        const PlayerId enemyId = (selfId == PlayerId::Player0)
+                                     ? PlayerId::Player1
+                                     : PlayerId::Player0;
         const int selfVP = effective_vp(boardState, selfId);
         const int enemyVP = effective_vp(boardState, enemyId);
 
@@ -1266,7 +1433,8 @@ Action::PackedAction ParaPlayer::getTurnAction() {
                 bestAlt = it.second;
             }
         }
-        if (bestAlt != Action::getEmptyAction() && bestAltScore + 1e-9 >= base) return bestAlt;
+        if (bestAlt != Action::getEmptyAction() && bestAltScore + 1e-9 >= base)
+            return bestAlt;
     }
 
     return pick;

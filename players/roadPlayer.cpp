@@ -1,35 +1,42 @@
 #include "roadPlayer.hpp"
 
-#include "playerHelpers.hpp"
-
 #include <algorithm>
 #include <array>
 #include <cstdint>
 #include <limits>
 #include <vector>
 
+#include "playerHelpers.hpp"
+
 namespace {
 
+using PlayerHelpers::cost_for;
 using PlayerHelpers::dice_pips;
 using PlayerHelpers::effective_vp;
-using PlayerHelpers::unpack_resources;
-using PlayerHelpers::hand_count;
-using PlayerHelpers::cost_for;
 using PlayerHelpers::evaluate_position;
+using PlayerHelpers::hand_count;
 using PlayerHelpers::is_deterministic_action;
 using PlayerHelpers::node_distance_rule_ok;
 using PlayerHelpers::node_production_score;
+using PlayerHelpers::unpack_resources;
 
 uint8_t resource_weight_road_early(Resource r) {
     // Road-focused opening: ignore ore, prioritize road/settlement resources.
     switch (r) {
-        case Resource::Brick:  return 7;
-        case Resource::Lumber: return 7;
-        case Resource::Grain:  return 4;
-        case Resource::Wool:   return 4;
-        // Not the focus, but completely ignoring ore makes it hard to pivot into cities/dev.
-        case Resource::Ore:    return 2;
-        default:               return 0;
+        case Resource::Brick:
+            return 7;
+        case Resource::Lumber:
+            return 7;
+        case Resource::Grain:
+            return 4;
+        case Resource::Wool:
+            return 4;
+        // Not the focus, but completely ignoring ore makes it hard to pivot
+        // into cities/dev.
+        case Resource::Ore:
+            return 2;
+        default:
+            return 0;
     }
 }
 
@@ -38,8 +45,9 @@ struct PlacementScore {
     Action::PackedAction action = Action::getEmptyAction();
 };
 
-std::array<bool, 5> resources_at_node(const Board::BoardState* board, NodeId nodeId) {
-    std::array<bool, 5> has {false, false, false, false, false};
+std::array<bool, 5> resources_at_node(const Board::BoardState* board,
+                                      NodeId nodeId) {
+    std::array<bool, 5> has{false, false, false, false, false};
     if (nodeId >= NODE_COUNT) return has;
 
     const auto node = board->nodes[nodeId];
@@ -55,13 +63,14 @@ std::array<bool, 5> resources_at_node(const Board::BoardState* board, NodeId nod
     return has;
 }
 
-int score_settlement_node_road(const Board::BoardState* board, NodeId nodeId, bool secondPlacement,
-                              const std::array<bool, 5>& firstRes) {
+int score_settlement_node_road(const Board::BoardState* board, NodeId nodeId,
+                               bool secondPlacement,
+                               const std::array<bool, 5>& firstRes) {
     if (nodeId >= NODE_COUNT) return std::numeric_limits<int>::min();
     const auto node = board->nodes[nodeId];
 
     int productionScore = 0;
-    std::array<uint8_t, 5> resourceCounts {0, 0, 0, 0, 0};
+    std::array<uint8_t, 5> resourceCounts{0, 0, 0, 0, 0};
 
     for (uint8_t i = 0; i < 3; ++i) {
         const HexId hexId = Board::Node::unpackAdjacentHex(node, i);
@@ -72,7 +81,8 @@ int score_settlement_node_road(const Board::BoardState* board, NodeId nodeId, bo
         if (r == Resource::NoResource) continue;
 
         const uint8_t pips = dice_pips(Board::Hex::unpackCatanNumber(hex));
-        productionScore += static_cast<int>(pips) * static_cast<int>(resource_weight_road_early(r));
+        productionScore += static_cast<int>(pips) *
+                           static_cast<int>(resource_weight_road_early(r));
 
         if (static_cast<uint8_t>(r) < 5) {
             resourceCounts[static_cast<size_t>(r)]++;
@@ -107,21 +117,24 @@ int score_settlement_node_road(const Board::BoardState* board, NodeId nodeId, bo
             }
         }
         // Strongly ensure at least one of {Brick, Lumber}.
-        if (!firstRes[static_cast<size_t>(Resource::Brick)] && resourceCounts[static_cast<size_t>(Resource::Brick)] > 0) {
+        if (!firstRes[static_cast<size_t>(Resource::Brick)] &&
+            resourceCounts[static_cast<size_t>(Resource::Brick)] > 0) {
             complementBonus += 20;
         }
-        if (!firstRes[static_cast<size_t>(Resource::Lumber)] && resourceCounts[static_cast<size_t>(Resource::Lumber)] > 0) {
+        if (!firstRes[static_cast<size_t>(Resource::Lumber)] &&
+            resourceCounts[static_cast<size_t>(Resource::Lumber)] > 0) {
             complementBonus += 20;
         }
     }
 
-    return productionScore + diversityBonus + portBonus + complementBonus - duplicatePenalty;
+    return productionScore + diversityBonus + portBonus + complementBonus -
+           duplicatePenalty;
 }
 
-PlacementScore pick_best_road_placement(const Board::BoardState* board,
-                                       const std::vector<Action::PackedAction>& actions,
-                                       bool secondPlacement,
-                                       const std::array<bool, 5>& firstRes) {
+PlacementScore pick_best_road_placement(
+    const Board::BoardState* board,
+    const std::vector<Action::PackedAction>& actions, bool secondPlacement,
+    const std::array<bool, 5>& firstRes) {
     PlacementScore best;
 
     for (const auto a : actions) {
@@ -130,9 +143,11 @@ PlacementScore pick_best_road_placement(const Board::BoardState* board,
         if (nodeId >= NODE_COUNT) continue;
         if (edgeId == EdgeIdNone) continue;
 
-        int s = score_settlement_node_road(board, nodeId, secondPlacement, firstRes);
+        int s = score_settlement_node_road(board, nodeId, secondPlacement,
+                                           firstRes);
 
-        // Prefer roads that lead to a node with higher degree (more expansion options).
+        // Prefer roads that lead to a node with higher degree (more expansion
+        // options).
         NodeId n0 = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 0);
         NodeId n1 = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 1);
         const NodeId other = (n0 == nodeId) ? n1 : n0;
@@ -150,14 +165,16 @@ PlacementScore pick_best_road_placement(const Board::BoardState* board,
     }
 
     if (best.score == std::numeric_limits<int>::min()) {
-        best.action = actions.empty() ? Action::getEmptyAction() : actions.front();
+        best.action =
+            actions.empty() ? Action::getEmptyAction() : actions.front();
         best.score = 0;
     }
 
     return best;
 }
 
-int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId edgeId) {
+int edge_network_score(const Board::BoardState* board, PlayerId selfId,
+                       EdgeId edgeId) {
     if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) return -10000;
 
     int s = 0;
@@ -171,14 +188,16 @@ int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId e
         const auto owner = Board::Node::unpackOwner(node);
         const auto st = Board::Node::unpackStructure(node);
 
-        if (owner == selfId && (st == StructureType::Settlement || st == StructureType::City)) {
+        if (owner == selfId &&
+            (st == StructureType::Settlement || st == StructureType::City)) {
             s += 200;
         }
 
         for (uint8_t i = 0; i < 3; ++i) {
             const EdgeId e = Board::Node::unpackAdjacentEdge(node, i);
             if (e == EdgeIdNone || e >= EDGE_COUNT) continue;
-            if (Board::Edge::unpackHasRoad(board->edges[e]) && Board::Edge::unpackOwner(board->edges[e]) == selfId) {
+            if (Board::Edge::unpackHasRoad(board->edges[e]) &&
+                Board::Edge::unpackOwner(board->edges[e]) == selfId) {
                 s += 120;
                 break;
             }
@@ -189,17 +208,21 @@ int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId e
     score_node(n1);
 
     if (n0 < NODE_COUNT) {
-        if (Board::Node::unpackPortType(board->nodes[n0]) != PortType::NoPort) s += 10;
+        if (Board::Node::unpackPortType(board->nodes[n0]) != PortType::NoPort)
+            s += 10;
     }
     if (n1 < NODE_COUNT) {
-        if (Board::Node::unpackPortType(board->nodes[n1]) != PortType::NoPort) s += 10;
+        if (Board::Node::unpackPortType(board->nodes[n1]) != PortType::NoPort)
+            s += 10;
     }
 
     return s;
 }
 
-int road_action_score(const Board::BoardState* board, PlayerId selfId, EdgeId edgeId) {
-    if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) return std::numeric_limits<int>::min();
+int road_action_score(const Board::BoardState* board, PlayerId selfId,
+                      EdgeId edgeId) {
+    if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT)
+        return std::numeric_limits<int>::min();
 
     int s = edge_network_score(board, selfId, edgeId);
 
@@ -216,18 +239,20 @@ int road_action_score(const Board::BoardState* board, PlayerId selfId, EdgeId ed
 std::array<int, 5> road_keep_weights() {
     // Strongly keep Brick/Lumber to enable road spam.
     return {
-        24, // Brick
-        24, // Lumber
-        10, // Wool
-        10, // Grain
-        2,  // Ore
+        24,  // Brick
+        24,  // Lumber
+        10,  // Wool
+        10,  // Grain
+        2,   // Ore
     };
 }
 
-} // namespace
+}  // namespace
 
-std::pair<Action::PackedAction, Action::PackedAction> RoadPlayer::getInitialPlacement() {
-    auto actions = boardState->generatePlaceInitialStructures(boardState->currentPlayer);
+std::pair<Action::PackedAction, Action::PackedAction>
+RoadPlayer::getInitialPlacement() {
+    auto actions =
+        boardState->generatePlaceInitialStructures(boardState->currentPlayer);
     if (actions.empty()) {
         auto noAction = Action::getEmptyAction();
         return {noAction, noAction};
@@ -235,21 +260,25 @@ std::pair<Action::PackedAction, Action::PackedAction> RoadPlayer::getInitialPlac
 
     firstPlacementResources = {false, false, false, false, false};
 
-    const auto best = pick_best_road_placement(boardState, actions, false, firstPlacementResources);
+    const auto best = pick_best_road_placement(boardState, actions, false,
+                                               firstPlacementResources);
     const NodeId nodeId = Action::unpackArg1(best.action);
     firstPlacementResources = resources_at_node(boardState, nodeId);
 
     return {best.action, best.action};
 }
 
-std::pair<Action::PackedAction, Action::PackedAction> RoadPlayer::get2InitialPlacement() {
-    auto actions = boardState->generatePlace2InitialStructures(boardState->currentPlayer);
+std::pair<Action::PackedAction, Action::PackedAction>
+RoadPlayer::get2InitialPlacement() {
+    auto actions =
+        boardState->generatePlace2InitialStructures(boardState->currentPlayer);
     if (actions.empty()) {
         auto noAction = Action::getEmptyAction();
         return {noAction, noAction};
     }
 
-    const auto best = pick_best_road_placement(boardState, actions, true, firstPlacementResources);
+    const auto best = pick_best_road_placement(boardState, actions, true,
+                                               firstPlacementResources);
     return {best.action, best.action};
 }
 
@@ -276,7 +305,8 @@ Action::PackedAction RoadPlayer::getDiscardAction() {
         for (int i = 0; i < 5; ++i) {
             if (have[static_cast<size_t>(i)] == 0) continue;
 
-            const bool neededForRoad = have[static_cast<size_t>(i)] <= need[static_cast<size_t>(i)];
+            const bool neededForRoad =
+                have[static_cast<size_t>(i)] <= need[static_cast<size_t>(i)];
             int discardCost = baseW[static_cast<size_t>(i)];
             if (neededForRoad) discardCost += 600;
 
@@ -290,7 +320,8 @@ Action::PackedAction RoadPlayer::getDiscardAction() {
 
         const auto r = static_cast<Resource>(bestIdx);
         const uint8_t current = Action::unpackResource(action, r);
-        action = Action::packResource(action, r, static_cast<uint8_t>(current + 1));
+        action =
+            Action::packResource(action, r, static_cast<uint8_t>(current + 1));
         have[static_cast<size_t>(bestIdx)]--;
         remaining--;
     }
@@ -305,11 +336,13 @@ Action::PackedAction RoadPlayer::getTurnAction() {
     if (actions.empty()) return Action::getEmptyAction();
 
     const int baseScore = evaluate_position(boardState, selfId);
-    const auto basePacked = boardState->packedPlayers[static_cast<uint8_t>(selfId)];
+    const auto basePacked =
+        boardState->packedPlayers[static_cast<uint8_t>(selfId)];
     const int baseLen = Player::unpackLongestRoadLength(basePacked);
     const bool baseHasAward = Player::unpackLongestRoadFlag(basePacked);
 
-    const PlayerId enemyId = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+    const PlayerId enemyId =
+        (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
     const int selfVP = effective_vp(boardState, selfId);
     const int enemyVP = effective_vp(boardState, enemyId);
 
@@ -322,15 +355,18 @@ Action::PackedAction RoadPlayer::getTurnAction() {
         boardState->applyAction(a);
         int s = evaluate_position(boardState, selfId) + extraBonus;
 
-        // If this action immediately enables a city/settlement build next, reward it.
-        // (Keeps It5's strong conversion behavior.)
-        if (Action::unpackType(a) == ActionType::TradeBank || Action::unpackType(a) == ActionType::BuildRoad) {
+        // If this action immediately enables a city/settlement build next,
+        // reward it. (Keeps It5's strong conversion behavior.)
+        if (Action::unpackType(a) == ActionType::TradeBank ||
+            Action::unpackType(a) == ActionType::BuildRoad) {
             auto next = boardState->getLegalActions(selfId);
             bool canCity = false;
             bool canSettle = false;
             for (const auto na : next) {
-                if (Action::unpackType(na) == ActionType::BuildCity) canCity = true;
-                if (Action::unpackType(na) == ActionType::BuildSettlement) canSettle = true;
+                if (Action::unpackType(na) == ActionType::BuildCity)
+                    canCity = true;
+                if (Action::unpackType(na) == ActionType::BuildSettlement)
+                    canSettle = true;
             }
             if (canCity) s += 8000;
             if (canSettle) s += 5000;
@@ -338,7 +374,8 @@ Action::PackedAction RoadPlayer::getTurnAction() {
 
         // Mild road bias: prefer roads that grow/secure a continuous network.
         if (Action::unpackType(a) == ActionType::BuildRoad) {
-            const auto packed = boardState->packedPlayers[static_cast<uint8_t>(selfId)];
+            const auto packed =
+                boardState->packedPlayers[static_cast<uint8_t>(selfId)];
             const int len = Player::unpackLongestRoadLength(packed);
             const bool hasAward = Player::unpackLongestRoadFlag(packed);
             const int deltaLen = len - baseLen;
@@ -367,14 +404,16 @@ Action::PackedAction RoadPlayer::getTurnAction() {
             consider(a);
         }
     }
-    if (Action::unpackType(best) == ActionType::BuildCity || Action::unpackType(best) == ActionType::BuildSettlement) {
+    if (Action::unpackType(best) == ActionType::BuildCity ||
+        Action::unpackType(best) == ActionType::BuildSettlement) {
         return best;
     }
 
     // 2) Evaluate all deterministic actions (roads/trades/end turn).
     for (const auto a : actions) {
         const auto t = Action::unpackType(a);
-        if (t == ActionType::BuildRoad || t == ActionType::TradeBank || t == ActionType::EndTurn) {
+        if (t == ActionType::BuildRoad || t == ActionType::TradeBank ||
+            t == ActionType::EndTurn) {
             consider(a);
         }
     }
@@ -408,7 +447,8 @@ Action::PackedAction RoadPlayer::getTurnAction() {
     }
 
     // Avoid choosing EndTurn when it doesn't improve the evaluation.
-    if (Action::unpackType(best) == ActionType::EndTurn && bestScore < baseScore) {
+    if (Action::unpackType(best) == ActionType::EndTurn &&
+        bestScore < baseScore) {
         return It4Player::getTurnAction();
     }
 

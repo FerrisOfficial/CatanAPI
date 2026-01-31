@@ -1,80 +1,180 @@
+# Players Directory
 
-# Players
+This directory contains all player implementations (bots) for the Catan game simulation. Each bot inherits from the `IPlayer` interface and implements strategies for playing the game.
 
-This folder contains example AI player implementations used by the game simulation.
+## Table of Contents
 
-## Random Player
+- [Introduction](#introduction)
+- [IPlayer Interface](#iplayer-interface)
+- [Board Methods Available to Players](#board-methods-available-to-players)
+- [Implemented Bots](#implemented-bots)
+- [Creating a New Bot](#creating-a-new-bot)
 
-The Random Player is a baseline strategy that selects its next move by sampling uniformly from the set of currently legal actions.
+## Introduction
 
-- It does not evaluate positions, track long-term plans, or attempt to optimize resource collection.
-- It is useful as a simple opponent, a sanity check for game rules, and a benchmark when comparing stronger strategies.
+Bots are AI players that can participate in Catan games. They implement different strategies, from simple random moves to complex algorithms like alpha-beta pruning. All bots inherit from the abstract `IPlayer` class and must implement its pure virtual methods.
 
-## It1Player
+## IPlayer Interface
 
-It1Player is a small improvement over Random Player.
+The `IPlayer` class defines the interface that all bots must implement. It provides methods for different phases of the game:
 
-It inherits the same random behavior for setup, discarding, robber moves, and development-card play, but overrides turn decisions to prefer building actions when available.
+### Implemented Methods
 
-Priority order in `getTurnAction()`:
+- `getInitialPlacement()`: Returns initial settlement and road placements (2 pairs of actions).
+- `get2InitialPlacement()`: Returns second initial settlement and road placements.
+- `getTurnAction()`: Returns the main action for a turn (build, trade, etc.).
+- `getDevAction()`: Returns action for playing development cards.
+- `getDiscardAction()`: Returns action for discarding resources during robber attacks.
+- `getMoveRobber()`: Returns action for moving the robber and stealing.
 
-- Build city
-- Build settlement
-- Build road
-- Buy development card
-- Otherwise pick randomly from other legal actions (e.g., trades)
-- End turn
+All methods return `Action::PackedAction` values, which are compact representations of game actions.
 
-## It2Player
+## Board Methods Available to Players
 
-It2Player keeps It1’s build priorities, but adds a **goal-directed bank/port trading heuristic**.
+Players have access to the `Board::BoardState` through the `boardState` pointer. The board provides various methods for querying and generating actions:
 
-High-level behavior:
+### Query Methods
+- `getLegalActions(playerId)`: Get all legal actions for a player.
+- `getCurrentPlayer()`: Get the current player ID.
+- `getCurrentTurn()`: Get the current turn number.
 
-- If a **city** or **settlement** build is legal, it takes it immediately (same as It1).
-- Otherwise, if a bank/port **trade** is legal, it tries to trade **towards the closest affordable purchase**, where “closest” means: *minimize how many cards are still missing after best-case trading*, using the player’s current ports (2:1, 3:1, 4:1).
-	- It evaluates targets in this order for tie-breaks: City > Settlement > Road > DevCard.
-	- It chooses a concrete trade that reduces the “deficit” to the chosen target and prefers better ratios (2:1 first, then 3:1, then 4:1).
-	- It only spends resources that are surplus relative to the chosen target’s cost.
-- If no helpful trade exists, it falls back to It1-style: Road, then DevCard, then random among remaining actions.
+### Action Generation Methods
+- `generatePlaceInitialStructures(playerId)`: Generate initial settlement/road placements.
+- `generatePlace2InitialStructures(playerId)`: Generate second initial placements.
+- `generateBuildActions(playerId)`: Generate building actions (settlements, cities, roads).
+- `generateTradeActions(playerId)`: Generate trading actions.
+- `generatePlayDevCardActions(playerId)`: Generate development card playing actions.
+- `generateMoveRobberActions(playerId)`: Generate robber movement actions.
 
-Note: this means It2 may trade even when a road/dev purchase is currently legal, if trading moves it closer to a higher-value target.
+### Helper Methods
+- `getPlayerResources(playerId)`: Get player's current resources.
+- `getPlayerDevCards(playerId)`: Get player's development cards.
+- `getLongestRoadPlayer()`: Get player with longest road.
+- `getLargestArmyPlayer()`: Get player with largest army.
 
-## It3Player
+## Implemented Bots
 
-It3Player inherits **It2Player’s turn logic**, but improves:
+### Basic Bots
 
-- **Setup** (`getInitialPlacement()`, `get2InitialPlacement()`): chooses initial settlement+road placements by scoring candidate settlement nodes using dice-number “pips” (6/8 highest), early-game resource preferences (Brick/Lumber slightly favored), resource diversity, and a modest port bonus. The second placement additionally prefers covering resources that the first placement didn’t provide.
-- **Robber** (`getMoveRobber()`): prefers moving the robber onto high-frequency hexes that hurt the opponent’s production while avoiding blocking its own production (strongly prefers hexes where the opponent has buildings and It3 does not).
+#### RandomPlayer
+- **Strategy**: Makes completely random legal moves.
+- **Use**: Baseline for testing, very fast.
+- **Strength**: Poor, but can occasionally win by luck.
 
-## It4Player
+#### RoadPlayer
+- **Strategy**: Prioritizes building roads to achieve longest road victory.
+- **Use**: Good for testing road-building mechanics.
+- **Strength**: Strong in road-focused games.
 
-It4Player inherits **It3Player** (so it keeps It3’s improved setup + robber), and adds two major improvements:
+### Iterative Bots (itPlayers/)
 
-- Smarter **development-card usage** via `getDevAction()`.
-- Stronger, more deterministic **turn policy** via `getTurnAction()` (better build placement choices and more goal-directed trades).
+These bots represent incremental improvements over the basic random strategy:
 
-High-level behavior:
+#### It1Player
+- **Strategy**: Same as RandomPlayer (baseline).
 
-- Generally avoids playing a development card **before rolling** unless it has a strong reason (e.g., securing Largest Army, a high-value Monopoly).
-- **Knight**: prioritizes playing a knight if it would immediately secure (or swing) **Largest Army**; otherwise chooses a robber move that reduces opponent production while minimizing self-blocking.
-- **Monopoly**: plays when the opponent holds a meaningful amount of a resource (prefers denying resources that help the opponent and that help It4’s current best purchase goal).
-- **Year of Plenty**: prefers resource pairs that reduce the deficit to the best purchase target; huge preference if it makes a City/Settlement immediately affordable.
-- **Road Building**: prefers road placements that connect to the player’s existing network (roads/settlements), with a bias toward building two roads when possible.
+#### It2Player
+- **Strategy**: Improved initial placements + better robber management.
 
-Turn policy highlights:
+#### It3Player
+- **Strategy**: It2 + smarter development card usage.
 
-- If a **City** is buildable, picks the best city upgrade (production-weighted).
-- Else if a **Settlement** is buildable, picks the best settlement node (production-weighted + ports).
-- Else considers **bank/port trades** that reduce the deficit to the best purchase target.
-- Otherwise chooses between **Road** and **BuyDevCard** with a bias toward dev cards in mid-game.
+#### It4Player
+- **Strategy**: It3 + optimized development card playing.
 
-## It5Player
+#### It5Player
+- **Strategy**: Full strategy implementation with all improvements.
 
-It5Player inherits **It4Player** and focuses on handling the “7 discard” rule better while also improving deterministic turn decisions.
+### Specialized Bots (oneTacticPlayers/)
 
-- **Discarding** (`getDiscardAction()`): when the hand size is above the limit, it discards resources that least damage its closest purchase plan.
-	- Note: in this project, discarding triggers when you have **10+** resource cards (hand limit **9**) and you discard `totalResources / 2`.
-- **Turn action** (`getTurnAction()`): uses a 1-step lookahead for deterministic actions (builds, roads, trades) by temporarily applying an action to the board, scoring the resulting position, then undoing it.
-	- It intentionally does **not** simulate RNG actions like `BuyDevCard` (because that would consume randomness and bias the simulation).
+#### AlphaBetaPlayer
+- **Strategy**: Uses alpha-beta pruning algorithm for move evaluation.
+- **Use**: Advanced AI with look-ahead capabilities.
+- **Strength**: Very strong, but slower.
 
+#### CityRushPlayer
+- **Strategy**: Focuses on building cities as quickly as possible.
+- **Use**: Good for city-focused victory conditions.
+- **Strength**: Strong in resource-rich games.
+
+#### DevPlayer
+- **Strategy**: Prioritizes acquiring and playing development cards.
+- **Use**: Good for development card heavy strategies.
+- **Strength**: Strong in games with many dev cards.
+
+#### OneResourcePlayer
+- **Strategy**: Focuses on maximizing production of a single resource type.
+- **Use**: Testing resource monopolization.
+- **Strength**: Situational, very strong in specific board layouts.
+
+### Parametric Bots (parametricPlayers/)
+
+#### ParaPlayer
+- **Strategy**: Uses configurable parameters for decision making.
+- **Use**: Research and optimization of bot parameters.
+- **Strength**: Variable, can be tuned for high performance.
+
+#### ParaSetit5Player
+- **Strategy**: Advanced parametric bot with more parameters.
+- **Use**: High-performance configurable AI.
+- **Strength**: Potentially very strong when optimized.
+
+## Creating a New Bot
+
+To create a new bot:
+
+1. **Create header and implementation files** in appropriate subfolder (e.g., `myBot.hpp` and `myBot.cpp`).
+
+2. **Inherit from IPlayer**:
+   ```cpp
+   class MyBot : public IPlayer {
+   public:
+       MyBot() : IPlayer() {}
+       virtual ~MyBot() = default;
+
+       // Implement all pure virtual methods
+       std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement() override;
+       // ... other methods
+   };
+   ```
+
+3. **Implement the methods** using `boardState` to query game state and generate actions.
+
+4. **Add to CMakeLists.txt** in the players directory to include in build.
+
+5. **Test the bot** by running games with it.
+
+### Tips for Implementation
+
+- Always check `boardState->getLegalActions()` to ensure actions are valid.
+- Use helper functions from `playerHelpers.hpp` for common calculations.
+- Consider game phase (initial placement vs. main game) in your logic.
+- Test with different board configurations and opponent types.
+
+### Example Simple Bot
+
+```cpp
+#include "player.hpp"
+
+class SimpleBot : public IPlayer {
+public:
+    std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement() override {
+        auto actions = boardState->generatePlaceInitialStructures(boardState->getCurrentPlayer());
+        if (actions.empty()) {
+            auto noAction = Action::getEmptyAction();
+            return {noAction, noAction};
+        }
+        // Pick first available placement
+        return {actions[0], actions[0]};
+    }
+
+    Action::PackedAction getTurnAction() override {
+        auto actions = boardState->getLegalActions(boardState->getCurrentPlayer());
+        if (actions.empty()) return Action::getEmptyAction();
+        // Pick random action
+        return actions[RandomDevice::uniform_u32_range(0, actions.size() - 1)];
+    }
+
+    // Implement other methods similarly...
+};
+```

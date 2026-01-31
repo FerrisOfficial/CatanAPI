@@ -1,33 +1,41 @@
 #include "cityRushPlayer.hpp"
-#include "playerHelpers.hpp"
 
-#include <array>
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <vector>
 
+#include "playerHelpers.hpp"
+
 namespace {
-using PlayerHelpers::dice_pips;
-using PlayerHelpers::unpack_resources;
 using PlayerHelpers::cost_for;
 using PlayerHelpers::deficit;
+using PlayerHelpers::dice_pips;
 using PlayerHelpers::evaluate_position;
 using PlayerHelpers::is_deterministic_action;
+using PlayerHelpers::unpack_resources;
 
 int city_rush_resource_weight(Resource r) {
     // Mild city bias, but keep early expansion healthy.
     switch (r) {
-        case Resource::Brick: return 5;
-        case Resource::Lumber: return 5;
-        case Resource::Wool: return 4;
-        case Resource::Grain: return 6;
-        case Resource::Ore: return 6;
-        default: return 0;
+        case Resource::Brick:
+            return 5;
+        case Resource::Lumber:
+            return 5;
+        case Resource::Wool:
+            return 4;
+        case Resource::Grain:
+            return 6;
+        case Resource::Ore:
+            return 6;
+        default:
+            return 0;
     }
 }
 
-std::array<bool, 5> resources_at_node(const Board::BoardState* board, NodeId nodeId) {
-    std::array<bool, 5> has {false, false, false, false, false};
+std::array<bool, 5> resources_at_node(const Board::BoardState* board,
+                                      NodeId nodeId) {
+    std::array<bool, 5> has{false, false, false, false, false};
     if (nodeId >= NODE_COUNT) return has;
     const auto node = board->nodes[nodeId];
     for (uint8_t i = 0; i < 3; ++i) {
@@ -40,7 +48,8 @@ std::array<bool, 5> resources_at_node(const Board::BoardState* board, NodeId nod
     return has;
 }
 
-int score_city_rush_node(const Board::BoardState* board, NodeId nodeId, bool secondPlacement,
+int score_city_rush_node(const Board::BoardState* board, NodeId nodeId,
+                         bool secondPlacement,
                          const std::array<bool, 5>& firstRes) {
     if (nodeId >= NODE_COUNT) return std::numeric_limits<int>::min();
     const auto node = board->nodes[nodeId];
@@ -48,7 +57,7 @@ int score_city_rush_node(const Board::BoardState* board, NodeId nodeId, bool sec
     int productionScore = 0;
     int orePips = 0;
     int grainPips = 0;
-    std::array<uint8_t, 5> resourceCounts {0, 0, 0, 0, 0};
+    std::array<uint8_t, 5> resourceCounts{0, 0, 0, 0, 0};
 
     for (uint8_t i = 0; i < 3; ++i) {
         const HexId hexId = Board::Node::unpackAdjacentHex(node, i);
@@ -57,7 +66,8 @@ int score_city_rush_node(const Board::BoardState* board, NodeId nodeId, bool sec
         const Resource r = Board::Hex::unpackResource(hex);
         if (r == Resource::NoResource) continue;
 
-        const int pips = static_cast<int>(dice_pips(Board::Hex::unpackCatanNumber(hex)));
+        const int pips =
+            static_cast<int>(dice_pips(Board::Hex::unpackCatanNumber(hex)));
         productionScore += pips * city_rush_resource_weight(r);
 
         if (r == Resource::Ore) orePips += pips;
@@ -73,7 +83,8 @@ int score_city_rush_node(const Board::BoardState* board, NodeId nodeId, bool sec
 
     int duplicatePenalty = 0;
     for (size_t i = 0; i < 5; ++i) {
-        if (resourceCounts[i] > 1) duplicatePenalty += 18 * static_cast<int>(resourceCounts[i] - 1);
+        if (resourceCounts[i] > 1)
+            duplicatePenalty += 18 * static_cast<int>(resourceCounts[i] - 1);
     }
 
     // City-rush tilt: keep it present but not dominant.
@@ -85,8 +96,12 @@ int score_city_rush_node(const Board::BoardState* board, NodeId nodeId, bool sec
             if (resourceCounts[i] > 0 && !firstRes[i]) complementBonus += 18;
         }
         // Strongly avoid ending setup without Brick/Lumber access.
-        if (!firstRes[static_cast<size_t>(Resource::Brick)] && resourceCounts[static_cast<size_t>(Resource::Brick)] > 0) complementBonus += 14;
-        if (!firstRes[static_cast<size_t>(Resource::Lumber)] && resourceCounts[static_cast<size_t>(Resource::Lumber)] > 0) complementBonus += 14;
+        if (!firstRes[static_cast<size_t>(Resource::Brick)] &&
+            resourceCounts[static_cast<size_t>(Resource::Brick)] > 0)
+            complementBonus += 14;
+        if (!firstRes[static_cast<size_t>(Resource::Lumber)] &&
+            resourceCounts[static_cast<size_t>(Resource::Lumber)] > 0)
+            complementBonus += 14;
     }
 
     int portBonus = 0;
@@ -105,17 +120,22 @@ int score_city_rush_node(const Board::BoardState* board, NodeId nodeId, bool sec
         stallPenalty = secondPlacement ? 45 : 70;
     }
     if (secondPlacement) {
-        if (!firstRes[static_cast<size_t>(Resource::Brick)] && resourceCounts[static_cast<size_t>(Resource::Brick)] == 0) stallPenalty += 35;
-        if (!firstRes[static_cast<size_t>(Resource::Lumber)] && resourceCounts[static_cast<size_t>(Resource::Lumber)] == 0) stallPenalty += 35;
+        if (!firstRes[static_cast<size_t>(Resource::Brick)] &&
+            resourceCounts[static_cast<size_t>(Resource::Brick)] == 0)
+            stallPenalty += 35;
+        if (!firstRes[static_cast<size_t>(Resource::Lumber)] &&
+            resourceCounts[static_cast<size_t>(Resource::Lumber)] == 0)
+            stallPenalty += 35;
     }
 
-    return productionScore + diversityBonus + cityBias + complementBonus + portBonus - duplicatePenalty - stallPenalty;
+    return productionScore + diversityBonus + cityBias + complementBonus +
+           portBonus - duplicatePenalty - stallPenalty;
 }
 
-Action::PackedAction pick_best_city_rush_placement(const Board::BoardState* board,
-                                                   const std::vector<Action::PackedAction>& actions,
-                                                   bool secondPlacement,
-                                                   const std::array<bool, 5>& firstRes) {
+Action::PackedAction pick_best_city_rush_placement(
+    const Board::BoardState* board,
+    const std::vector<Action::PackedAction>& actions, bool secondPlacement,
+    const std::array<bool, 5>& firstRes) {
     int bestScore = std::numeric_limits<int>::min();
     Action::PackedAction best = Action::getEmptyAction();
 
@@ -126,8 +146,10 @@ Action::PackedAction pick_best_city_rush_placement(const Board::BoardState* boar
 
         int s = score_city_rush_node(board, nodeId, secondPlacement, firstRes);
 
-        const NodeId n0 = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 0);
-        const NodeId n1 = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 1);
+        const NodeId n0 =
+            Board::Edge::unpackAdjacentNode(board->edges[edgeId], 0);
+        const NodeId n1 =
+            Board::Edge::unpackAdjacentNode(board->edges[edgeId], 1);
         const NodeId other = (n0 == nodeId) ? n1 : n0;
         if (other < NODE_COUNT) {
             const auto adj = Board::Node::getAdjacentEdges(board->nodes[other]);
@@ -153,37 +175,46 @@ bool has_upgradeable_settlement(const Board::BoardState* board, PlayerId pid) {
     for (NodeId n = 0; n < NODE_COUNT; ++n) {
         const auto node = board->nodes[n];
         if (Board::Node::unpackOwner(node) != pid) continue;
-        if (Board::Node::unpackStructure(node) == StructureType::Settlement) return true;
+        if (Board::Node::unpackStructure(node) == StructureType::Settlement)
+            return true;
     }
     return false;
 }
 
-} // namespace
+}  // namespace
 
-std::pair<Action::PackedAction, Action::PackedAction> CityRushPlayer::getInitialPlacement() {
-    auto actions = boardState->generatePlaceInitialStructures(boardState->currentPlayer);
+std::pair<Action::PackedAction, Action::PackedAction>
+CityRushPlayer::getInitialPlacement() {
+    auto actions =
+        boardState->generatePlaceInitialStructures(boardState->currentPlayer);
     if (actions.empty()) {
         auto noAction = Action::getEmptyAction();
         return {noAction, noAction};
     }
 
-    const std::array<bool, 5> emptyFirst {false, false, false, false, false};
-    const auto best = pick_best_city_rush_placement(boardState, actions, false, emptyFirst);
+    const std::array<bool, 5> emptyFirst{false, false, false, false, false};
+    const auto best =
+        pick_best_city_rush_placement(boardState, actions, false, emptyFirst);
     const NodeId nodeId = Action::unpackArg1(best);
     firstPlacementResources = resources_at_node(boardState, nodeId);
     hasFirstPlacement = true;
     return {best, best};
 }
 
-std::pair<Action::PackedAction, Action::PackedAction> CityRushPlayer::get2InitialPlacement() {
-    auto actions = boardState->generatePlace2InitialStructures(boardState->currentPlayer);
+std::pair<Action::PackedAction, Action::PackedAction>
+CityRushPlayer::get2InitialPlacement() {
+    auto actions =
+        boardState->generatePlace2InitialStructures(boardState->currentPlayer);
     if (actions.empty()) {
         auto noAction = Action::getEmptyAction();
         return {noAction, noAction};
     }
 
-    const auto best = pick_best_city_rush_placement(boardState, actions, true, hasFirstPlacement ? firstPlacementResources
-                                                                                                 : std::array<bool, 5>{false, false, false, false, false});
+    const auto best = pick_best_city_rush_placement(
+        boardState, actions, true,
+        hasFirstPlacement
+            ? firstPlacementResources
+            : std::array<bool, 5>{false, false, false, false, false});
     return {best, best};
 }
 
@@ -193,8 +224,9 @@ Action::PackedAction CityRushPlayer::getTurnAction() {
     auto actions = boardState->getLegalActions(selfId);
     if (actions.empty()) return Action::getEmptyAction();
 
-    // Keep the "rush cities" identity by snapping to city builds when available,
-    // but otherwise rely on It5's much stronger overall policy (including dev cards).
+    // Keep the "rush cities" identity by snapping to city builds when
+    // available, but otherwise rely on It5's much stronger overall policy
+    // (including dev cards).
     for (const auto a : actions) {
         if (Action::unpackType(a) == ActionType::BuildCity) return a;
     }

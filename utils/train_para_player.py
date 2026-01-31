@@ -8,7 +8,7 @@ Example (after building):
 
 Notes:
 - The runner is invoked with --switch to reduce seat bias.
-- ParaPlayer reads config from ./players/paraPlayer.cfg.
+- ParaPlayer reads config from ./players/parametricPlayers/paraPlayer.cfg.
 """
 
 from __future__ import annotations
@@ -479,13 +479,13 @@ def main() -> int:
         "--base-cfg",
         type=Path,
         default=None,
-        help="(Deprecated) Ignored. ParaPlayer uses only ./players/paraPlayer.cfg.",
+        help="(Deprecated) Ignored. ParaPlayer uses only ./players/parametricPlayers/paraPlayer.cfg.",
     )
     ap.add_argument(
         "--out",
         type=Path,
-        default=Path("players/paraPlayer.cfg"),
-        help="(Deprecated) Ignored. ParaPlayer uses only ./players/paraPlayer.cfg.",
+        default=Path("players/parametricPlayers/paraPlayer.cfg"),
+        help="(Deprecated) Ignored. ParaPlayer uses only ./players/parametricPlayers/paraPlayer.cfg.",
     )
     ap.add_argument(
         "--log-file",
@@ -576,7 +576,7 @@ def main() -> int:
 
     repo_root = Path(__file__).resolve().parents[1]
 
-    canonical_cfg = repo_root / "players" / "paraPlayer.cfg"
+    canonical_cfg = repo_root / "players" / "parametricPlayers" / "paraPlayer.cfg"
 
     run_exe = args.run_exe
     if run_exe is None:

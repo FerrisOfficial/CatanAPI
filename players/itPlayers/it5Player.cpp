@@ -1,35 +1,41 @@
 #include "it5Player.hpp"
-#include "playerHelpers.hpp"
 
-#include <array>
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
+#include "playerHelpers.hpp"
+
 namespace {
 
-using PlayerHelpers::effective_vp;
-using PlayerHelpers::unpack_resources;
-using PlayerHelpers::hand_count;
 using PlayerHelpers::cost_for;
 using PlayerHelpers::deficit;
-using PlayerHelpers::node_production_score;
-using PlayerHelpers::production_score_for_player;
+using PlayerHelpers::effective_vp;
+using PlayerHelpers::evaluate_position;
+using PlayerHelpers::hand_count;
+using PlayerHelpers::is_deterministic_action;
 using PlayerHelpers::node_distance_rule_ok;
 using PlayerHelpers::node_is_adjacent_to_own_road;
+using PlayerHelpers::node_production_score;
+using PlayerHelpers::production_score_for_player;
 using PlayerHelpers::settlement_potential_score;
-using PlayerHelpers::evaluate_position;
-using PlayerHelpers::is_deterministic_action;
+using PlayerHelpers::unpack_resources;
 
 int priority_index(BuyableType b) {
     switch (b) {
-        case BuyableType::City: return 0;
-        case BuyableType::Settlement: return 1;
-        case BuyableType::Road: return 2;
-        case BuyableType::DevCard: return 3;
-        default: return 99;
+        case BuyableType::City:
+            return 0;
+        case BuyableType::Settlement:
+            return 1;
+        case BuyableType::Road:
+            return 2;
+        case BuyableType::DevCard:
+            return 3;
+        default:
+            return 99;
     }
 }
 
@@ -37,10 +43,12 @@ BuyableType best_target_for_discard(const std::array<uint8_t, 5>& have) {
     BuyableType best = BuyableType::Road;
     uint16_t bestDef = std::numeric_limits<uint16_t>::max();
 
-    for (BuyableType t : {BuyableType::City, BuyableType::Settlement, BuyableType::Road, BuyableType::DevCard}) {
+    for (BuyableType t : {BuyableType::City, BuyableType::Settlement,
+                          BuyableType::Road, BuyableType::DevCard}) {
         const auto need = cost_for(t);
         const auto d = deficit(have, need);
-        if (d < bestDef || (d == bestDef && priority_index(t) < priority_index(best))) {
+        if (d < bestDef ||
+            (d == bestDef && priority_index(t) < priority_index(best))) {
             bestDef = d;
             best = t;
         }
@@ -52,16 +60,14 @@ BuyableType best_target_for_discard(const std::array<uint8_t, 5>& have) {
 std::array<int, 5> base_keep_weights_for(BuyableType target) {
     // Base (slight city/dev bias).
     std::array<int, 5> w = {
-        10, // Brick
-        10, // Lumber
-        8,  // Wool
-        12, // Grain
-        13, // Ore
+        10,  // Brick
+        10,  // Lumber
+        8,   // Wool
+        12,  // Grain
+        13,  // Ore
     };
 
-    auto add = [&](Resource r, int v) {
-        w[static_cast<size_t>(r)] += v;
-    };
+    auto add = [&](Resource r, int v) { w[static_cast<size_t>(r)] += v; };
 
     switch (target) {
         case BuyableType::City:
@@ -90,10 +96,10 @@ std::array<int, 5> base_keep_weights_for(BuyableType target) {
     return w;
 }
 
+}  // namespace
 
-} // namespace
-
-int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId edgeId) {
+int edge_network_score(const Board::BoardState* board, PlayerId selfId,
+                       EdgeId edgeId) {
     if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) return -10000;
 
     int s = 0;
@@ -101,20 +107,22 @@ int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId e
     const NodeId n0 = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 0);
     const NodeId n1 = Board::Edge::unpackAdjacentNode(board->edges[edgeId], 1);
 
-    const auto score_node = [&](NodeId n) { 
+    const auto score_node = [&](NodeId n) {
         if (n >= NODE_COUNT) return;
         const auto node = board->nodes[n];
         const auto owner = Board::Node::unpackOwner(node);
         const auto st = Board::Node::unpackStructure(node);
 
-        if (owner == selfId && (st == StructureType::Settlement || st == StructureType::City)) {
+        if (owner == selfId &&
+            (st == StructureType::Settlement || st == StructureType::City)) {
             s += 200;
         }
 
         for (uint8_t i = 0; i < 3; ++i) {
             const EdgeId e = Board::Node::unpackAdjacentEdge(node, i);
             if (e == EdgeIdNone || e >= EDGE_COUNT) continue;
-            if (Board::Edge::unpackHasRoad(board->edges[e]) && Board::Edge::unpackOwner(board->edges[e]) == selfId) {
+            if (Board::Edge::unpackHasRoad(board->edges[e]) &&
+                Board::Edge::unpackOwner(board->edges[e]) == selfId) {
                 s += 120;
                 break;
             }
@@ -125,17 +133,21 @@ int edge_network_score(const Board::BoardState* board, PlayerId selfId, EdgeId e
     score_node(n1);
 
     if (n0 < NODE_COUNT) {
-        if (Board::Node::unpackPortType(board->nodes[n0]) != PortType::NoPort) s += 10;
+        if (Board::Node::unpackPortType(board->nodes[n0]) != PortType::NoPort)
+            s += 10;
     }
     if (n1 < NODE_COUNT) {
-        if (Board::Node::unpackPortType(board->nodes[n1]) != PortType::NoPort) s += 10;
+        if (Board::Node::unpackPortType(board->nodes[n1]) != PortType::NoPort)
+            s += 10;
     }
 
     return s;
 }
 
-int road_action_score(const Board::BoardState* board, PlayerId selfId, EdgeId edgeId) {
-    if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) return std::numeric_limits<int>::min();
+int road_action_score(const Board::BoardState* board, PlayerId selfId,
+                      EdgeId edgeId) {
+    if (edgeId == EdgeIdNone || edgeId >= EDGE_COUNT)
+        return std::numeric_limits<int>::min();
 
     int s = edge_network_score(board, selfId, edgeId);
 
@@ -174,7 +186,8 @@ Action::PackedAction It5Player::getDiscardAction() {
             if (have[static_cast<size_t>(i)] == 0) continue;
 
             // Prefer discarding surplus over required parts of the target.
-            const bool neededForTarget = have[static_cast<size_t>(i)] <= need[static_cast<size_t>(i)];
+            const bool neededForTarget =
+                have[static_cast<size_t>(i)] <= need[static_cast<size_t>(i)];
             int discardCost = baseW[static_cast<size_t>(i)];
             if (neededForTarget) discardCost += 500;
 
@@ -188,7 +201,8 @@ Action::PackedAction It5Player::getDiscardAction() {
 
         const auto r = static_cast<Resource>(bestIdx);
         const uint8_t current = Action::unpackResource(action, r);
-        action = Action::packResource(action, r, static_cast<uint8_t>(current + 1));
+        action =
+            Action::packResource(action, r, static_cast<uint8_t>(current + 1));
         have[static_cast<size_t>(bestIdx)]--;
         remaining--;
     }
@@ -212,15 +226,18 @@ Action::PackedAction It5Player::getTurnAction() {
         boardState->applyAction(a);
         int s = evaluate_position(boardState, selfId) + extraBonus;
 
-        // If this action immediately enables a city/settlement build next, reward it.
-        // (This helps trades/roads that unlock a strong build.)
-        if (Action::unpackType(a) == ActionType::TradeBank || Action::unpackType(a) == ActionType::BuildRoad) {
+        // If this action immediately enables a city/settlement build next,
+        // reward it. (This helps trades/roads that unlock a strong build.)
+        if (Action::unpackType(a) == ActionType::TradeBank ||
+            Action::unpackType(a) == ActionType::BuildRoad) {
             auto next = boardState->getLegalActions(selfId);
             bool canCity = false;
             bool canSettle = false;
             for (const auto na : next) {
-                if (Action::unpackType(na) == ActionType::BuildCity) canCity = true;
-                if (Action::unpackType(na) == ActionType::BuildSettlement) canSettle = true;
+                if (Action::unpackType(na) == ActionType::BuildCity)
+                    canCity = true;
+                if (Action::unpackType(na) == ActionType::BuildSettlement)
+                    canSettle = true;
             }
             if (canCity) s += 8000;
             if (canSettle) s += 5000;
@@ -241,21 +258,25 @@ Action::PackedAction It5Player::getTurnAction() {
             consider(a);
         }
     }
-    if (Action::unpackType(best) == ActionType::BuildCity || Action::unpackType(best) == ActionType::BuildSettlement) {
+    if (Action::unpackType(best) == ActionType::BuildCity ||
+        Action::unpackType(best) == ActionType::BuildSettlement) {
         return best;
     }
 
     // 2) Evaluate all deterministic actions (roads/trades/end turn).
     for (const auto a : actions) {
         const auto t = Action::unpackType(a);
-        if (t == ActionType::BuildRoad || t == ActionType::TradeBank || t == ActionType::EndTurn) {
+        if (t == ActionType::BuildRoad || t == ActionType::TradeBank ||
+            t == ActionType::EndTurn) {
             consider(a);
         }
     }
 
     // 3) Heuristic for dev-card buying without simulating (it is RNG).
-    // Prefer dev-buy when it doesn't block an imminent city/settlement and we're not already far ahead.
-    const PlayerId enemyId = (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
+    // Prefer dev-buy when it doesn't block an imminent city/settlement and
+    // we're not already far ahead.
+    const PlayerId enemyId =
+        (selfId == PlayerId::Player0) ? PlayerId::Player1 : PlayerId::Player0;
     const int selfVP = effective_vp(boardState, selfId);
     const int enemyVP = effective_vp(boardState, enemyId);
 
@@ -269,12 +290,15 @@ Action::PackedAction It5Player::getTurnAction() {
     }
 
     if (Action::unpackType(devBuy) == ActionType::BuyDevCard) {
-        // If we're behind or midgame and no strong deterministic improvement exists, dev-buy is often good.
+        // If we're behind or midgame and no strong deterministic improvement
+        // exists, dev-buy is often good.
         int devScore = baseScore + 1500;
         if (enemyVP > selfVP) devScore += 2500;
-        if (selfVP >= 8) devScore -= 500; // late-game: prefer deterministic builds/trades.
-        if (hasTrade) devScore -= 500;    // trades can be more targeted.
-        if (hasRoad) devScore -= 200;     // roads might open deterministic settlement.
+        if (selfVP >= 8)
+            devScore -= 500;  // late-game: prefer deterministic builds/trades.
+        if (hasTrade) devScore -= 500;  // trades can be more targeted.
+        if (hasRoad)
+            devScore -= 200;  // roads might open deterministic settlement.
 
         if (devScore > bestScore) {
             bestScore = devScore;
@@ -288,7 +312,8 @@ Action::PackedAction It5Player::getTurnAction() {
     }
 
     // Avoid choosing EndTurn when it doesn't improve the evaluation.
-    if (Action::unpackType(best) == ActionType::EndTurn && bestScore < baseScore) {
+    if (Action::unpackType(best) == ActionType::EndTurn &&
+        bestScore < baseScore) {
         return It4Player::getTurnAction();
     }
 

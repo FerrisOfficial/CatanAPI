@@ -1,9 +1,5 @@
 #include "paraSetit5Player.hpp"
 
-#include "game_simulation/board.hpp"
-#include "utils/randomDevice.hpp"
-#include "playerHelpers.hpp"
-
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -17,6 +13,10 @@
 #include <unordered_map>
 #include <vector>
 
+#include "game_simulation/board.hpp"
+#include "playerHelpers.hpp"
+#include "utils/randomDevice.hpp"
+
 namespace {
 
 using PlayerHelpers::dice_pips;
@@ -25,8 +25,8 @@ constexpr const char* PARA_SETIT5_CFG_ENV = "CATAN_PARA_SETIT5_CFG";
 
 struct ParaSettleParams {
     // policy
-    double policy_temperature = 0.0; // 0 = greedy, >0 = softmax
-    double policy_epsilon = 0.02;    // random pick
+    double policy_temperature = 0.0;  // 0 = greedy, >0 = softmax
+    double policy_epsilon = 0.02;     // random pick
     int policy_top_k = 1;
 
     // production scoring
@@ -56,14 +56,19 @@ struct ParaSettleParams {
 
         auto trim = [](std::string s) {
             size_t b = 0;
-            while (b < s.size() && std::isspace(static_cast<unsigned char>(s[b]))) ++b;
+            while (b < s.size() &&
+                   std::isspace(static_cast<unsigned char>(s[b])))
+                ++b;
             size_t e = s.size();
-            while (e > b && std::isspace(static_cast<unsigned char>(s[e - 1]))) --e;
+            while (e > b && std::isspace(static_cast<unsigned char>(s[e - 1])))
+                --e;
             return s.substr(b, e - b);
         };
 
         std::unordered_map<std::string, double*> m;
-        auto bind = [&](const char* k, double& v) { m.emplace(std::string(k), &v); };
+        auto bind = [&](const char* k, double& v) {
+            m.emplace(std::string(k), &v);
+        };
 
         bind("policy.temperature", policy_temperature);
         bind("policy.epsilon", policy_epsilon);
@@ -85,7 +90,8 @@ struct ParaSettleParams {
         bind("init.port_three_for_one_bonus", init_port_three_for_one_bonus);
         bind("init.port_resource_bonus", init_port_resource_bonus);
         bind("init.complement_bonus", init_complement_bonus);
-        bind("init.complement_brick_lumber_bonus", init_complement_brick_lumber_bonus);
+        bind("init.complement_brick_lumber_bonus",
+             init_complement_brick_lumber_bonus);
         bind("init.road_deg_bonus", init_road_deg_bonus);
 
         std::string line;
@@ -128,7 +134,8 @@ struct ParaSettleParams {
     }
 };
 
-std::string find_cfg_upwards(const std::filesystem::path& start, const std::filesystem::path& rel) {
+std::string find_cfg_upwards(const std::filesystem::path& start,
+                             const std::filesystem::path& rel) {
     namespace fs = std::filesystem;
 
     fs::path p = start;
@@ -201,18 +208,25 @@ const ParaSettleParams& get_cached_params() {
     return params;
 }
 
-int node_production_score(const Board::BoardState* board, NodeId nodeId, const ParaSettleParams& p) {
+int node_production_score(const Board::BoardState* board, NodeId nodeId,
+                          const ParaSettleParams& p) {
     if (nodeId >= NODE_COUNT) return std::numeric_limits<int>::min();
     const auto node = board->nodes[nodeId];
 
     auto res_weight = [&](Resource r) -> double {
         switch (r) {
-            case Resource::Ore: return p.res_w_ore;
-            case Resource::Grain: return p.res_w_grain;
-            case Resource::Brick: return p.res_w_brick;
-            case Resource::Lumber: return p.res_w_lumber;
-            case Resource::Wool: return p.res_w_wool;
-            default: return 0.0;
+            case Resource::Ore:
+                return p.res_w_ore;
+            case Resource::Grain:
+                return p.res_w_grain;
+            case Resource::Brick:
+                return p.res_w_brick;
+            case Resource::Lumber:
+                return p.res_w_lumber;
+            case Resource::Wool:
+                return p.res_w_wool;
+            default:
+                return 0.0;
         }
     };
 
@@ -223,21 +237,25 @@ int node_production_score(const Board::BoardState* board, NodeId nodeId, const P
         const auto hex = board->hexes[h];
         const Resource r = Board::Hex::unpackResource(hex);
         if (r == Resource::NoResource) continue;
-        const uint8_t pip = PlayerHelpers::dice_pips(Board::Hex::unpackCatanNumber(hex));
+        const uint8_t pip =
+            PlayerHelpers::dice_pips(Board::Hex::unpackCatanNumber(hex));
         s += static_cast<double>(pip) * res_weight(r);
     }
 
     const auto pt = Board::Node::unpackPortType(node);
     if (pt != PortType::NoPort) {
-        if (pt == PortType::ThreeForOne) s += p.port_three_for_one;
-        else s += p.port_two_for_one;
+        if (pt == PortType::ThreeForOne)
+            s += p.port_three_for_one;
+        else
+            s += p.port_two_for_one;
     }
 
     return static_cast<int>(std::llround(s));
 }
 
-std::array<bool, 5> resources_at_node(const Board::BoardState* board, NodeId nodeId) {
-    std::array<bool, 5> has {false, false, false, false, false};
+std::array<bool, 5> resources_at_node(const Board::BoardState* board,
+                                      NodeId nodeId) {
+    std::array<bool, 5> has{false, false, false, false, false};
     if (nodeId >= NODE_COUNT) return has;
     const auto node = board->nodes[nodeId];
     for (uint8_t i = 0; i < 3; ++i) {
@@ -252,25 +270,29 @@ std::array<bool, 5> resources_at_node(const Board::BoardState* board, NodeId nod
     return has;
 }
 
-std::array<bool, 5> resources_covered_by_player(const Board::BoardState* board, PlayerId pid) {
-    std::array<bool, 5> has {false, false, false, false, false};
+std::array<bool, 5> resources_covered_by_player(const Board::BoardState* board,
+                                                PlayerId pid) {
+    std::array<bool, 5> has{false, false, false, false, false};
     for (NodeId n = 0; n < NODE_COUNT; ++n) {
         const auto node = board->nodes[n];
         if (Board::Node::unpackOwner(node) != pid) continue;
         const auto st = Board::Node::unpackStructure(node);
-        if (st != StructureType::Settlement && st != StructureType::City) continue;
+        if (st != StructureType::Settlement && st != StructureType::City)
+            continue;
         const auto at = resources_at_node(board, n);
         for (size_t i = 0; i < 5; ++i) has[i] = has[i] || at[i];
     }
     return has;
 }
 
-int score_initial_settlement_node(const Board::BoardState* board, NodeId nodeId, bool secondPlacement,
-                                 const std::array<bool, 5>& alreadyHave, const ParaSettleParams& p) {
+int score_initial_settlement_node(const Board::BoardState* board, NodeId nodeId,
+                                  bool secondPlacement,
+                                  const std::array<bool, 5>& alreadyHave,
+                                  const ParaSettleParams& p) {
     if (nodeId >= NODE_COUNT) return std::numeric_limits<int>::min();
     const auto node = board->nodes[nodeId];
 
-    std::array<uint8_t, 5> resourceCounts {0, 0, 0, 0, 0};
+    std::array<uint8_t, 5> resourceCounts{0, 0, 0, 0, 0};
     for (uint8_t i = 0; i < 3; ++i) {
         const HexId hexId = Board::Node::unpackAdjacentHex(node, i);
         if (hexId == HexIdNone || hexId >= HEX_COUNT) continue;
@@ -286,41 +308,58 @@ int score_initial_settlement_node(const Board::BoardState* board, NodeId nodeId,
     int duplicatePenalty = 0;
     for (size_t i = 0; i < 5; ++i) {
         unique += (resourceCounts[i] > 0) ? 1 : 0;
-        if (resourceCounts[i] > 1) duplicatePenalty += static_cast<int>(p.init_duplicate_penalty) * static_cast<int>(resourceCounts[i] - 1);
+        if (resourceCounts[i] > 1)
+            duplicatePenalty += static_cast<int>(p.init_duplicate_penalty) *
+                                static_cast<int>(resourceCounts[i] - 1);
     }
-    const int diversityBonus = static_cast<int>(p.init_diversity_bonus) * unique;
+    const int diversityBonus =
+        static_cast<int>(p.init_diversity_bonus) * unique;
 
     int portBonus = 0;
     const auto port = Board::Node::unpackPortType(node);
     if (port != PortType::NoPort) {
-        portBonus += static_cast<int>(secondPlacement ? p.init_port_second : p.init_port_first);
-        if (port == PortType::ThreeForOne) portBonus += static_cast<int>(p.init_port_three_for_one_bonus);
-        else portBonus += static_cast<int>(p.init_port_resource_bonus);
+        portBonus += static_cast<int>(secondPlacement ? p.init_port_second
+                                                      : p.init_port_first);
+        if (port == PortType::ThreeForOne)
+            portBonus += static_cast<int>(p.init_port_three_for_one_bonus);
+        else
+            portBonus += static_cast<int>(p.init_port_resource_bonus);
     }
 
     int complementBonus = 0;
     if (secondPlacement) {
         for (size_t i = 0; i < 5; ++i) {
-            if (resourceCounts[i] > 0 && !alreadyHave[i]) complementBonus += static_cast<int>(p.init_complement_bonus);
+            if (resourceCounts[i] > 0 && !alreadyHave[i])
+                complementBonus += static_cast<int>(p.init_complement_bonus);
         }
-        if (!alreadyHave[static_cast<size_t>(Resource::Brick)] && resourceCounts[static_cast<size_t>(Resource::Brick)] > 0) {
-            complementBonus += static_cast<int>(p.init_complement_brick_lumber_bonus);
+        if (!alreadyHave[static_cast<size_t>(Resource::Brick)] &&
+            resourceCounts[static_cast<size_t>(Resource::Brick)] > 0) {
+            complementBonus +=
+                static_cast<int>(p.init_complement_brick_lumber_bonus);
         }
-        if (!alreadyHave[static_cast<size_t>(Resource::Lumber)] && resourceCounts[static_cast<size_t>(Resource::Lumber)] > 0) {
-            complementBonus += static_cast<int>(p.init_complement_brick_lumber_bonus);
+        if (!alreadyHave[static_cast<size_t>(Resource::Lumber)] &&
+            resourceCounts[static_cast<size_t>(Resource::Lumber)] > 0) {
+            complementBonus +=
+                static_cast<int>(p.init_complement_brick_lumber_bonus);
         }
     }
 
     const int prodScore = node_production_score(board, nodeId, p);
     if (prodScore == std::numeric_limits<int>::min()) return prodScore;
 
-    const double scaledProd = static_cast<double>(prodScore) * p.init_prod_scale;
-    const double total = scaledProd + static_cast<double>(diversityBonus + portBonus + complementBonus - duplicatePenalty);
+    const double scaledProd =
+        static_cast<double>(prodScore) * p.init_prod_scale;
+    const double total =
+        scaledProd + static_cast<double>(diversityBonus + portBonus +
+                                         complementBonus - duplicatePenalty);
     return static_cast<int>(std::llround(total));
 }
 
-int road_degree_bonus(const Board::BoardState* board, NodeId settlementNodeId, EdgeId edgeId, const ParaSettleParams& p) {
-    if (settlementNodeId >= NODE_COUNT || edgeId == EdgeIdNone || edgeId >= EDGE_COUNT) return 0;
+int road_degree_bonus(const Board::BoardState* board, NodeId settlementNodeId,
+                      EdgeId edgeId, const ParaSettleParams& p) {
+    if (settlementNodeId >= NODE_COUNT || edgeId == EdgeIdNone ||
+        edgeId >= EDGE_COUNT)
+        return 0;
     const auto edge = board->edges[edgeId];
     const NodeId a = Board::Edge::unpackAdjacentNode(edge, 0);
     const NodeId b = Board::Edge::unpackAdjacentNode(edge, 1);
@@ -329,15 +368,19 @@ int road_degree_bonus(const Board::BoardState* board, NodeId settlementNodeId, E
     const auto adj = Board::Node::getAdjacentEdges(board->nodes[other]);
     int deg = 0;
     for (auto e : adj) deg += (e != EdgeIdNone) ? 1 : 0;
-    return static_cast<int>(std::llround(p.init_road_deg_bonus * static_cast<double>(deg)));
+    return static_cast<int>(
+        std::llround(p.init_road_deg_bonus * static_cast<double>(deg)));
 }
 
-Action::PackedAction greedy_pick_from_scores(const std::vector<std::pair<double, Action::PackedAction>>& scored, const ParaSettleParams& p) {
+Action::PackedAction greedy_pick_from_scores(
+    const std::vector<std::pair<double, Action::PackedAction>>& scored,
+    const ParaSettleParams& p) {
     if (scored.empty()) return Action::getEmptyAction();
 
     const double r01 = RandomDevice::uniform_u32_range(0, 1000000) / 1000000.0;
     if (r01 < p.policy_epsilon) {
-        const uint32_t idx = RandomDevice::uniform_u32_range(0, static_cast<uint32_t>(scored.size()) - 1);
+        const uint32_t idx = RandomDevice::uniform_u32_range(
+            0, static_cast<uint32_t>(scored.size()) - 1);
         return scored[idx].second;
     }
 
@@ -356,7 +399,8 @@ Action::PackedAction greedy_pick_from_scores(const std::vector<std::pair<double,
         }
         if (sum <= 0.0) return scored[0].second;
 
-        const double pick = RandomDevice::uniform_u32_range(0, 1000000) / 1000000.0 * sum;
+        const double pick =
+            RandomDevice::uniform_u32_range(0, 1000000) / 1000000.0 * sum;
         double acc = 0.0;
         for (size_t i = 0; i < scored.size(); ++i) {
             acc += w[i];
@@ -383,18 +427,22 @@ Action::PackedAction greedy_pick_from_scores(const std::vector<std::pair<double,
     idxs.reserve(scored.size());
     for (size_t i = 0; i < scored.size(); ++i) idxs.push_back(i);
 
-    const auto better = [&](size_t a, size_t b) { return scored[a].first > scored[b].first; };
+    const auto better = [&](size_t a, size_t b) {
+        return scored[a].first > scored[b].first;
+    };
     if (kk < idxs.size()) {
         std::nth_element(idxs.begin(), idxs.begin() + kk, idxs.end(), better);
     }
 
-    const uint32_t pick = RandomDevice::uniform_u32_range(0, static_cast<uint32_t>(kk) - 1);
+    const uint32_t pick =
+        RandomDevice::uniform_u32_range(0, static_cast<uint32_t>(kk) - 1);
     return scored[idxs[pick]].second;
 }
 
-} // namespace
+}  // namespace
 
-std::pair<Action::PackedAction, Action::PackedAction> ParaSettleIt5Player::getInitialPlacement() {
+std::pair<Action::PackedAction, Action::PackedAction>
+ParaSettleIt5Player::getInitialPlacement() {
     const ParaSettleParams& params = get_cached_params();
 
     const PlayerId selfId = boardState->currentPlayer;
@@ -412,7 +460,8 @@ std::pair<Action::PackedAction, Action::PackedAction> ParaSettleIt5Player::getIn
     for (auto a : actions) {
         const NodeId nodeId = Action::unpackArg1(a);
         const EdgeId edgeId = Action::unpackArg2(a);
-        int s = score_initial_settlement_node(boardState, nodeId, false, already, params);
+        int s = score_initial_settlement_node(boardState, nodeId, false,
+                                              already, params);
         s += road_degree_bonus(boardState, nodeId, edgeId, params);
         scored.push_back({static_cast<double>(s), a});
     }
@@ -420,12 +469,14 @@ std::pair<Action::PackedAction, Action::PackedAction> ParaSettleIt5Player::getIn
     const auto pick = greedy_pick_from_scores(scored, params);
 
     // Keep state for second placement scoring.
-    firstPlacementResources = resources_at_node(boardState, Action::unpackArg1(pick));
+    firstPlacementResources =
+        resources_at_node(boardState, Action::unpackArg1(pick));
 
     return {pick, pick};
 }
 
-std::pair<Action::PackedAction, Action::PackedAction> ParaSettleIt5Player::get2InitialPlacement() {
+std::pair<Action::PackedAction, Action::PackedAction>
+ParaSettleIt5Player::get2InitialPlacement() {
     const ParaSettleParams& params = get_cached_params();
 
     const PlayerId selfId = boardState->currentPlayer;
@@ -435,8 +486,9 @@ std::pair<Action::PackedAction, Action::PackedAction> ParaSettleIt5Player::get2I
         return {noAction, noAction};
     }
 
-    // Use already-covered resources from current board state; fall back to local remembered first placement.
-    // (This keeps it safe if the simulation sequence changes.)
+    // Use already-covered resources from current board state; fall back to
+    // local remembered first placement. (This keeps it safe if the simulation
+    // sequence changes.)
     auto already = resources_covered_by_player(boardState, selfId);
     for (size_t i = 0; i < 5; ++i) {
         already[i] = already[i] || firstPlacementResources[i];
@@ -448,7 +500,8 @@ std::pair<Action::PackedAction, Action::PackedAction> ParaSettleIt5Player::get2I
     for (auto a : actions) {
         const NodeId nodeId = Action::unpackArg1(a);
         const EdgeId edgeId = Action::unpackArg2(a);
-        int s = score_initial_settlement_node(boardState, nodeId, true, already, params);
+        int s = score_initial_settlement_node(boardState, nodeId, true, already,
+                                              params);
         s += road_degree_bonus(boardState, nodeId, edgeId, params);
         scored.push_back({static_cast<double>(s), a});
     }

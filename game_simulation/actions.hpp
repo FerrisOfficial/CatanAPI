@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <cassert>
 #include <consts.hpp>
+#include <cstdint>
 
 // Packed 64-bit action representation
 // Layout (from LSB to MSB):
@@ -27,7 +27,7 @@ namespace Action {
 
 using PackedAction = uint64_t;
 
-constexpr PackedAction getEmptyAction() {return 0;}
+constexpr PackedAction getEmptyAction() { return 0; }
 
 constexpr bool isValidPackedResource(Resource r) {
     return static_cast<uint8_t>(r) <= static_cast<uint8_t>(Resource::Ore);
@@ -43,7 +43,8 @@ constexpr ActionType unpackType(PackedAction a) {
 
 // Player ID packing/unpacking (bits 5-6)
 constexpr PackedAction packPlayerID(PackedAction a, PlayerId playerID) {
-    return (a & ~(0x3ULL << 5)) | (uint64_t(static_cast<uint8_t>(playerID) & 0x3) << 5);
+    return (a & ~(0x3ULL << 5)) |
+           (uint64_t(static_cast<uint8_t>(playerID) & 0x3) << 5);
 }
 constexpr PlayerId unpackPlayerID(PackedAction a) {
     return static_cast<PlayerId>((a >> 5) & 0x3);
@@ -60,7 +61,8 @@ constexpr PackedAction packResource(PackedAction a, Resource r, uint8_t value) {
     if (!isValidPackedResource(r)) {
         return a;
     }
-    uint8_t shift = 7 + (static_cast<uint8_t>(r) * 5);  // Resources start at bit 7
+    uint8_t shift =
+        7 + (static_cast<uint8_t>(r) * 5);  // Resources start at bit 7
     a &= ~(0x1FULL << shift);
     a |= (uint64_t(value & 0x1F) << shift);
     return a;
@@ -75,7 +77,8 @@ constexpr uint8_t unpackResource(PackedAction a, Resource r) {
     if (!isValidPackedResource(r)) {
         return 0;
     }
-    uint8_t shift = 7 + (static_cast<uint8_t>(r) * 5);  // Resources start at bit 7
+    uint8_t shift =
+        7 + (static_cast<uint8_t>(r) * 5);  // Resources start at bit 7
     return static_cast<uint8_t>((a >> shift) & 0x1F);
 }
 
@@ -101,4 +104,4 @@ constexpr uint8_t unpackArg3(PackedAction a) {
     return static_cast<uint8_t>((a >> 48) & 0xFF);
 }
 
-} // namespace Action
+}  // namespace Action

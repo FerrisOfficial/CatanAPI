@@ -1,22 +1,24 @@
 #pragma once
 
-#include "../itPlayers/it5Player.hpp"
-#include "../game_simulation/consts.hpp"
+#include "game_simulation/consts.hpp"
+#include "itPlayers/it5Player.hpp"
 
-// It3: It2 turn logic + smarter setup + smarter robber.
 struct OneResourcePlayer : public It5Player {
     OneResourcePlayer() : It5Player() {}
     virtual ~OneResourcePlayer() = default;
 
-    std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement() override;
-    std::pair<Action::PackedAction, Action::PackedAction> get2InitialPlacement() override;
+    std::pair<Action::PackedAction, Action::PackedAction> getInitialPlacement()
+        override;
+    std::pair<Action::PackedAction, Action::PackedAction> get2InitialPlacement()
+        override;
     Action::PackedAction getDiscardAction() override;
     Action::PackedAction getTurnAction() override;
 
-
-private:
+   private:
     NodeId firstSettlementNode = 0xFF;
-    std::array<bool, 5> firstPlacementResources {false, false, false, false, false};
-    Resource prioritizedResource = Resource::Brick; // chosen at setup based on board
+    std::array<bool, 5> firstPlacementResources{false, false, false, false,
+                                                false};
+    Resource prioritizedResource =
+        Resource::Brick;  // chosen at setup based on board
     bool priorityChosen = false;
 };

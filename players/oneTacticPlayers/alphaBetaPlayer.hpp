@@ -1,11 +1,10 @@
 #pragma once
 
-#include "../itPlayers/it5Player.hpp"
+#include "itPlayers/it5Player.hpp"
 
-// It5: It5 + alpha-beta pruning for turn action
-struct alphaBetaPlayer : public It5Player {
-    alphaBetaPlayer() : It5Player() {}
-    virtual ~alphaBetaPlayer() = default;
+struct AlphaBetaPlayer : public It5Player {
+    AlphaBetaPlayer() : It5Player() {}
+    virtual ~AlphaBetaPlayer() = default;
 
     Action::PackedAction getTurnAction() override;
 };
