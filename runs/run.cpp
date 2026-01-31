@@ -59,7 +59,7 @@ std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
         return std::make_unique<ParaSetIt5Player>();
     }
     if (flag == "ab") {
-        return std::make_unique<alphaBetaPlayer>();
+        return std::make_unique<AlphaBetaPlayer>();
     }
     if (flag == "or") {
         return std::make_unique<OneResourcePlayer>();

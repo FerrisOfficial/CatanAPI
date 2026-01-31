@@ -401,7 +401,7 @@ int alphabeta(const Board::BoardState& board, PlayerId selfId, int depth,
 
 }  // namespace
 
-Action::PackedAction alphaBetaPlayer::getTurnAction() {
+Action::PackedAction AlphaBetaPlayer::getTurnAction() {
     const PlayerId selfId = boardState->currentPlayer;
 
     auto actions = boardState->getLegalActions(selfId);

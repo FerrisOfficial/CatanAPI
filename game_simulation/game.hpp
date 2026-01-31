@@ -30,7 +30,6 @@ struct Game {
 
     void applyActionLogged(Action::PackedAction action, const char* phase);
 
-    // Breakdown helpers
     bool processDevPhase(IPlayer& currentPlayer);
     void applyDiceRoll(uint8_t diceNumber);
     void discardResourcesForSeven(PlayerId currentPlayerId);

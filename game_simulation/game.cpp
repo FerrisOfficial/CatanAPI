@@ -301,7 +301,7 @@ void Game::turnLoop() {
                                      this->boardState);
     }
 
-    if (rolledDiceNumber != 7) {
+    if (rolledDiceNumber != ROBBER_DICE_NUMBER) {
         applyDiceRoll(rolledDiceNumber);
     } else {
         discardResourcesForSeven(currentPlayerId);

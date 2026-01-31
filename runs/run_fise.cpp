@@ -34,7 +34,7 @@ std::unique_ptr<IPlayer> make_player_from_flag(const std::string& flag) {
     if (flag == "it5") return std::make_unique<It5Player>();
     if (flag == "para") return std::make_unique<ParaPlayer>();
     if (flag == "psit5") return std::make_unique<ParaSetIt5Player>();
-    if (flag == "ab") return std::make_unique<alphaBetaPlayer>();
+    if (flag == "ab") return std::make_unique<AlphaBetaPlayer>();
     if (flag == "or") return std::make_unique<OneResourcePlayer>();
     if (flag == "dev") return std::make_unique<DevPlayer>();
     if (flag == "road") return std::make_unique<RoadPlayer>();
@@ -165,16 +165,16 @@ void print_order_summary(std::ostream& os, const std::string& firstFlag,
             ? (static_cast<double>(r.totalTurns) / static_cast<double>(games))
             : 0.0;
 
-    os << "  " << display_name_from_flag(firstFlag) << " (pierwszy) vs "
-       << display_name_from_flag(secondFlag) << " (drugi)\n";
-    os << "    Wygrane pierwszego: " << r.winsFirst << " (" << std::fixed
+    os << "  " << display_name_from_flag(firstFlag) << " (first) vs "
+       << display_name_from_flag(secondFlag) << " (second)\n";
+    os << "    First player wins: " << r.winsFirst << " (" << std::fixed
        << std::setprecision(1) << pct(r.winsFirst) << "%)\n";
-    os << "    Wygrane drugiego:   " << r.winsSecond << " (" << std::fixed
+    os << "    Second player wins:   " << r.winsSecond << " (" << std::fixed
        << std::setprecision(1) << pct(r.winsSecond) << "%)\n";
-    os << "    Brak zwycięzcy:      " << r.noWinner << " (" << std::fixed
+    os << "    No winner:      " << r.noWinner << " (" << std::fixed
        << std::setprecision(1) << pct(r.noWinner) << "%)\n";
-    os << "    Średnia liczba tur:  " << std::fixed << std::setprecision(1)
-       << avgTurns << ", max tur: " << r.maxTurns << "\n";
+    os << "    Average number of turns:  " << std::fixed << std::setprecision(1)
+       << avgTurns << ", max turns: " << r.maxTurns << "\n";
 }
 }  // namespace
 
@@ -284,7 +284,7 @@ int main(int argc, char* argv[]) {
         std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 
     out << "============================================================\n";
-    out << "Podsumowanie per bot (wygrane zależne od kolejności)\n";
+    out << "Summary per bot (wins dependent on order)\n";
 
     for (size_t i = 0; i < flags.size(); ++i) {
         const auto& name = display_name_from_flag(flags[i]);

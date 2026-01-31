@@ -2,9 +2,6 @@
 
 #include <cassert>
 #include <cstdint>
-#pragma once
-
-#include <cstdint>
 
 #include "consts.hpp"
 

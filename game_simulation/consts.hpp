@@ -12,6 +12,8 @@ using EdgeId = uint8_t;
 using HexId = uint8_t;
 using DiceNumber = uint8_t;
 
+constexpr DiceNumber ROBBER_DICE_NUMBER = 7;
+constexpr uint8_t MAX_RESOURCES_BEFORE_DISCARD = 9;
 constexpr HexId HexIdNone = 0x1F;
 constexpr EdgeId EdgeIdNone = 0x7F;
 
