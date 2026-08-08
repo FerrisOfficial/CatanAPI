@@ -1,6 +1,7 @@
 #pragma once
 
 #include <actions.hpp>
+#include <array>
 #include <consts.hpp>
 #include <cstdint>
 #include <packedBank.hpp>
@@ -134,7 +135,10 @@ constexpr EdgeId unpackAdjacentEdge(PackedNode n, uint8_t edgeIndex) {
     return (n >> shift) & 0x7F;
 }
 
-inline std::vector<EdgeId> getAdjacentEdges(PackedNode n) {
+// A node has at most three incident edges, so the count is known at compile
+// time. Returning std::array keeps this off the heap: as a vector, every call
+// in the innermost geometry code cost an allocation and a free.
+inline std::array<EdgeId, 3> getAdjacentEdges(PackedNode n) {
     return {unpackAdjacentEdge(n, 0), unpackAdjacentEdge(n, 1),
             unpackAdjacentEdge(n, 2)};
 }
@@ -288,6 +292,26 @@ struct BoardState {
                                            PlayerId playerId);
 
     std::vector<Action::PackedAction> getLegalActions(PlayerId playerId);
+
+    // Append straight into a caller-owned buffer. getLegalActions() uses these
+    // so one reserved vector serves the whole call, instead of each generator
+    // allocating its own and having every action copied out of it. The
+    // generate* forms below remain, implemented on top of these.
+    void appendBuildRoadActions(PlayerId playerId,
+                                std::vector<Action::PackedAction>& out);
+    void appendBuildSettlementActions(PlayerId playerId,
+                                      std::vector<Action::PackedAction>& out);
+    void appendBuildCityActions(PlayerId playerId,
+                                std::vector<Action::PackedAction>& out);
+    void appendBankTradeActions(PlayerId playerId,
+                                std::vector<Action::PackedAction>& out);
+    void appendTwoToOnePortTradeActions(PlayerId playerId,
+                                        std::vector<Action::PackedAction>& out);
+    void appendThreeToOnePortTradeActions(
+        PlayerId playerId, std::vector<Action::PackedAction>& out);
+    void appendBuyDevCardActions(PlayerId playerId,
+                                 std::vector<Action::PackedAction>& out);
+
     std::vector<Action::PackedAction> generateBuildRoadActions(
         PlayerId playerId);
     std::vector<Action::PackedAction> generateBuildSettlementActions(

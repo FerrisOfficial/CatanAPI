@@ -323,7 +323,12 @@ static bool nodeBlocksRoad(BoardState board, PlayerId playerId, NodeId nodeId) {
            owner != playerId;
 }
 
-static int dfsLongestFromEdge(BoardState board, PlayerId playerId,
+// Takes the board by reference. It was previously by value, and since this is
+// recursive, every level of the search deep-copied the whole BoardState —
+// including actionQueue, whose reserved capacity is 16k actions (128 KB). The
+// body only ever reads board.edges and board.nodes, so the copies bought
+// nothing; profiling put this single function at ~49% of total runtime.
+static int dfsLongestFromEdge(const BoardState& board, PlayerId playerId,
                               EdgeId edgeId, NodeId cameFromNode,
                               std::vector<uint8_t>& used) {
     used[edgeId] = 1;
@@ -354,7 +359,9 @@ static int dfsLongestFromEdge(BoardState board, PlayerId playerId,
     return best;
 }
 
-static uint8_t computeLongestRoad(BoardState board, PlayerId playerId) {
+// Read-only, like the DFS it drives — see the note above. Passing the board by
+// value here copied it once per call, on top of the per-recursion copies.
+static uint8_t computeLongestRoad(const BoardState& board, PlayerId playerId) {
     int best = 0;
     std::vector<uint8_t> used(EDGE_COUNT, 0);
 

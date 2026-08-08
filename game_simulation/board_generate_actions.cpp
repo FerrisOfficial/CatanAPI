@@ -86,38 +86,50 @@ static bool playerHasAvailableStructure(const BoardState& board,
     return Player::unpackAvailableStructures(player, structureType) > 0;
 }
 
-std::vector<Action::PackedAction> BoardState::generateBuildRoadActions(
-    PlayerId playerId) {
-    std::vector<Action::PackedAction> buildRoadActions;
+void BoardState::appendBuildRoadActions(
+    PlayerId playerId, std::vector<Action::PackedAction>& out) {
+
+    // Affordability and remaining-piece count do not change as the loop walks
+    // the board, so they are answered once instead of once per edge. When the
+    // player cannot build, the whole scan is skipped.
+    if (!Player::hasEnoughResources(packedPlayers[static_cast<uint8_t>(playerId)],
+                                    BuyableType::Road) ||
+        !playerHasAvailableStructure(*this, playerId, StructureType::Road)) {
+        return;
+    }
 
     for (EdgeId edgeId = 0; edgeId < EDGE_COUNT; ++edgeId) {
         if (!Edge::unpackHasRoad(edges[edgeId]) &&
-            Player::hasEnoughResources(
-                packedPlayers[static_cast<uint8_t>(playerId)],
-                BuyableType::Road) &&
-            playerHasAvailableStructure(*this, playerId, StructureType::Road) &&
             (playerHasAdjacentRoad(*this, playerId, edgeId) ||
              playerHasAdjacentSettlementOrCity(*this, playerId, edgeId))) {
-            buildRoadActions.push_back(
+            out.push_back(
                 buildAction(ActionType::BuildRoad, playerId, edgeId));
         }
     }
 
-    return buildRoadActions;
+    return;
 }
 
-std::vector<Action::PackedAction> BoardState::generateBuildSettlementActions(
+std::vector<Action::PackedAction> BoardState::generateBuildRoadActions(
     PlayerId playerId) {
-    std::vector<Action::PackedAction> buildSettlementActions;
+    std::vector<Action::PackedAction> out;
+    appendBuildRoadActions(playerId, out);
+    return out;
+}
+
+void BoardState::appendBuildSettlementActions(
+    PlayerId playerId, std::vector<Action::PackedAction>& out) {
+
+    // Loop-invariant: hoisted out of the 54-node scan (see generateBuildRoadActions).
+    if (!Player::hasEnoughResources(packedPlayers[static_cast<uint8_t>(playerId)],
+                                    BuyableType::Settlement) ||
+        !playerHasAvailableStructure(*this, playerId, StructureType::Settlement)) {
+        return;
+    }
 
     for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
         if (Node::unpackStructure(nodes[nodeId]) ==
-                StructureType::NoStructure &&
-            Player::hasEnoughResources(
-                packedPlayers[static_cast<uint8_t>(playerId)],
-                BuyableType::Settlement) &&
-            playerHasAvailableStructure(*this, playerId,
-                                        StructureType::Settlement)) {
+            StructureType::NoStructure) {
             // Check distance rule: no adjacent settlements/cities and at least
             // one adjacent road
             bool hasAdjacentSettlementOrCity = false;
@@ -156,36 +168,51 @@ std::vector<Action::PackedAction> BoardState::generateBuildSettlementActions(
             if (hasAdjacentSettlementOrCity || !hasAtLeastOneAdjacentRoad)
                 continue;
 
-            buildSettlementActions.push_back(
+            out.push_back(
                 buildAction(ActionType::BuildSettlement, playerId, nodeId));
         }
     }
 
-    return buildSettlementActions;
+    return;
 }
 
-std::vector<Action::PackedAction> BoardState::generateBuildCityActions(
+std::vector<Action::PackedAction> BoardState::generateBuildSettlementActions(
     PlayerId playerId) {
-    std::vector<Action::PackedAction> buildCityActions;
+    std::vector<Action::PackedAction> out;
+    appendBuildSettlementActions(playerId, out);
+    return out;
+}
+
+void BoardState::appendBuildCityActions(
+    PlayerId playerId, std::vector<Action::PackedAction>& out) {
+
+    // Loop-invariant: hoisted out of the 54-node scan (see generateBuildRoadActions).
+    if (!Player::hasEnoughResources(packedPlayers[static_cast<uint8_t>(playerId)],
+                                    BuyableType::City) ||
+        !playerHasAvailableStructure(*this, playerId, StructureType::City)) {
+        return;
+    }
 
     for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
         if (Node::unpackStructure(nodes[nodeId]) == StructureType::Settlement &&
-            Node::unpackOwner(nodes[nodeId]) == playerId &&
-            Player::hasEnoughResources(
-                packedPlayers[static_cast<uint8_t>(playerId)],
-                BuyableType::City) &&
-            playerHasAvailableStructure(*this, playerId, StructureType::City)) {
-            buildCityActions.push_back(
+            Node::unpackOwner(nodes[nodeId]) == playerId) {
+            out.push_back(
                 buildAction(ActionType::BuildCity, playerId, nodeId));
         }
     }
 
-    return buildCityActions;
+    return;
 }
 
-std::vector<Action::PackedAction> BoardState::generateTwoToOnePortTradeActions(
+std::vector<Action::PackedAction> BoardState::generateBuildCityActions(
     PlayerId playerId) {
-    std::vector<Action::PackedAction> tradeActions;
+    std::vector<Action::PackedAction> out;
+    appendBuildCityActions(playerId, out);
+    return out;
+}
+
+void BoardState::appendTwoToOnePortTradeActions(
+    PlayerId playerId, std::vector<Action::PackedAction>& out) {
 
     auto& player = packedPlayers[static_cast<uint8_t>(playerId)];
 
@@ -280,7 +307,7 @@ std::vector<Action::PackedAction> BoardState::generateTwoToOnePortTradeActions(
 
                 for (uint8_t tradeCount = 1; tradeCount * 2 <= playerHas;
                      ++tradeCount) {
-                    tradeActions.push_back(
+                    out.push_back(
                         buildAction(ActionType::TradeBank, playerId,
                                     static_cast<uint8_t>(giveResource),
                                     static_cast<uint8_t>(receiveResource), 2));
@@ -289,12 +316,18 @@ std::vector<Action::PackedAction> BoardState::generateTwoToOnePortTradeActions(
         }
     }
 
-    return tradeActions;
+    return;
 }
 
-std::vector<Action::PackedAction>
-BoardState::generateThreeToOnePortTradeActions(PlayerId playerId) {
-    std::vector<Action::PackedAction> tradeActions;
+std::vector<Action::PackedAction> BoardState::generateTwoToOnePortTradeActions(
+    PlayerId playerId) {
+    std::vector<Action::PackedAction> out;
+    appendTwoToOnePortTradeActions(playerId, out);
+    return out;
+}
+
+void BoardState::appendThreeToOnePortTradeActions(
+    PlayerId playerId, std::vector<Action::PackedAction>& out) {
 
     auto& player = packedPlayers[static_cast<uint8_t>(playerId)];
 
@@ -323,7 +356,7 @@ BoardState::generateThreeToOnePortTradeActions(PlayerId playerId) {
 
                 for (uint8_t tradeCount = 1; tradeCount * 3 <= playerHas;
                      ++tradeCount) {
-                    tradeActions.push_back(
+                    out.push_back(
                         buildAction(ActionType::TradeBank, playerId,
                                     static_cast<uint8_t>(giveResource),
                                     static_cast<uint8_t>(receiveResource), 3));
@@ -332,12 +365,18 @@ BoardState::generateThreeToOnePortTradeActions(PlayerId playerId) {
         }
     }
 
-    return tradeActions;
+    return;
 }
 
-std::vector<Action::PackedAction> BoardState::generateBankTradeActions(
+std::vector<Action::PackedAction> BoardState::generateThreeToOnePortTradeActions(
     PlayerId playerId) {
-    std::vector<Action::PackedAction> tradeActions;
+    std::vector<Action::PackedAction> out;
+    appendThreeToOnePortTradeActions(playerId, out);
+    return out;
+}
+
+void BoardState::appendBankTradeActions(
+    PlayerId playerId, std::vector<Action::PackedAction>& out) {
 
     auto& player = packedPlayers[static_cast<uint8_t>(playerId)];
     for (Resource giveResource :
@@ -353,7 +392,7 @@ std::vector<Action::PackedAction> BoardState::generateBankTradeActions(
             // 4:1 trades
             for (uint8_t tradeCount = 1; tradeCount * 4 <= playerHas;
                  ++tradeCount) {
-                tradeActions.push_back(
+                out.push_back(
                     buildAction(ActionType::TradeBank, playerId,
                                 static_cast<uint8_t>(giveResource),
                                 static_cast<uint8_t>(receiveResource), 4));
@@ -361,12 +400,18 @@ std::vector<Action::PackedAction> BoardState::generateBankTradeActions(
         }
     }
 
-    return tradeActions;
+    return;
 }
 
-std::vector<Action::PackedAction> BoardState::generateBuyDevCardActions(
+std::vector<Action::PackedAction> BoardState::generateBankTradeActions(
     PlayerId playerId) {
-    std::vector<Action::PackedAction> buyDevCardActions;
+    std::vector<Action::PackedAction> out;
+    appendBankTradeActions(playerId, out);
+    return out;
+}
+
+void BoardState::appendBuyDevCardActions(
+    PlayerId playerId, std::vector<Action::PackedAction>& out) {
 
     auto& player = packedPlayers[static_cast<uint8_t>(playerId)];
 
@@ -379,11 +424,18 @@ std::vector<Action::PackedAction> BoardState::generateBuyDevCardActions(
     uint8_t maxAffordable = std::min(playerCanBuy, availableDevCards);
 
     for (uint8_t cardCount = 1; cardCount <= maxAffordable; ++cardCount) {
-        buyDevCardActions.push_back(
+        out.push_back(
             buildAction(ActionType::BuyDevCard, playerId));
     }
 
-    return buyDevCardActions;
+    return;
+}
+
+std::vector<Action::PackedAction> BoardState::generateBuyDevCardActions(
+    PlayerId playerId) {
+    std::vector<Action::PackedAction> out;
+    appendBuyDevCardActions(playerId, out);
+    return out;
 }
 
 std::vector<Action::PackedAction> BoardState::generatePlayDevCardKnightActions(
@@ -642,31 +694,24 @@ std::vector<Action::PackedAction> BoardState::generatePlayDevCardActions(
 
 std::vector<Action::PackedAction> BoardState::getLegalActions(
     PlayerId playerId) {
+    // Previously this built seven separate vectors and then copied every
+    // element into an eighth — eight allocations and two writes per action,
+    // at every decision point, with alpha-beta doing it recursively.
+    //
+    // Each generator now appends straight into one buffer that is reserved
+    // once up front. The append* helpers carry the logic; the generate*
+    // functions below remain as thin wrappers so existing callers and the
+    // test suite are unaffected.
     std::vector<Action::PackedAction> legalActions;
+    legalActions.reserve(64);
 
-    auto buildRoadActions = generateBuildRoadActions(playerId);
-    auto buildSettlementActions = generateBuildSettlementActions(playerId);
-    auto buildCityActions = generateBuildCityActions(playerId);
-    auto bankTradeActions = generateBankTradeActions(playerId);
-    auto twoToOnePortTradeActions = generateTwoToOnePortTradeActions(playerId);
-    auto threeToOnePortTradeActions =
-        generateThreeToOnePortTradeActions(playerId);
-    auto buyDevCardActions = generateBuyDevCardActions(playerId);
-
-    legalActions.insert(legalActions.end(), buildRoadActions.begin(),
-                        buildRoadActions.end());
-    legalActions.insert(legalActions.end(), buildSettlementActions.begin(),
-                        buildSettlementActions.end());
-    legalActions.insert(legalActions.end(), buildCityActions.begin(),
-                        buildCityActions.end());
-    legalActions.insert(legalActions.end(), bankTradeActions.begin(),
-                        bankTradeActions.end());
-    legalActions.insert(legalActions.end(), twoToOnePortTradeActions.begin(),
-                        twoToOnePortTradeActions.end());
-    legalActions.insert(legalActions.end(), threeToOnePortTradeActions.begin(),
-                        threeToOnePortTradeActions.end());
-    legalActions.insert(legalActions.end(), buyDevCardActions.begin(),
-                        buyDevCardActions.end());
+    appendBuildRoadActions(playerId, legalActions);
+    appendBuildSettlementActions(playerId, legalActions);
+    appendBuildCityActions(playerId, legalActions);
+    appendBankTradeActions(playerId, legalActions);
+    appendTwoToOnePortTradeActions(playerId, legalActions);
+    appendThreeToOnePortTradeActions(playerId, legalActions);
+    appendBuyDevCardActions(playerId, legalActions);
     legalActions.push_back(buildAction(ActionType::EndTurn, playerId));
 
     return legalActions;
