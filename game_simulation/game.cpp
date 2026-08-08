@@ -8,6 +8,19 @@
 #include "utils/dumper.hpp"
 #include "utils/randomDevice.hpp"
 
+// Bots are handed a mutable board pointer, so callPlayerGuarded below snapshots
+// the board before every callback and throws if the bot changed it. That is a
+// genuinely useful integrity check while writing bots, but it costs a full
+// BoardState copy plus a deep comparison per callback — profiling attributed
+// ~20% of total runtime to the comparison alone.
+//
+// It stays ON by default, so a normal CMake build of this repo behaves exactly
+// as before. Builds that want raw throughput and are running already-trusted
+// bots — the WebAssembly demo — compile it out with -DCATAN_VALIDATE_PLAYERS=0.
+#ifndef CATAN_VALIDATE_PLAYERS
+#define CATAN_VALIDATE_PLAYERS 1
+#endif
+
 namespace {
 
 std::string_view playerName(const Game& game, const IPlayer& player) {
@@ -20,6 +33,13 @@ template <class Func>
 auto callPlayerGuarded(const Game& game, Board::BoardState& board,
                        IPlayer& player, const char* methodName, Func&& func)
     -> decltype(func()) {
+#if !CATAN_VALIDATE_PLAYERS
+    (void)game;
+    (void)board;
+    (void)player;
+    (void)methodName;
+    return func();
+#else
     Board::BoardState before = board;
     auto result = func();
     const bool boardChanged = !(before == board);
@@ -85,6 +105,7 @@ auto callPlayerGuarded(const Game& game, Board::BoardState& board,
                  : (std::string(" (first diff: ") + details.str() + ")")));
     }
     return result;
+#endif
 }
 
 }  // namespace
