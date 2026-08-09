@@ -86,6 +86,8 @@ std::string display_name_from_flag(const std::string& flag) {
     if (flag == "it5") return "It5Player";
     if (flag == "para") return "ParaPlayer";
     if (flag == "psit5") return "ParaSettleIt5Player";
+    if (flag == "ab") return "AlphaBetaPlayer";
+    if (flag == "or") return "OneResourcePlayer";
     if (flag == "dev") return "DevPlayer";
     if (flag == "road") return "RoadPlayer";
     if (flag == "cr") return "CityRushPlayer";
@@ -163,14 +165,20 @@ struct LossVPByBotStats {
     size_t lastGameIndexB = 0;
 
     // seat0Flag/seat1Flag: which bot played in Player0/Player1 in this
-    // particular game.
-    void addGame(const std::string& botAFlag, const std::string& botBFlag,
-                 const std::string& seat0Flag, const std::string& seat1Flag,
-                 PlayerId winner, int vpSeat0, int vpSeat1, size_t gameIndex) {
+    // particular game, for diagnostics only.
+    //
+    // Attribution goes through `swapped` rather than by comparing flags: with
+    // identical flags (it5 vs it5) a comparison matches botA every time, which
+    // silently credited every loss to botA and left botB's average at 0.
+    void addGame(bool swapped, const std::string& seat0Flag,
+                 const std::string& seat1Flag, PlayerId winner, int vpSeat0,
+                 int vpSeat1, size_t gameIndex) {
         if (winner == PlayerId::NoPlayer) return;
 
         const bool seat0Won = (winner == PlayerId::Player0);
-        const std::string& loserFlag = seat0Won ? seat1Flag : seat0Flag;
+        // seat0 holds botA unless seats were swapped, so the loser is botA when
+        // seat0 won and seats were swapped, or when seat1 won and they weren't.
+        const bool loserIsBotA = seat0Won ? swapped : !swapped;
         const int rawLoserVp = seat0Won ? vpSeat1 : vpSeat0;
         const int loserVp = std::max(0, rawLoserVp);
 
@@ -186,14 +194,14 @@ struct LossVPByBotStats {
                       << "\n";
         }
 
-        if (loserFlag == botAFlag) {
+        if (loserIsBotA) {
             if (!botACorrupted) {
                 sumBotALoserVp += static_cast<long long>(loserVp);
                 ++botALosses;
                 lastRawLoserVpA = rawLoserVp;
                 lastGameIndexA = gameIndex;
             }
-        } else if (loserFlag == botBFlag) {
+        } else {
             if (!botBCorrupted) {
                 sumBotBLoserVp += static_cast<long long>(loserVp);
                 ++botBLosses;
@@ -601,8 +609,8 @@ int main(int argc, char** argv) {
                 effective_vp(&game.boardState, PlayerId::Player0);
             const int vpSeat1 =
                 effective_vp(&game.boardState, PlayerId::Player1);
-            lossVpByBot.addGame(p0_flag, p1_flag, seat0_flag, seat1_flag,
-                                winner, vpSeat0, vpSeat1, gameIndex);
+            lossVpByBot.addGame(swapped, seat0_flag, seat1_flag, winner,
+                                vpSeat0, vpSeat1, gameIndex);
 
             switch (winner) {
                 case PlayerId::Player0:
