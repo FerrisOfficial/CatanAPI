@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 
 #include "consts.hpp"
@@ -148,7 +149,7 @@ constexpr PackedBank packDevCard(PackedBank pb, DevType d, uint8_t value) {
 constexpr PackedBank buyableTransaction(PackedBank pb, BuyableType b,
                                         DevType d = DevType::NoDev,
                                         bool sell = true) {
-    const auto& cost = StructureCost[static_cast<size_t>(b)];
+    const auto& cost = StructureCost[static_cast<std::size_t>(b)];
 
     if (sell) {
         // Bank sells an item to a player: add resources from bank

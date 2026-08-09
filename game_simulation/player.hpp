@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 
 #include "consts.hpp"
@@ -195,7 +196,7 @@ constexpr uint8_t unpackAvailableStructures(PackedPlayer p, StructureType s) {
 }
 
 constexpr bool hasEnoughResources(PackedPlayer p, BuyableType b) {
-    const auto& cost = StructureCost[static_cast<size_t>(b)];
+    const auto& cost = StructureCost[static_cast<std::size_t>(b)];
     return unpackResource(p, Resource::Brick) >= cost[0] &&
            unpackResource(p, Resource::Lumber) >= cost[1] &&
            unpackResource(p, Resource::Wool) >= cost[2] &&
@@ -204,7 +205,7 @@ constexpr bool hasEnoughResources(PackedPlayer p, BuyableType b) {
 }
 
 constexpr void buy(PackedPlayer& p, BuyableType b, DevType d = DevType::NoDev) {
-    const auto& cost = StructureCost[static_cast<size_t>(b)];
+    const auto& cost = StructureCost[static_cast<std::size_t>(b)];
     p = packResource(p, Resource::Brick,
                      unpackResource(p, Resource::Brick) - cost[0]);
     p = packResource(p, Resource::Lumber,
@@ -247,7 +248,7 @@ constexpr void buy(PackedPlayer& p, BuyableType b, DevType d = DevType::NoDev) {
 
 constexpr void refund(PackedPlayer& p, BuyableType b,
                       DevType d = DevType::NoDev) {
-    const auto& cost = StructureCost[static_cast<size_t>(b)];
+    const auto& cost = StructureCost[static_cast<std::size_t>(b)];
     p = packResource(p, Resource::Brick,
                      unpackResource(p, Resource::Brick) + cost[0]);
     p = packResource(p, Resource::Lumber,
