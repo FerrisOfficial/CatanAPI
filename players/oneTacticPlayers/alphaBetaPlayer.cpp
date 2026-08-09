@@ -94,7 +94,6 @@ struct ExpectedStateFP {
     std::array<int, RESOURCE_COUNT> remainderFP{0, 0, 0, 0, 0};
 };
 
-
 std::array<int, RESOURCE_COUNT> addExpectedResourcesFP(
     Board::BoardState& board, PlayerId playerId,
     ExpectedStateFP& expectedState) {

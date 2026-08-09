@@ -88,12 +88,11 @@ static bool playerHasAvailableStructure(const BoardState& board,
 
 void BoardState::appendBuildRoadActions(
     PlayerId playerId, std::vector<Action::PackedAction>& out) {
-
     // Affordability and remaining-piece count do not change as the loop walks
     // the board, so they are answered once instead of once per edge. When the
     // player cannot build, the whole scan is skipped.
-    if (!Player::hasEnoughResources(packedPlayers[static_cast<uint8_t>(playerId)],
-                                    BuyableType::Road) ||
+    if (!Player::hasEnoughResources(
+            packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::Road) ||
         !playerHasAvailableStructure(*this, playerId, StructureType::Road)) {
         return;
     }
@@ -102,8 +101,7 @@ void BoardState::appendBuildRoadActions(
         if (!Edge::unpackHasRoad(edges[edgeId]) &&
             (playerHasAdjacentRoad(*this, playerId, edgeId) ||
              playerHasAdjacentSettlementOrCity(*this, playerId, edgeId))) {
-            out.push_back(
-                buildAction(ActionType::BuildRoad, playerId, edgeId));
+            out.push_back(buildAction(ActionType::BuildRoad, playerId, edgeId));
         }
     }
 
@@ -119,11 +117,13 @@ std::vector<Action::PackedAction> BoardState::generateBuildRoadActions(
 
 void BoardState::appendBuildSettlementActions(
     PlayerId playerId, std::vector<Action::PackedAction>& out) {
-
-    // Loop-invariant: hoisted out of the 54-node scan (see generateBuildRoadActions).
-    if (!Player::hasEnoughResources(packedPlayers[static_cast<uint8_t>(playerId)],
-                                    BuyableType::Settlement) ||
-        !playerHasAvailableStructure(*this, playerId, StructureType::Settlement)) {
+    // Loop-invariant: hoisted out of the 54-node scan (see
+    // generateBuildRoadActions).
+    if (!Player::hasEnoughResources(
+            packedPlayers[static_cast<uint8_t>(playerId)],
+            BuyableType::Settlement) ||
+        !playerHasAvailableStructure(*this, playerId,
+                                     StructureType::Settlement)) {
         return;
     }
 
@@ -185,10 +185,10 @@ std::vector<Action::PackedAction> BoardState::generateBuildSettlementActions(
 
 void BoardState::appendBuildCityActions(
     PlayerId playerId, std::vector<Action::PackedAction>& out) {
-
-    // Loop-invariant: hoisted out of the 54-node scan (see generateBuildRoadActions).
-    if (!Player::hasEnoughResources(packedPlayers[static_cast<uint8_t>(playerId)],
-                                    BuyableType::City) ||
+    // Loop-invariant: hoisted out of the 54-node scan (see
+    // generateBuildRoadActions).
+    if (!Player::hasEnoughResources(
+            packedPlayers[static_cast<uint8_t>(playerId)], BuyableType::City) ||
         !playerHasAvailableStructure(*this, playerId, StructureType::City)) {
         return;
     }
@@ -196,8 +196,7 @@ void BoardState::appendBuildCityActions(
     for (NodeId nodeId = 0; nodeId < NODE_COUNT; ++nodeId) {
         if (Node::unpackStructure(nodes[nodeId]) == StructureType::Settlement &&
             Node::unpackOwner(nodes[nodeId]) == playerId) {
-            out.push_back(
-                buildAction(ActionType::BuildCity, playerId, nodeId));
+            out.push_back(buildAction(ActionType::BuildCity, playerId, nodeId));
         }
     }
 
@@ -213,7 +212,6 @@ std::vector<Action::PackedAction> BoardState::generateBuildCityActions(
 
 void BoardState::appendTwoToOnePortTradeActions(
     PlayerId playerId, std::vector<Action::PackedAction>& out) {
-
     auto& player = packedPlayers[static_cast<uint8_t>(playerId)];
 
     // Detect which 2:1 ports the player owns by checking specific port nodes
@@ -328,7 +326,6 @@ std::vector<Action::PackedAction> BoardState::generateTwoToOnePortTradeActions(
 
 void BoardState::appendThreeToOnePortTradeActions(
     PlayerId playerId, std::vector<Action::PackedAction>& out) {
-
     auto& player = packedPlayers[static_cast<uint8_t>(playerId)];
 
     // Check ThreeForOne Ports (nodes 2, 3, 5, 6, 16, 27, 52, 53)
@@ -368,8 +365,8 @@ void BoardState::appendThreeToOnePortTradeActions(
     return;
 }
 
-std::vector<Action::PackedAction> BoardState::generateThreeToOnePortTradeActions(
-    PlayerId playerId) {
+std::vector<Action::PackedAction>
+BoardState::generateThreeToOnePortTradeActions(PlayerId playerId) {
     std::vector<Action::PackedAction> out;
     appendThreeToOnePortTradeActions(playerId, out);
     return out;
@@ -377,7 +374,6 @@ std::vector<Action::PackedAction> BoardState::generateThreeToOnePortTradeActions
 
 void BoardState::appendBankTradeActions(
     PlayerId playerId, std::vector<Action::PackedAction>& out) {
-
     auto& player = packedPlayers[static_cast<uint8_t>(playerId)];
     for (Resource giveResource :
          {Resource::Brick, Resource::Lumber, Resource::Wool, Resource::Grain,
@@ -392,10 +388,10 @@ void BoardState::appendBankTradeActions(
             // 4:1 trades
             for (uint8_t tradeCount = 1; tradeCount * 4 <= playerHas;
                  ++tradeCount) {
-                out.push_back(
-                    buildAction(ActionType::TradeBank, playerId,
-                                static_cast<uint8_t>(giveResource),
-                                static_cast<uint8_t>(receiveResource), 4));
+                out.push_back(buildAction(ActionType::TradeBank, playerId,
+                                          static_cast<uint8_t>(giveResource),
+                                          static_cast<uint8_t>(receiveResource),
+                                          4));
             }
         }
     }
@@ -412,7 +408,6 @@ std::vector<Action::PackedAction> BoardState::generateBankTradeActions(
 
 void BoardState::appendBuyDevCardActions(
     PlayerId playerId, std::vector<Action::PackedAction>& out) {
-
     auto& player = packedPlayers[static_cast<uint8_t>(playerId)];
 
     // BuyDevCard actions
@@ -424,8 +419,7 @@ void BoardState::appendBuyDevCardActions(
     uint8_t maxAffordable = std::min(playerCanBuy, availableDevCards);
 
     for (uint8_t cardCount = 1; cardCount <= maxAffordable; ++cardCount) {
-        out.push_back(
-            buildAction(ActionType::BuyDevCard, playerId));
+        out.push_back(buildAction(ActionType::BuyDevCard, playerId));
     }
 
     return;
