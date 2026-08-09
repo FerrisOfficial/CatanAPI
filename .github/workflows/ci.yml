@@ -60,8 +60,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Pinned deliberately. clang-format's output changes between major
+      # versions, so relying on whatever the runner image ships makes the gate
+      # fail on code that is correctly formatted locally -- ubuntu-latest is on
+      # 18, which disagrees with current LLVM on this codebase. Bump this and
+      # reformat in the same commit.
+      - name: Install clang-format
+        run: pipx install clang-format==22.1.8
+
       - name: Check formatting
         run: |
+          clang-format --version
           find game_simulation players runs tests utils \
             \( -name '*.cpp' -o -name '*.hpp' \) -print0 \
             | xargs -0 clang-format --dry-run --Werror
