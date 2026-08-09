@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-gcc, os: ubuntu-latest }
+          - { name: windows-msvc, os: windows-latest }
+          - { name: macos-clang, os: macos-latest }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # GoogleTest comes in via FetchContent, so cache it instead of
+      # re-downloading and rebuilding it on every run.
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: deps-${{ matrix.name }}-${{ hashFiles('CMakeLists.txt') }}
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Test
+        run: ctest --test-dir build --build-config Release --output-on-failure
+
+      # The unit tests exercise the rules; this checks that the CLI still plays
+      # games end to end and reports a result. Seeded so a failure reproduces.
+      - name: Smoke run
+        run: |
+          exe=$(find build/runs -maxdepth 2 -type f \( -name run -o -name run.exe \) | head -1)
+          test -n "$exe" || { echo "run binary not found under build/runs"; exit 1; }
+          "$exe" it5 rp -n 20 --switch --no-dump --seed 1
+
+  format:
+    name: clang-format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check formatting
+        run: |
+          find game_simulation players runs tests utils \
+            \( -name '*.cpp' -o -name '*.hpp' \) -print0 \
+            | xargs -0 clang-format --dry-run --Werror
+
+  asan:
+    name: linux-asan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure with AddressSanitizer
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
